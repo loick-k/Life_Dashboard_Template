@@ -29,6 +29,14 @@ Lorsque `DATABASE_URL` est défini, l'écran de connexion devient obligatoire et
 l'application refuse de charger les données si `APP_ACCESS_PASSWORD` est absent.
 Les secrets réels ne doivent jamais être ajoutés au dépôt.
 
+### Connexion Google persistante
+
+Pour éviter de ressaisir le code après chaque actualisation, configurez Google
+OpenID Connect avec les valeurs documentées dans `.streamlit/secrets.toml.example`.
+La liste `APP_ALLOWED_EMAILS` est obligatoire et limite strictement l'accès aux
+adresses indiquées. Lorsque la section `[auth]` est complète, la connexion Google
+remplace automatiquement le mot de passe et reste mémorisée par Streamlit.
+
 Les intégrations facultatives utilisent également les Secrets Streamlit :
 
 ```toml

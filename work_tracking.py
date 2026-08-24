@@ -171,3 +171,33 @@ def work_week_summary(df_entries, settings, ref_date=None):
     total = float(duration.dropna().sum()) if not duration.dropna().empty else None
     target = setting_float(settings, "work_weekly_target_hours", 35) or 35
     return total, target, None if total is None else total - target
+
+
+def work_week_counter_balance(df_entries, ref_date=None):
+    """Solde de la semaine selon la référence de 7 h 42 par journée renseignée."""
+    ref_date = ref_date or today_paris()
+    monday, sunday = week_bounds(ref_date)
+    if df_entries.empty:
+        return None
+    frame = df_entries[
+        (df_entries["entry_date"] >= monday) & (df_entries["entry_date"] <= sunday)
+    ].copy()
+    if frame.empty:
+        return None
+    duration = pd.to_numeric(
+        frame.get("work_duration_hours", frame.get("work_hours")), errors="coerce"
+    )
+    if "work_hours" in frame.columns:
+        duration = duration.fillna(pd.to_numeric(frame["work_hours"], errors="coerce"))
+    frame["duration"] = duration
+    frame = frame[frame["duration"].notna()]
+    if frame.empty:
+        return None
+    balance = sum(
+        work_day_balance(
+            float(row["duration"]),
+            day_off=row.get("work_travel") == "Day off",
+        ) or 0.0
+        for _, row in frame.iterrows()
+    )
+    return round(balance, 2)

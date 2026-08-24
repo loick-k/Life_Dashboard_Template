@@ -10,6 +10,7 @@ import streamlit as st
 MAX_FAILED_ATTEMPTS = 5
 LOCKOUT_SECONDS = 5 * 60
 MAX_RETRY_DELAY_SECONDS = 30
+OIDC_REQUIRED_KEYS = ("redirect_uri", "cookie_secret", "client_id", "client_secret", "server_metadata_url")
 
 
 def _configured_secret(name: str) -> str:
@@ -20,6 +21,34 @@ def _configured_secret(name: str) -> str:
         return str(st.secrets.get(name, "") or "").strip()
     except Exception:
         return ""
+
+
+def _parse_allowed_emails(raw_value) -> set[str]:
+    if isinstance(raw_value, str):
+        values = raw_value.split(",")
+    elif isinstance(raw_value, (list, tuple, set)):
+        values = raw_value
+    else:
+        values = []
+    return {str(value).strip().lower() for value in values if str(value).strip()}
+
+
+def _allowed_google_emails() -> set[str]:
+    environment_value = os.getenv("APP_ALLOWED_EMAILS", "").strip()
+    if environment_value:
+        return _parse_allowed_emails(environment_value)
+    try:
+        return _parse_allowed_emails(st.secrets.get("APP_ALLOWED_EMAILS", []))
+    except Exception:
+        return set()
+
+
+def _google_oidc_is_configured() -> bool:
+    try:
+        auth = st.secrets.get("auth", {})
+        return all(str(auth.get(key, "") or "").strip() for key in OIDC_REQUIRED_KEYS)
+    except Exception:
+        return False
 
 
 def _password_matches(candidate: str, password: str, password_hash: str) -> bool:
@@ -51,6 +80,28 @@ def _reset_auth_failures() -> None:
 def require_private_data_access(external_database_enabled: bool) -> None:
     """Protège systématiquement l'accès à l'instance personnelle."""
     del external_database_enabled  # Conservé dans la signature pour compatibilité.
+    if _google_oidc_is_configured():
+        if not st.user.is_logged_in:
+            st.title("🔒 Accès privé")
+            st.caption("Connecte-toi avec le compte Google autorisé pour accéder à tes données.")
+            if st.button("Continuer avec Google", type="primary", use_container_width=True):
+                st.login()
+            st.stop()
+
+        allowed_emails = _allowed_google_emails()
+        current_email = str(getattr(st.user, "email", "") or "").strip().lower()
+        if not allowed_emails:
+            st.error("Accès désactivé : configure APP_ALLOWED_EMAILS dans les Secrets Streamlit.")
+            if st.button("Se déconnecter", use_container_width=True):
+                st.logout()
+            st.stop()
+        if current_email not in allowed_emails:
+            st.error("Ce compte Google n’est pas autorisé à accéder à cette application.")
+            if st.button("Utiliser un autre compte Google", use_container_width=True):
+                st.logout()
+            st.stop()
+        return
+
     password = _configured_secret("APP_ACCESS_PASSWORD")
     password_hash = _configured_secret("APP_ACCESS_PASSWORD_SHA256")
     if st.session_state.get("life_dashboard_authenticated", False):
@@ -103,4 +154,7 @@ def require_private_data_access(external_database_enabled: bool) -> None:
 
 def logout_private_data_access() -> None:
     _reset_auth_failures()
+    if _google_oidc_is_configured() and st.user.is_logged_in:
+        st.logout()
+        return
     st.session_state.life_dashboard_authenticated = False

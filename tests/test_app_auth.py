@@ -1,7 +1,12 @@
 import hashlib
 import unittest
 
-from app_auth import MAX_RETRY_DELAY_SECONDS, _password_matches, _retry_delay_seconds
+from app_auth import (
+    MAX_RETRY_DELAY_SECONDS,
+    _parse_allowed_emails,
+    _password_matches,
+    _retry_delay_seconds,
+)
 
 
 class AppAuthTests(unittest.TestCase):
@@ -20,6 +25,16 @@ class AppAuthTests(unittest.TestCase):
         self.assertEqual(_retry_delay_seconds(2), 2)
         self.assertEqual(_retry_delay_seconds(5), 16)
         self.assertEqual(_retry_delay_seconds(20), MAX_RETRY_DELAY_SECONDS)
+
+    def test_allowed_emails_are_normalized(self):
+        self.assertEqual(
+            _parse_allowed_emails([" User@Example.com ", "second@example.com"]),
+            {"user@example.com", "second@example.com"},
+        )
+        self.assertEqual(
+            _parse_allowed_emails("User@Example.com, SECOND@example.com"),
+            {"user@example.com", "second@example.com"},
+        )
 
 
 if __name__ == "__main__":

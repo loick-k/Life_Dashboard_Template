@@ -1,4 +1,5 @@
 import unittest
+from datetime import date
 
 import pandas as pd
 
@@ -8,6 +9,7 @@ from work_tracking import (
     parse_optional_time,
     work_balance_before_day,
     work_day_balance,
+    work_week_counter_balance,
 )
 
 
@@ -71,6 +73,32 @@ class WorkTrackingTests(unittest.TestCase):
             {"work_duration_hours": 0.0, "work_hours": None, "work_travel": "Day off"},
         ])
         self.assertAlmostEqual(work_balance_before_day(entries), -0.4)
+
+    def test_week_counter_uses_daily_target_and_ignores_day_off_target(self):
+        entries = pd.DataFrame([
+            {
+                "entry_date": date(2026, 8, 24),
+                "work_duration_hours": 8.0,
+                "work_hours": None,
+                "work_travel": "Bureau",
+            },
+            {
+                "entry_date": date(2026, 8, 25),
+                "work_duration_hours": 7.0,
+                "work_hours": None,
+                "work_travel": "Télétravail",
+            },
+            {
+                "entry_date": date(2026, 8, 26),
+                "work_duration_hours": 0.0,
+                "work_hours": None,
+                "work_travel": "Day off",
+            },
+        ])
+        self.assertAlmostEqual(
+            work_week_counter_balance(entries, date(2026, 8, 26)),
+            -0.4,
+        )
 
 
 if __name__ == "__main__":
