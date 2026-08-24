@@ -1,0 +1,19 @@
+# Données personnelles et bases locales
+*.sqlite
+*.sqlite3
+*.db
+
+# Python / Streamlit
+__pycache__/
+*.py[cod]
+.streamlit/secrets.toml
+.env
+.venv/
+backups/
+venv/
+
+# Fichiers locaux Codex et système
+.agents/
+.codex/
+.DS_Store
+Thumbs.db
