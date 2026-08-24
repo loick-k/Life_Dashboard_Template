@@ -11,8 +11,8 @@ from work_tracking import (
     format_signed_duration,
     parse_optional_time,
     work_balance_before_day,
+    work_balance_through_date,
     work_day_balance,
-    work_week_counter_balance,
 )
 
 
@@ -106,8 +106,14 @@ class WorkTrackingTests(unittest.TestCase):
         ])
         self.assertAlmostEqual(work_balance_before_day(entries), -0.4)
 
-    def test_week_counter_uses_daily_target_and_ignores_day_off_target(self):
+    def test_cumulative_counter_matches_form_and_ignores_incomplete_days(self):
         entries = pd.DataFrame([
+            {
+                "entry_date": date(2026, 8, 23),
+                "work_duration_hours": 7.0,
+                "work_hours": None,
+                "work_travel": "Bureau",
+            },
             {
                 "entry_date": date(2026, 8, 24),
                 "work_duration_hours": 8.0,
@@ -126,11 +132,26 @@ class WorkTrackingTests(unittest.TestCase):
                 "work_hours": None,
                 "work_travel": "Day off",
             },
+            {
+                "entry_date": date(2026, 8, 27),
+                "work_duration_hours": None,
+                "work_hours": None,
+                "work_travel": "Bureau",
+            },
+            {
+                "entry_date": date(2026, 8, 28),
+                "work_duration_hours": 12.0,
+                "work_hours": None,
+                "work_travel": "Bureau",
+            },
         ])
         self.assertAlmostEqual(
-            work_week_counter_balance(entries, date(2026, 8, 26)),
-            -0.4,
+            work_balance_through_date(entries, date(2026, 8, 27)),
+            -1.1,
         )
+
+    def test_cumulative_counter_is_balanced_without_history(self):
+        self.assertEqual(work_balance_through_date(pd.DataFrame(), date(2026, 8, 24)), 0.0)
 
 
 if __name__ == "__main__":

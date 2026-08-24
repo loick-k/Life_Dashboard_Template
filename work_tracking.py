@@ -173,31 +173,12 @@ def work_week_summary(df_entries, settings, ref_date=None):
     return total, target, None if total is None else total - target
 
 
-def work_week_counter_balance(df_entries, ref_date=None):
-    """Solde de la semaine selon la référence de 7 h 42 par journée renseignée."""
+def work_balance_through_date(df_entries, ref_date=None):
+    """Solde cumulé jusqu'à la date, en ignorant les journées incomplètes."""
     ref_date = ref_date or today_paris()
-    monday, sunday = week_bounds(ref_date)
-    if df_entries.empty:
-        return None
-    frame = df_entries[
-        (df_entries["entry_date"] >= monday) & (df_entries["entry_date"] <= sunday)
-    ].copy()
-    if frame.empty:
-        return None
-    duration = pd.to_numeric(
-        frame.get("work_duration_hours", frame.get("work_hours")), errors="coerce"
-    )
-    if "work_hours" in frame.columns:
-        duration = duration.fillna(pd.to_numeric(frame["work_hours"], errors="coerce"))
-    frame["duration"] = duration
-    frame = frame[frame["duration"].notna()]
-    if frame.empty:
-        return None
-    balance = sum(
-        work_day_balance(
-            float(row["duration"]),
-            day_off=row.get("work_travel") == "Day off",
-        ) or 0.0
-        for _, row in frame.iterrows()
-    )
-    return round(balance, 2)
+    if df_entries is None or df_entries.empty or "entry_date" not in df_entries.columns:
+        return 0.0
+    frame = df_entries.copy()
+    entry_dates = pd.to_datetime(frame["entry_date"], errors="coerce").dt.date
+    frame = frame[entry_dates.notna() & (entry_dates <= ref_date)]
+    return work_balance_before_day(frame)

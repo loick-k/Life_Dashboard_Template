@@ -79,7 +79,7 @@ from work_tracking import (
     format_hour_decimal,
     format_signed_duration,
     parse_optional_time,
-    work_week_counter_balance,
+    work_balance_through_date,
     work_week_summary,
     work_week_table,
 )
@@ -502,13 +502,18 @@ elif selected_tab == "Dashboard":
         st.divider()
         st.markdown("### Travail")
         plot_workday_calendar(df_entries, weeks=calendar_weeks)
-        st.markdown("#### Suivi hebdomadaire du temps de travail")
-        weekly_counter = work_week_counter_balance(df_entries, today)
+        st.markdown("#### Compteur cumulé du temps de travail")
+        current_work_counter = work_balance_through_date(df_entries, today)
         st.metric(
             "⏱️ Compteur temps de travail",
-            "—" if weekly_counter is None else format_signed_duration(weekly_counter),
-            help="Avance ou retard de la semaine sur une référence de 7 h 42 par journée de travail renseignée. Les Day off sont neutres.",
+            format_signed_duration(current_work_counter),
+            help=(
+                "Avance ou retard total jusqu’à aujourd’hui sur une référence de 7 h 42 par "
+                "journée de travail renseignée. La journée actuelle n’est ajoutée "
+                "que lorsque sa durée est calculable. Les Day off sont neutres."
+            ),
         )
+        st.caption("Le détail de la semaine en cours est présenté ci-dessous.")
         work_table = work_week_table(df_entries, settings, today)
         if work_table.empty:
             st.info("Pas encore de données de travail cette semaine.")
