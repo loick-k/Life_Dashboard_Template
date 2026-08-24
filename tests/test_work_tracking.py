@@ -2,6 +2,9 @@ import unittest
 from datetime import date
 
 import pandas as pd
+from unittest.mock import patch
+
+from checkin.steps.work import _sync_work_schedule_from_entry
 
 from work_tracking import (
     compute_work_duration,
@@ -14,6 +17,35 @@ from work_tracking import (
 
 
 class WorkTrackingTests(unittest.TestCase):
+    def test_work_widgets_are_resynchronized_from_persisted_entry(self):
+        draft = {
+            "work_start_time": "",
+            "work_morning_end_time": "",
+            "work_afternoon_start_time": "",
+            "work_end_time": "",
+            "work_third_start_time": "",
+            "work_third_end_time": "",
+            "work_travel": "Bureau",
+        }
+        widget_keys = {field: f"widget_{field}" for field in draft if field != "work_travel"}
+        persisted = {
+            "work_start_time": "08:17",
+            "work_morning_end_time": "12:05",
+            "work_afternoon_start_time": "13:10",
+            "work_end_time": None,
+            "work_third_start_time": None,
+            "work_third_end_time": None,
+            "work_travel": "Télétravail",
+        }
+        session_state = {}
+        with patch("checkin.steps.work.st.session_state", session_state):
+            _sync_work_schedule_from_entry(draft, persisted, widget_keys)
+        self.assertEqual(draft["work_start_time"], "08:17")
+        self.assertEqual(draft["work_morning_end_time"], "12:05")
+        self.assertEqual(draft["work_afternoon_start_time"], "13:10")
+        self.assertEqual(session_state[widget_keys["work_start_time"]], "08:17")
+        self.assertEqual(draft["work_travel"], "Télétravail")
+
     def test_time_formats_are_normalized(self):
         for raw, expected in (("8:30", "08:30"), ("8h30", "08:30"), ("0830", "08:30")):
             errors = []

@@ -19,7 +19,11 @@ from checkin.steps.body import (_use_last_measurement, _french_number, _measurem
 from checkin.steps.sport import (_add_sport_session, _remove_sport_session, _persist_sport_duration_change, _persist_sport_widget_change, _parse_sport_value, _format_duration)
 from checkin.steps.sleep import (_parse_clock, _bedtime_options, _sleep_duration, _sleep_gauge)
 from checkin.steps.nutrition import (_number_or_none, _render_energy_kpis, _render_nutrition_estimate, _show_nutrition_notice)
-from checkin.steps.work import (_apply_work_schedule)
+from checkin.steps.work import (
+    _apply_work_schedule,
+    _persist_work_time_change,
+    _sync_work_schedule_from_entry,
+)
 from checkin.steps.social import (_create_friend_for_refresh)
 from checkin.steps.wellbeing import sync_me_time_widgets
 from work_tracking import (
@@ -294,7 +298,11 @@ def render_daily_checkin(
                 st.session_state[context_key]["existing"] = latest_entry
                 _sync_body_measurements_from_entry(draft, latest_entry, selected_date)
         _render_checkin_home(selected_date, title_col, draft)
+        st.session_state.pop("checkin_last_rendered_step", None)
         return
+
+    entered_step = st.session_state.get("checkin_last_rendered_step") != step
+    st.session_state.checkin_last_rendered_step = step
 
     active_goals = (
         load_active_goals(active_only=True)
@@ -566,6 +574,12 @@ def render_daily_checkin(
                 "work_third_start_time": f"work_third_start_{selected_date}",
                 "work_third_end_time": f"work_third_end_{selected_date}",
             }
+            if entered_step:
+                _sync_work_schedule_from_entry(
+                    draft,
+                    load_entry(selected_date) or existing,
+                    widget_keys,
+                )
             previous_entry = load_entry(selected_date - timedelta(days=1))
             previous_schedule = {field: _clean(previous_entry.get(field), "") if previous_entry else "" for field in widget_keys}
             standard_schedule = {
@@ -582,15 +596,18 @@ def render_daily_checkin(
             def work_value(field):
                 return {"value": draft[field]} if widget_keys[field] not in st.session_state else {}
             c1, c2 = st.columns(2)
-            start = c1.text_input("1. Heure de début", placeholder="08:30", key=widget_keys["work_start_time"], **work_value("work_start_time"))
-            morning_end = c2.text_input("2. Fin de matinée", placeholder="12:30", key=widget_keys["work_morning_end_time"], **work_value("work_morning_end_time"))
+            start = c1.text_input("1. Heure de début", placeholder="08:30", key=widget_keys["work_start_time"], on_change=_persist_work_time_change, args=(save_daily_bundle, load_entry, selected_date, draft_key, existing, widget_keys, "work_start_time"), **work_value("work_start_time"))
+            morning_end = c2.text_input("2. Fin de matinée", placeholder="12:30", key=widget_keys["work_morning_end_time"], on_change=_persist_work_time_change, args=(save_daily_bundle, load_entry, selected_date, draft_key, existing, widget_keys, "work_morning_end_time"), **work_value("work_morning_end_time"))
             c3, c4 = st.columns(2)
-            afternoon_start = c3.text_input("3. Début d’après-midi", placeholder="13:30", key=widget_keys["work_afternoon_start_time"], **work_value("work_afternoon_start_time"))
-            end = c4.text_input("4. Fin de journée", placeholder="17:30", key=widget_keys["work_end_time"], **work_value("work_end_time"))
+            afternoon_start = c3.text_input("3. Début d’après-midi", placeholder="13:30", key=widget_keys["work_afternoon_start_time"], on_change=_persist_work_time_change, args=(save_daily_bundle, load_entry, selected_date, draft_key, existing, widget_keys, "work_afternoon_start_time"), **work_value("work_afternoon_start_time"))
+            end = c4.text_input("4. Fin de journée", placeholder="17:30", key=widget_keys["work_end_time"], on_change=_persist_work_time_change, args=(save_daily_bundle, load_entry, selected_date, draft_key, existing, widget_keys, "work_end_time"), **work_value("work_end_time"))
             st.caption("Créneau 3 · facultatif")
             c5, c6 = st.columns(2)
-            third_start = c5.text_input("5. Heure de début", placeholder="18:30", key=widget_keys["work_third_start_time"], **work_value("work_third_start_time"))
-            third_end = c6.text_input("6. Heure de fin", placeholder="20:00", key=widget_keys["work_third_end_time"], **work_value("work_third_end_time"))
+            third_start = c5.text_input("5. Heure de début", placeholder="18:30", key=widget_keys["work_third_start_time"], on_change=_persist_work_time_change, args=(save_daily_bundle, load_entry, selected_date, draft_key, existing, widget_keys, "work_third_start_time"), **work_value("work_third_start_time"))
+            third_end = c6.text_input("6. Heure de fin", placeholder="20:00", key=widget_keys["work_third_end_time"], on_change=_persist_work_time_change, args=(save_daily_bundle, load_entry, selected_date, draft_key, existing, widget_keys, "work_third_end_time"), **work_value("work_third_end_time"))
+            work_save_error = st.session_state.pop(f"work_save_error_{selected_date}", None)
+            if work_save_error:
+                st.error(work_save_error)
         else:
             start = morning_end = afternoon_start = end = third_start = third_end = ""
         work_payload = {"work_travel": travel, "work_start_time": start.strip(), "work_morning_end_time": morning_end.strip(), "work_afternoon_start_time": afternoon_start.strip(), "work_end_time": end.strip(), "work_third_start_time": third_start.strip(), "work_third_end_time": third_end.strip()}
