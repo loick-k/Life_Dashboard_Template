@@ -83,6 +83,7 @@ from work_tracking import (
     work_week_summary,
     work_week_table,
 )
+from work_report import build_work_report
 from todoist_view import render_todoist_view
 from todoist_metrics import completed_tasks_frame, render_todoist_metrics
 from services.todoist_service import TodoistError, load_completed_tasks
@@ -214,7 +215,7 @@ with st.sidebar:
         args=("Todo",),
     )
     st.button(
-        "📈 Courbes",
+        "📊 Bilan",
         use_container_width=True,
         type="primary" if main_section == "Courbes" else "secondary",
         on_click=navigate_main,
@@ -311,7 +312,7 @@ elif selected_tab == "Dashboard":
         social_recurrence_table,
     )
 
-    st.header("Courbes")
+    st.header("Bilan")
     period_label = st.radio(
         "Période affichée",
         options=["7 jours", "1 mois", "1 an", "Depuis le début"],
@@ -393,6 +394,13 @@ elif selected_tab == "Dashboard":
         st.markdown("### Travail")
         plot_workday_calendar(df_entries, weeks=calendar_weeks)
         plot_daily_bar(df_entries, "work_hours", "Durée de travail", "heures", "#2563eb", granularity=chart_granularity, aggregation="sum")
+        st.download_button(
+            "📄 Télécharger le rapport PDF du temps de travail",
+            data=build_work_report(df_entries, today),
+            file_name=f"rapport_temps_travail_{today.isoformat()}.pdf",
+            mime="application/pdf",
+            use_container_width=True,
+        )
         st.divider()
         st.markdown("### Alcool")
         plot_weekly_alcohol(df_entries, granularity=alcohol_granularity)
@@ -520,6 +528,13 @@ elif selected_tab == "Dashboard":
         else:
             st.dataframe(work_table, use_container_width=True, hide_index=True)
         plot_daily_bar(df_entries, "work_hours", "Durée de travail", "heures", "#2563eb", granularity=chart_granularity, aggregation="sum")
+        st.download_button(
+            "📄 Télécharger le rapport PDF du temps de travail",
+            data=build_work_report(df_entries, today),
+            file_name=f"rapport_temps_travail_{today.isoformat()}.pdf",
+            mime="application/pdf",
+            use_container_width=True,
+        )
 
         st.divider()
         st.markdown("### Alcool")
