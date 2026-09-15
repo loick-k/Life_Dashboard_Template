@@ -12,10 +12,11 @@ explicite avant de commencer la suivante.
 - [x] Créer des données de test synthétiques.
 - [x] Exécuter un export réel de Neon.
 - [x] Vérifier l'export sans afficher son contenu sensible.
-- [ ] Tester une restauration sur une branche Neon isolée.
+- [x] Tester une restauration dans un schéma Neon temporaire isolé.
 
 Condition de sortie : une sauvegarde restaurable a été vérifiée sur une branche
-de test Neon.
+ou un schéma temporaire de test Neon. Condition remplie le 15/09/2026 : 12 tables
+et 348 lignes restaurées et vérifiées, puis schéma temporaire supprimé.
 
 ## Étape 1 - Fiabilisation des écritures existantes
 

@@ -17,6 +17,7 @@ mobile_app\.venv-tools\Scripts\python.exe -m pip install -r mobile_app\requireme
 $env:DATABASE_URL = "URL Neon obtenue depuis la console"
 mobile_app\.venv-tools\Scripts\python.exe mobile_app\scripts\export_snapshot.py
 mobile_app\.venv-tools\Scripts\python.exe mobile_app\scripts\verify_snapshot.py
+mobile_app\.venv-tools\Scripts\python.exe mobile_app\scripts\test_restore_neon.py
 ```
 
 Le script produit un répertoire horodaté dans `mobile_app/backups/` avec :
@@ -24,6 +25,11 @@ Le script produit un répertoire horodaté dans `mobile_app/backups/` avec :
 - un fichier JSON par table ;
 - un manifeste contenant le nombre de lignes et le schéma des colonnes ;
 - aucun secret de connexion.
+
+Le test de restauration crée un schéma PostgreSQL temporaire portant le préfixe
+`mobile_restore_test_`. Il ne modifie aucune table du schéma `public`, compare les
+compteurs restaurés, puis supprime ce schéma automatiquement, y compris en cas
+d'erreur.
 
 ## Sauvegarde PostgreSQL complète
 

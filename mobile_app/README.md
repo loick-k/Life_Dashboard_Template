@@ -6,11 +6,13 @@ transition.
 
 ## État actuel
 
-- Étape 0 : préparée le 15/09/2026.
+- Étape 0 : terminée et validée le 15/09/2026.
 - Application source : commit `d9a24be613092955f8409002820df8585c658a05`.
 - Tests source : 46 tests réussis.
 - Aucune modification de schéma Neon réalisée.
 - Aucune donnée personnelle enregistrée dans ce dossier.
+- Sauvegarde réelle validée : 12 tables et 348 lignes.
+- Restauration testée dans un schéma Neon temporaire, ensuite supprimé.
 
 ## Documents
 
@@ -32,6 +34,7 @@ mobile_app\.venv-tools\Scripts\python.exe -m pip install -r mobile_app\requireme
 $env:DATABASE_URL = "postgresql://..."
 mobile_app\.venv-tools\Scripts\python.exe mobile_app\scripts\export_snapshot.py
 mobile_app\.venv-tools\Scripts\python.exe mobile_app\scripts\verify_snapshot.py
+mobile_app\.venv-tools\Scripts\python.exe mobile_app\scripts\test_restore_neon.py
 ```
 
 Ne jamais copier une URL Neon dans un fichier du dépôt.
