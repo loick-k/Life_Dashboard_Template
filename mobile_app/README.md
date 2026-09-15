@@ -31,6 +31,7 @@ python -m venv mobile_app\.venv-tools
 mobile_app\.venv-tools\Scripts\python.exe -m pip install -r mobile_app\requirements-tools.txt
 $env:DATABASE_URL = "postgresql://..."
 mobile_app\.venv-tools\Scripts\python.exe mobile_app\scripts\export_snapshot.py
+mobile_app\.venv-tools\Scripts\python.exe mobile_app\scripts\verify_snapshot.py
 ```
 
 Ne jamais copier une URL Neon dans un fichier du dépôt.

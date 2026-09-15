@@ -16,6 +16,7 @@ python -m venv mobile_app\.venv-tools
 mobile_app\.venv-tools\Scripts\python.exe -m pip install -r mobile_app\requirements-tools.txt
 $env:DATABASE_URL = "URL Neon obtenue depuis la console"
 mobile_app\.venv-tools\Scripts\python.exe mobile_app\scripts\export_snapshot.py
+mobile_app\.venv-tools\Scripts\python.exe mobile_app\scripts\verify_snapshot.py
 ```
 
 Le script produit un répertoire horodaté dans `mobile_app/backups/` avec :

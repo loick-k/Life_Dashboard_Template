@@ -10,8 +10,8 @@ explicite avant de commencer la suivante.
 - [x] Définir les critères de réussite.
 - [x] Préparer un export local exclu de Git.
 - [x] Créer des données de test synthétiques.
-- [ ] Exécuter un export réel de Neon.
-- [ ] Vérifier l'export sans afficher son contenu sensible.
+- [x] Exécuter un export réel de Neon.
+- [x] Vérifier l'export sans afficher son contenu sensible.
 - [ ] Tester une restauration sur une branche Neon isolée.
 
 Condition de sortie : une sauvegarde restaurable a été vérifiée sur une branche
@@ -85,4 +85,3 @@ La période d'observation minimale est de deux semaines sans perte de données.
 
 Streamlit devient une interface de bilan et d'administration. L'ancien mécanisme
 d'écriture n'est retiré qu'après sauvegarde et validation finale.
-
