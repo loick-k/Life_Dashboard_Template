@@ -42,15 +42,28 @@ Condition de sortie : les services métier fonctionnent sans importer Streamlit.
 Condition remplie le 15/09/2026 : domaine Pydantic pur, calcul du travail partagé,
 repositories SQL testés sur SQLite, analyse nutritionnelle explicite et frontière V1/V2 documentée.
 
-## Étape 3 - Évolution additive de Neon
+## Étape 3A - Architecture locale de la V2
 
-- Ajouter `users` et rattacher les données existantes au compte propriétaire.
-- Ajouter UUID, version serveur et index nécessaires.
-- Ne supprimer aucune ancienne colonne.
-- Tester les migrations sur une branche Neon avant la production.
+- [x] Définir SQLite comme stockage principal mono-utilisateur de la V2.
+- [x] Définir un schéma local à UUID, révisions, contraintes et index.
+- [x] Définir la frontière de chiffrement Android Keystore.
+- [x] Définir le format et la vérification des sauvegardes chiffrées.
+- [x] Tester les migrations locales et leur idempotence.
+- [x] Conserver Streamlit/Neon comme V1 fonctionnelle sans les modifier.
 
-Condition de sortie : l'application Streamlit et le nouveau modèle fonctionnent
-simultanément.
+Condition de sortie : le schéma local peut être créé et vérifié sans Neon. Condition
+remplie le 15/09/2026 ; l'implémentation Android du chiffrement reste un critère bloquant
+du socle mobile, car elle dépendra de la bibliothèque retenue.
+
+## Étape 3B - Import contrôlé depuis Neon
+
+- Transformer la sauvegarde de référence vers les UUID du schéma local.
+- Produire un rapport de correspondance sans afficher de données personnelles.
+- Restaurer et vérifier l'import dans une base SQLite temporaire.
+- Répéter l'import sans créer de doublons.
+- Exécuter ensuite ensemble un export Neon frais et l'import final.
+
+Condition de sortie : chaque ligne source est retrouvée une seule fois dans SQLite V2.
 
 ## Étape 4 - API sécurisée
 

@@ -10,6 +10,9 @@ __pycache__/
 .env
 .venv/
 backups/
+mobile_app/local_data/
+*.sqlite-wal
+*.sqlite-shm
 venv/
 
 # Fichiers locaux Codex et système
