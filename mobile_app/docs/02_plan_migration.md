@@ -32,12 +32,15 @@ pour les relations, suppressions explicites et 52 tests de non-régression valid
 
 ## Étape 2 - Extraction du domaine
 
-- Modèles indépendants de Streamlit.
-- Validation des valeurs et calculs métier centralisés.
-- Repositories PostgreSQL testables.
-- Analyse nutritionnelle séparée de la sauvegarde.
+- [x] Modèles indépendants de Streamlit.
+- [x] Validation des valeurs et calculs métier centralisés.
+- [x] Repositories PostgreSQL testables par injection de connexion.
+- [x] Analyse nutritionnelle séparée de la sauvegarde.
+- [x] Adaptateur Streamlit isolé pour maintenir la V1 fonctionnelle.
 
 Condition de sortie : les services métier fonctionnent sans importer Streamlit.
+Condition remplie le 15/09/2026 : domaine Pydantic pur, calcul du travail partagé,
+repositories SQL testés sur SQLite, analyse nutritionnelle explicite et frontière V1/V2 documentée.
 
 ## Étape 3 - Évolution additive de Neon
 

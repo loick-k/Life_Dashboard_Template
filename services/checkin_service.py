@@ -1,24 +1,20 @@
 import json
 from uuid import uuid4
 import logging
-import time
 
 import pandas as pd
-import streamlit as st
 
-from app_clock import timestamp_paris
 from app_config import CHECKIN_DATA_STEP_COUNT, CHECKIN_VERSION
 from data_store import (
     clear_nutrition_analysis, delete_goal_log, delete_goal_logs_for_date,
-    get_conn, load_entry, save_api_usage, save_entry, save_goal_log,
-    save_entry_fields, save_nutrition_analysis, save_social_logs_for_date,
+    get_conn, load_entry, save_entry, save_goal_log, save_entry_fields,
+    save_social_logs_for_date,
     save_sport_sessions,
 )
 from nutrition_analysis import (
-    NUTRITION_MODEL, NutritionAnalysisUnavailable, analyze_meals,
-    has_meal_content, has_sport_content, nutrition_source_hash,
+    nutrition_source_hash,
 )
-from performance_monitor import measure_performance, record_performance
+from performance_monitor import measure_performance
 from work_tracking import compute_work_duration, parse_optional_time
 
 
@@ -287,56 +283,5 @@ def save_checkin_bundle(selected_date, draft, existing):
     finally:
         conn.close()
 
-    analysis_requested = bool(draft.pop("_request_nutrition_analysis", False))
-    if analysis_requested:
-        notice_key = f"nutrition_analysis_notice_{selected_date.isoformat()}"
-        if not has_meal_content(meals) and not has_sport_content(sport_sessions_payload):
-            st.session_state[notice_key] = ("info", "Aucun repas ni aucune séance sportive à analyser pour cette journée.")
-        else:
-            analysis_started = time.perf_counter()
-            try:
-                estimate, api_usage = analyze_meals(meals, sport_sessions_payload, current_weight)
-                save_nutrition_analysis(
-                    selected_date,
-                    estimate,
-                    current_nutrition_hash,
-                    NUTRITION_MODEL,
-                )
-                save_api_usage(selected_date, NUTRITION_MODEL, api_usage)
-                data.update({
-                    "kcal": int(estimate.kcal),
-                    "sport_kcal_burned": int(estimate.sport_kcal_burned),
-                    "proteins_g": float(estimate.proteins_g),
-                    "carbs_g": float(estimate.carbs_g),
-                    "fats_g": float(estimate.fats_g),
-                    "nutrition_analysis_hash": current_nutrition_hash,
-                    "nutrition_analysis_model": NUTRITION_MODEL,
-                    "nutrition_analysis_confidence": estimate.confidence,
-                    "nutrition_analysis_assumptions": json.dumps(estimate.assumptions, ensure_ascii=False),
-                    "nutrition_analyzed_at": timestamp_paris(),
-                })
-                draft["_nutrition_estimate"] = data.copy()
-                st.session_state[notice_key] = (
-                    "success",
-                    f"Estimation calculée : {estimate.kcal} kcal ingérées · "
-                    f"{estimate.sport_kcal_burned} kcal sport · "
-                    f"P {estimate.proteins_g:.0f} g · G {estimate.carbs_g:.0f} g · L {estimate.fats_g:.0f} g.",
-                )
-            except NutritionAnalysisUnavailable as exc:
-                st.session_state[notice_key] = ("warning", str(exc))
-            except Exception:
-                LOGGER.exception("Erreur nutritionnelle inattendue")
-                st.session_state[notice_key] = (
-                    "warning",
-                    "Les repas sont enregistrés, mais une erreur inattendue a interrompu l’analyse. Consulte les logs Streamlit.",
-                )
-            finally:
-                record_performance(
-                    "API · analyse nutritionnelle",
-                    (time.perf_counter() - analysis_started) * 1000,
-                )
-
-    context_key = f"checkin_context_{selected_date.isoformat()}"
-    if context_key in st.session_state:
-        st.session_state[context_key]["existing"] = None if entry_removed else data.copy()
+    draft["_last_saved_entry"] = None if entry_removed else data.copy()
     return None

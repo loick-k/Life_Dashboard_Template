@@ -16,6 +16,12 @@ class DomainTests(unittest.TestCase):
         for module in (models, nutrition, work):
             self.assertNotIn("streamlit", module.__dict__)
 
+    def test_business_services_do_not_import_streamlit(self):
+        import services.checkin_service as checkin_service
+        import services.nutrition_service as nutrition_service
+        self.assertNotIn("st", checkin_service.__dict__)
+        self.assertNotIn("st", nutrition_service.__dict__)
+
     def test_work_schedule_normalizes_and_computes_three_slots(self):
         schedule = WorkSchedule(start_time="8h15", morning_end_time="12:00", afternoon_start_time="13.00", end_time="17:00", third_start_time="1830", third_end_time="19:15")
         self.assertEqual(schedule.start_time, "08:15")

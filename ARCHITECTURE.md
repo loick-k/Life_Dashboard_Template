@@ -2,6 +2,11 @@
 
 ## Modules
 
+- `domain/` : modèles, validation et calculs métier purs partagés avec la V2 ; aucun import Streamlit ou base de données.
+- `repositories/` : contrats et implémentations SQL injectables destinés à la future API mobile V2.
+- `services/checkin_service.py` : orchestration des écritures, indépendante de l'interface.
+- `services/nutrition_service.py` : analyse nutritionnelle explicite, séparée de la sauvegarde quotidienne.
+- `services/streamlit_checkin_adapter.py` : compatibilité d'interface réservée à Streamlit V1.
 - `app_life_dashboard_v4.py` : composition de l’application et rendu des pages.
 - `daily_checkin.py` : parcours quotidien mobile et état temporaire du formulaire.
 - `data_store.py` : connexion Neon/SQLite, schéma et opérations de persistance.
@@ -18,6 +23,16 @@
 3. Le parcours quotidien reçoit ses fonctions de lecture et de sauvegarde par paramètres ; il ne connaît pas la base utilisée.
 4. Les calculs métier ne doivent pas écrire dans la base.
 5. Toute nouvelle donnée persistée doit conserver la compatibilité avec les journées existantes.
+6. La V1 Streamlit reste exécutable pendant toute la construction de la V2 mobile.
+7. Seuls les adaptateurs d'interface peuvent importer Streamlit ; le domaine et les services métier l'ignorent.
+
+## Versions maintenues pendant la migration
+
+- **V1** : application Streamlit actuelle, conservée comme interface fonctionnelle et solution de secours.
+- **V2** : application mobile et future API, construites progressivement sur `domain/` et `repositories/`.
+
+Les deux versions partagent les règles métier, mais pas leur état d'interface. Une étape de migration
+ne doit jamais retirer une fonctionnalité V1 avant la période de double exploitation prévue.
 
 ## Évolutions futures
 

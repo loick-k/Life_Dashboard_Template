@@ -1,5 +1,10 @@
 # Migration mobile du Life Dashboard
 
+La migration crée une **V2 mobile** distincte. L'application Streamlit existante demeure la
+**V1 fonctionnelle** et la solution de secours jusqu'à la bascule validée. Le code partagé se
+trouve dans `domain/`; la V2 accédera aux données via une API et les repositories injectables,
+jamais directement depuis l'APK.
+
 Ce dossier accueille la migration progressive de l'interface Streamlit vers une
 application Android. La base Neon existante reste la source de vérité pendant la
 transition.

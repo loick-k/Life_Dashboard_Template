@@ -51,14 +51,6 @@ from data_store import (
     update_friend_active,
     USE_POSTGRES,
 )
-from nutrition_analysis import (
-    NUTRITION_MODEL,
-    NutritionAnalysisUnavailable,
-    analyze_meals,
-    has_meal_content,
-    has_sport_content,
-    nutrition_source_hash,
-)
 from dashboard_metrics import (
     fmt_metric,
     global_form_assessment,
@@ -91,7 +83,7 @@ from checkin.steps.body import flush_pending_body_measurements
 
 LOGGER = logging.getLogger(__name__)
 
-from services.checkin_service import save_checkin_bundle
+from services.streamlit_checkin_adapter import save_checkin_bundle
 
 
 

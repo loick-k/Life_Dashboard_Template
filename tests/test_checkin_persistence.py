@@ -37,11 +37,8 @@ class CheckinPersistenceIntegrationTests(unittest.TestCase):
         data_store.init_db.clear()
         data_store.init_db()
         self.selected_date = date(2026, 8, 10)
-        self.session_state_patch = patch.object(checkin_service.st, "session_state", {})
-        self.session_state_patch.start()
 
     def tearDown(self):
-        self.session_state_patch.stop()
         data_store.init_db.clear()
         data_store.DB_PATH = self.original_db_path
         data_store.USE_POSTGRES = self.original_use_postgres

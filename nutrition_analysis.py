@@ -7,7 +7,6 @@ import os
 from dataclasses import dataclass
 from typing import Literal
 
-import streamlit as st
 from pydantic import BaseModel, Field
 
 
@@ -70,22 +69,11 @@ def has_sport_content(sport_sessions: list[dict] | None) -> bool:
 
 
 def get_openai_api_key() -> str:
-    key = os.getenv("OPENAI_API_KEY", "").strip()
-    if key:
-        return key
-    try:
-        return str(st.secrets.get("OPENAI_API_KEY", "")).strip()
-    except Exception:
-        return ""
+    return os.getenv("OPENAI_API_KEY", "").strip()
 
 
 def get_usd_to_eur_rate() -> float:
     raw_value = os.getenv("OPENAI_USD_TO_EUR", "").strip()
-    if not raw_value:
-        try:
-            raw_value = str(st.secrets.get("OPENAI_USD_TO_EUR", "")).strip()
-        except Exception:
-            raw_value = ""
     try:
         rate = float(raw_value.replace(",", ".")) if raw_value else DEFAULT_USD_TO_EUR
     except ValueError:
@@ -93,7 +81,7 @@ def get_usd_to_eur_rate() -> float:
     return rate if rate > 0 else DEFAULT_USD_TO_EUR
 
 
-def _usage_from_response(response) -> NutritionUsage:
+def _usage_from_response(response, usd_to_eur: float | None = None) -> NutritionUsage:
     def token_count(value) -> int:
         return max(0, int(value)) if isinstance(value, (int, float)) else 0
 
@@ -108,7 +96,7 @@ def _usage_from_response(response) -> NutritionUsage:
         + cached_tokens * CACHED_INPUT_USD_PER_MILLION
         + output_tokens * OUTPUT_USD_PER_MILLION
     ) / 1_000_000
-    usd_to_eur = get_usd_to_eur_rate()
+    usd_to_eur = usd_to_eur or get_usd_to_eur_rate()
     return NutritionUsage(
         input_tokens=input_tokens,
         cached_input_tokens=cached_tokens,
@@ -184,8 +172,11 @@ def analyze_meals(
     meals: dict[str, str],
     sport_sessions: list[dict] | None = None,
     weight_kg: float | None = None,
+    *,
+    api_key: str | None = None,
+    usd_to_eur: float | None = None,
 ) -> tuple[NutritionEstimate, NutritionUsage]:
-    api_key = get_openai_api_key()
+    api_key = (api_key or get_openai_api_key()).strip()
     if not api_key:
         raise NutritionAnalysisUnavailable(
             "Ajoute OPENAI_API_KEY dans les Secrets Streamlit pour activer l’analyse nutritionnelle."
@@ -237,4 +228,4 @@ def analyze_meals(
     estimate = response.output_parsed
     if estimate is None:
         raise NutritionAnalysisUnavailable("L’analyse nutritionnelle n’a retourné aucun résultat exploitable.")
-    return estimate, _usage_from_response(response)
+    return estimate, _usage_from_response(response, usd_to_eur)
