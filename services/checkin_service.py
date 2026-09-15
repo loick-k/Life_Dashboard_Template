@@ -1,4 +1,5 @@
 import json
+from uuid import uuid4
 import logging
 import time
 
@@ -219,13 +220,23 @@ def save_checkin_bundle(selected_date, draft, existing):
             draft["_nutrition_estimate"] = data.copy()
 
         if deleting_step == 6:
-            save_sport_sessions(selected_date, [], conn=conn)
+            save_sport_sessions(selected_date, [], conn=conn, clear_all=True)
         elif not saving_skipped and (saving_step is None or saving_step == 6) and 6 not in skipped:
             sessions = [
                 session for session in draft.get("sport_sessions", [])
                 if session.get("sport_type") and int(session.get("duration_minutes") or 0) > 0
             ]
-            save_sport_sessions(selected_date, sessions, conn=conn)
+            for session in sessions:
+                session.setdefault("session_id", str(uuid4()))
+            ids_to_save = draft.get("_saving_sport_session_ids")
+            if ids_to_save is None and saving_step is None:
+                ids_to_save = {session["session_id"] for session in sessions}
+            save_sport_sessions(
+                selected_date, sessions, conn=conn,
+                session_ids_to_save=ids_to_save,
+                session_ids_to_delete=draft.get("_deleted_sport_session_ids", set()),
+            )
+            draft.pop("_deleted_sport_session_ids", None)
 
         if deleting_step == 12:
             delete_goal_logs_for_date(selected_date, conn=conn)

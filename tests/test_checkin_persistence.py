@@ -203,6 +203,38 @@ class CheckinPersistenceIntegrationTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             data_store.save_entry_fields(self.selected_date, {"entry_date": "2030-01-01"})
 
+    def test_stale_sport_edit_does_not_overwrite_another_session(self):
+        first = {"session_id": "session-course", "sport_type": "Course", "duration_minutes": 45, "distance_km": 7.2}
+        second = {"session_id": "session-walk", "sport_type": "Marche", "duration_minutes": 30, "distance_km": None}
+        data_store.save_sport_sessions(self.selected_date, [first, second])
+
+        data_store.save_sport_sessions(
+            self.selected_date, [first, {**second, "duration_minutes": 55}],
+            session_ids_to_save={"session-walk"},
+        )
+        data_store.save_sport_sessions(
+            self.selected_date, [{**first, "distance_km": 8.1}, second],
+            session_ids_to_save={"session-course"},
+        )
+
+        saved = data_store.load_sport_sessions(self.selected_date).set_index("session_id")
+        self.assertAlmostEqual(float(saved.loc["session-course", "distance_km"]), 8.1)
+        self.assertEqual(int(saved.loc["session-walk", "duration_minutes"]), 55)
+
+    def test_sport_session_delete_is_explicit_and_targeted(self):
+        sessions = [
+            {"session_id": "keep", "sport_type": "Course", "duration_minutes": 20, "distance_km": 3.0},
+            {"session_id": "remove", "sport_type": "Marche", "duration_minutes": 25, "distance_km": None},
+        ]
+        data_store.save_sport_sessions(self.selected_date, sessions)
+        data_store.save_sport_sessions(
+            self.selected_date, [sessions[0]], session_ids_to_save=set(),
+            session_ids_to_delete={"remove"},
+        )
+
+        saved_ids = set(data_store.load_sport_sessions(self.selected_date)["session_id"])
+        self.assertEqual(saved_ids, {"keep"})
+
     def test_isolated_work_times_are_saved_and_can_be_completed_later(self):
         morning = _initial_draft(None)
         morning.update({

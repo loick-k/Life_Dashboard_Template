@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from datetime import date, datetime, time, timedelta
+from uuid import uuid4
 
 import pandas as pd
 import streamlit as st
@@ -215,6 +216,7 @@ def render_daily_checkin(
         if sport_sessions is not None and not sport_sessions.empty:
             st.session_state[draft_key]["sport_sessions"] = [
                 {
+                    "session_id": str(row["session_id"]),
                     "sport_type": str(row["sport_type"]),
                     "duration_minutes": int(_clean(row["duration_minutes"], 0)),
                     "distance_km": _clean(row["distance_km"]),
@@ -226,6 +228,7 @@ def render_daily_checkin(
             # de lignes sport_sessions. Si le détail n'a pas été chargé, on attend
             # le chargement différé au lieu de fabriquer une séance sans distance.
             st.session_state[draft_key]["sport_sessions"] = [{
+                "session_id": str(uuid4()),
                 "sport_type": st.session_state[draft_key]["sport_type"],
                 "duration_minutes": st.session_state[draft_key]["sport_minutes"],
                 "distance_km": None,
@@ -282,6 +285,7 @@ def render_daily_checkin(
         if not stored_sessions.empty:
             draft["sport_sessions"] = [
                 {
+                    "session_id": str(row["session_id"]),
                     "sport_type": str(row["sport_type"]),
                     "duration_minutes": int(_clean(row["duration_minutes"], 0)),
                     "distance_km": _clean(row["distance_km"]),
@@ -328,6 +332,7 @@ def render_daily_checkin(
         if not sport_sessions.empty and not draft["sport_sessions"]:
             draft["sport_sessions"] = [
                 {
+                    "session_id": str(row["session_id"]),
                     "sport_type": str(row["sport_type"]),
                     "duration_minutes": int(_clean(row["duration_minutes"], 0)),
                     "distance_km": _clean(row["distance_km"]),
@@ -742,6 +747,7 @@ def render_daily_checkin(
                     if distance_error:
                         sport_errors.append(distance_error)
                 session_values.append({
+                    "session_id": session["session_id"],
                     "sport_type": sport_type,
                     "duration_minutes": int(duration or 0),
                     "distance_km": float(distance) if distance else None,

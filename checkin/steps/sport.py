@@ -1,6 +1,7 @@
 import json
 import time
 from datetime import date
+from uuid import uuid4
 
 import streamlit as st
 
@@ -10,12 +11,19 @@ from checkin.steps.body import _parse_measurement
 def _add_sport_session(draft_key: str) -> None:
     sessions = st.session_state[draft_key].setdefault("sport_sessions", [])
     if len(sessions) < 3:
-        sessions.append({"sport_type": "Course", "duration_minutes": 0, "distance_km": None})
+        sessions.append({
+            "session_id": str(uuid4()), "sport_type": "Course",
+            "duration_minutes": 0, "distance_km": None,
+        })
 
 def _remove_sport_session(draft_key: str, index: int, selected_date: date) -> None:
     sessions = st.session_state[draft_key].setdefault("sport_sessions", [])
     if 0 <= index < len(sessions):
-        sessions.pop(index)
+        removed = sessions.pop(index)
+        if removed.get("session_id"):
+            st.session_state[draft_key].setdefault("_deleted_sport_session_ids", set()).add(
+                str(removed["session_id"])
+            )
     prefix = f"sport_session_{selected_date}_"
     for key in list(st.session_state):
         if str(key).startswith(prefix):
@@ -66,6 +74,8 @@ def _persist_sport_widget_change(
         return
 
     sessions[index][field] = value
+    session_id = str(sessions[index].setdefault("session_id", str(uuid4())))
+    draft["_saving_sport_session_ids"] = {session_id}
     draft["sport_minutes"] = sum(int(session.get("duration_minutes") or 0) for session in sessions)
     draft["sport_type"] = ", ".join(
         str(session.get("sport_type"))
@@ -94,8 +104,14 @@ def _persist_sport_widget_change(
         try:
             save_error = save_daily_bundle(selected_date, draft, existing)
             persisted = load_sport_sessions(selected_date) if save_error is None else None
-            if persisted is not None and len(persisted) > persisted_index:
-                row = persisted.iloc[persisted_index]
+            if persisted is not None and not persisted.empty:
+                matching = (
+                    persisted[persisted["session_id"].astype(str) == session_id]
+                    if "session_id" in persisted.columns else persisted.iloc[[persisted_index]]
+                )
+                if matching.empty:
+                    continue
+                row = matching.iloc[0]
                 expected = sessions[index]
                 distance_matches = (
                     expected.get("distance_km") is None
@@ -119,6 +135,7 @@ def _persist_sport_widget_change(
             time.sleep(0.15)
     draft.pop("_saving_step", None)
     draft.pop("_saving_skipped", None)
+    draft.pop("_saving_sport_session_ids", None)
     st.session_state[error_key] = save_error
     if save_error is None:
         payload = json.dumps(sessions, sort_keys=True, ensure_ascii=False, default=str)

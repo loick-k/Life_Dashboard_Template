@@ -844,20 +844,51 @@ def load_sport_sessions(entry_date: date, conn=None):
     return df
 
 @measure_performance("Sauvegarde · sport")
-def save_sport_sessions(entry_date: date, sessions: list[dict], conn=None):
+def save_sport_sessions(
+    entry_date: date, sessions: list[dict], conn=None, *,
+    session_ids_to_save=None, session_ids_to_delete=None, clear_all: bool = False,
+):
+    """Met à jour uniquement les séances explicitement modifiées."""
     owns_connection = conn is None
     conn = conn or get_conn()
     cur = conn.cursor()
-    cur.execute("DELETE FROM sport_sessions WHERE entry_date = ?", (entry_date.isoformat(),))
+    if clear_all:
+        cur.execute("DELETE FROM sport_sessions WHERE entry_date = ?", (entry_date.isoformat(),))
+    for session_id in set(session_ids_to_delete or []):
+        cur.execute(
+            "DELETE FROM sport_sessions WHERE entry_date = ? AND session_id = ?",
+            (entry_date.isoformat(), str(session_id)),
+        )
+    selected_ids = None if session_ids_to_save is None else {
+        str(session_id) for session_id in session_ids_to_save
+    }
     for index, session in enumerate(sessions[:3], start=1):
+        session_id = str(session.get("session_id") or "")
+        if not session_id or (selected_ids is not None and session_id not in selected_ids):
+            continue
+        updated = cur.execute(
+            """
+            UPDATE sport_sessions
+            SET sport_type = ?, duration_minutes = ?, distance_km = ?
+            WHERE entry_date = ? AND session_id = ?
+            """,
+            (
+                session["sport_type"], session.get("duration_minutes"),
+                session.get("distance_km"), entry_date.isoformat(), session_id,
+            ),
+        ).rowcount
+        if updated:
+            continue
         cur.execute(
             """
-            INSERT INTO sport_sessions (entry_date, session_index, sport_type, duration_minutes, distance_km)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO sport_sessions
+                (entry_date, session_index, session_id, sport_type, duration_minutes, distance_km)
+            VALUES (?, ?, ?, ?, ?, ?)
             """,
             (
                 entry_date.isoformat(),
                 index,
+                session_id,
                 session["sport_type"],
                 session.get("duration_minutes"),
                 session.get("distance_km"),

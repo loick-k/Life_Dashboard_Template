@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import Callable
+from uuid import uuid4
 
 import streamlit as st
 
@@ -197,12 +198,14 @@ def _apply_current_schema(conn):
         CREATE TABLE IF NOT EXISTS sport_sessions (
             entry_date TEXT NOT NULL,
             session_index INTEGER NOT NULL,
+            session_id TEXT,
             sport_type TEXT NOT NULL,
             duration_minutes INTEGER,
             distance_km REAL,
             PRIMARY KEY (entry_date, session_index)
         )
     """)
+    add_column_if_missing(conn, "sport_sessions", "session_id TEXT")
 
     cur.execute("""
         CREATE TABLE IF NOT EXISTS checkin_progress (
@@ -325,7 +328,7 @@ REQUIRED_SCHEMA = {
     "friends": {"id", "name", "category", "active", "created_at"},
     "social_logs": {"id", "entry_date", "friend_id", "context", "duration_hours", "note", "updated_at"},
     "settings": {"key", "value"},
-    "sport_sessions": {"entry_date", "session_index", "sport_type", "duration_minutes", "distance_km"},
+    "sport_sessions": {"entry_date", "session_index", "session_id", "sport_type", "duration_minutes", "distance_km"},
     "checkin_progress": {"entry_date", "completed_steps", "skipped_steps", "finished", "version", "updated_at"},
     "todo_categories": {"id", "name", "created_at"},
     "todo_items": {"id", "title", "due_date", "priority", "completed", "source", "external_id", "category_id", "created_at", "completed_at", "updated_at"},
@@ -403,6 +406,34 @@ def _close_relations_score_exists(conn):
     return "close_relations_listening_score" in table_columns(conn, "daily_entries")
 
 
+def _add_stable_sport_session_ids(conn):
+    from data_store import add_column_if_missing
+
+    add_column_if_missing(conn, "sport_sessions", "session_id TEXT")
+    rows = conn.execute(
+        "SELECT entry_date, session_index FROM sport_sessions WHERE session_id IS NULL OR session_id = ''"
+    ).fetchall()
+    for entry_date, session_index in rows:
+        conn.execute(
+            "UPDATE sport_sessions SET session_id = ? WHERE entry_date = ? AND session_index = ?",
+            (str(uuid4()), entry_date, session_index),
+        )
+    conn.execute(
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_sport_sessions_session_id ON sport_sessions(session_id)"
+    )
+
+
+def _stable_sport_session_ids_exist(conn):
+    from data_store import table_columns
+
+    if "session_id" not in table_columns(conn, "sport_sessions"):
+        return False
+    missing = conn.execute(
+        "SELECT 1 FROM sport_sessions WHERE session_id IS NULL OR session_id = '' LIMIT 1"
+    ).fetchone()
+    return missing is None
+
+
 @dataclass(frozen=True)
 class Migration:
     migration_id: str
@@ -417,6 +448,7 @@ MIGRATIONS = (
     Migration("20260809_003_add_nap_minutes", "add-nap-minutes-v1", _add_nap_minutes, _nap_minutes_exists),
     Migration("20260812_004_add_third_work_slot", "add-third-work-slot-v1", _add_third_work_slot, _third_work_slot_exists),
     Migration("20260824_005_generic_relations_score", "generic-relations-score-v1", _migrate_close_relations_score, _close_relations_score_exists),
+    Migration("20260915_006_stable_sport_session_ids", "stable-sport-session-ids-v1", _add_stable_sport_session_ids, _stable_sport_session_ids_exist),
 )
 
 
