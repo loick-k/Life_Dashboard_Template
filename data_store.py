@@ -809,15 +809,36 @@ def load_social_logs(entry_date: date | None = None, conn=None):
     return df
 
 @measure_performance("Sauvegarde · social")
-def save_social_logs_for_date(entry_date: date, friend_ids: list[int], context: str, duration_hours, note: str, conn=None):
+def save_social_logs_for_date(
+    entry_date: date, friend_ids: list[int], context: str, duration_hours, note: str,
+    conn=None, *, friend_ids_to_save=None, friend_ids_to_delete=None,
+    clear_all: bool = False,
+):
+    """Applique les ajouts/retraits sociaux sans remplacer toute la journée."""
     owns_connection = conn is None
     conn = conn or get_conn()
     cur = conn.cursor()
-    cur.execute("DELETE FROM social_logs WHERE entry_date = ?", (entry_date.isoformat(),))
+    if clear_all:
+        cur.execute("DELETE FROM social_logs WHERE entry_date = ?", (entry_date.isoformat(),))
+    for friend_id in set(friend_ids_to_delete or []):
+        cur.execute(
+            "DELETE FROM social_logs WHERE entry_date = ? AND friend_id = ?",
+            (entry_date.isoformat(), int(friend_id)),
+        )
+    selected_ids = None if friend_ids_to_save is None else {
+        int(friend_id) for friend_id in friend_ids_to_save
+    }
     for friend_id in friend_ids:
+        if selected_ids is not None and int(friend_id) not in selected_ids:
+            continue
         cur.execute("""
             INSERT INTO social_logs (entry_date, friend_id, context, duration_hours, note, updated_at)
             VALUES (?, ?, ?, ?, ?, ?)
+            ON CONFLICT(entry_date, friend_id) DO UPDATE SET
+                context = excluded.context,
+                duration_hours = excluded.duration_hours,
+                note = excluded.note,
+                updated_at = excluded.updated_at
         """, (
             entry_date.isoformat(),
             int(friend_id),

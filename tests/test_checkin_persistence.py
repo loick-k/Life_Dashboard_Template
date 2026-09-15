@@ -235,6 +235,39 @@ class CheckinPersistenceIntegrationTests(unittest.TestCase):
         saved_ids = set(data_store.load_sport_sessions(self.selected_date)["session_id"])
         self.assertEqual(saved_ids, {"keep"})
 
+    def test_stale_social_selection_does_not_erase_newer_person(self):
+        alice = data_store.create_friend("Alice concurrence", "Amie")
+        bob = data_store.create_friend("Bob concurrence", "Ami")
+        data_store.save_social_logs_for_date(
+            self.selected_date, [alice], "Vu en personne", None, ""
+        )
+        data_store.save_social_logs_for_date(
+            self.selected_date, [alice, bob], "Vu en personne", None, "",
+            friend_ids_to_save={bob},
+        )
+        # Une ancienne vue qui ne connaissait qu'Alice la resauvegarde.
+        data_store.save_social_logs_for_date(
+            self.selected_date, [alice], "Vu en personne", None, "",
+            friend_ids_to_save={alice},
+        )
+
+        saved_ids = set(data_store.load_social_logs(self.selected_date)["friend_id"].astype(int))
+        self.assertEqual(saved_ids, {alice, bob})
+
+    def test_social_removal_is_explicit_and_targeted(self):
+        alice = data_store.create_friend("Alice retrait", "Amie")
+        bob = data_store.create_friend("Bob retrait", "Ami")
+        data_store.save_social_logs_for_date(
+            self.selected_date, [alice, bob], "Vu en personne", None, ""
+        )
+        data_store.save_social_logs_for_date(
+            self.selected_date, [alice], "Vu en personne", None, "",
+            friend_ids_to_save=set(), friend_ids_to_delete={bob},
+        )
+
+        saved_ids = set(data_store.load_social_logs(self.selected_date)["friend_id"].astype(int))
+        self.assertEqual(saved_ids, {alice})
+
     def test_isolated_work_times_are_saved_and_can_be_completed_later(self):
         morning = _initial_draft(None)
         morning.update({

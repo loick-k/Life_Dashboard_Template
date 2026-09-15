@@ -248,8 +248,14 @@ def save_checkin_bundle(selected_date, draft, existing):
                     save_goal_log(selected_date, int(goal_id), bool(worked), conn=conn)
 
         if deleting_step == 11:
-            save_social_logs_for_date(selected_date, [], "Vu en personne", None, "", conn=conn)
+            save_social_logs_for_date(
+                selected_date, [], "Vu en personne", None, "", conn=conn,
+                clear_all=True,
+            )
         elif not saving_skipped and (saving_step is None or saving_step == 11) and 11 not in skipped:
+            social_ids_to_save = draft.get("_social_friend_ids_to_save")
+            if social_ids_to_save is None and saving_step is None:
+                social_ids_to_save = set(draft.get("friend_ids", []))
             save_social_logs_for_date(
                 selected_date,
                 [int(friend_id) for friend_id in draft.get("friend_ids", [])],
@@ -257,7 +263,11 @@ def save_checkin_bundle(selected_date, draft, existing):
                 draft.get("social_duration"),
                 draft.get("social_note", ""),
                 conn=conn,
+                friend_ids_to_save=social_ids_to_save,
+                friend_ids_to_delete=draft.get("_social_friend_ids_to_delete", set()),
             )
+            draft.pop("_social_friend_ids_to_save", None)
+            draft.pop("_social_friend_ids_to_delete", None)
         if (
             deleting_step is not None
             and not progress_completed

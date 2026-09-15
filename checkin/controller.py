@@ -940,6 +940,7 @@ def render_daily_checkin(
             current_ids = [int(friend_id) for friend_id in draft.get("friend_ids", [])]
             if pending_friend_id not in current_ids:
                 current_ids.append(pending_friend_id)
+                draft.setdefault("_social_friend_ids_to_save", set()).add(pending_friend_id)
             draft["friend_ids"] = current_ids
             st.session_state[selection_key] = current_ids
         draft["friend_ids"] = [
@@ -956,6 +957,7 @@ def render_daily_checkin(
         selection_default = {
             "default": [fid for fid in draft["friend_ids"] if fid in friend_map]
         } if selection_key not in st.session_state else {}
+        previous_selected = {int(friend_id) for friend_id in draft["friend_ids"]}
         selected = st.multiselect(
             "Personnes",
             list(friend_map),
@@ -963,6 +965,11 @@ def render_daily_checkin(
             key=selection_key,
             **selection_default,
         )
+        selected_set = {int(friend_id) for friend_id in selected}
+        draft.setdefault("_social_friend_ids_to_save", set()).update(selected_set - previous_selected)
+        draft.setdefault("_social_friend_ids_to_delete", set()).update(previous_selected - selected_set)
+        draft["_social_friend_ids_to_save"].difference_update(draft["_social_friend_ids_to_delete"])
+        draft["_social_friend_ids_to_delete"].difference_update(selected_set)
         draft["friend_ids"] = selected
         draft.update({"social_context": "Vu en personne", "social_duration": None})
         _autosave_step(save_daily_bundle, selected_date, draft, existing, step, {"friend_ids": selected})
