@@ -174,6 +174,35 @@ class CheckinPersistenceIntegrationTests(unittest.TestCase):
         self.assertEqual(len(data_store.load_social_logs(self.selected_date)), 1)
         self.assertEqual(len(data_store.load_goal_logs(self.selected_date)), 1)
 
+    def test_stale_step_snapshot_cannot_overwrite_a_newer_other_step(self):
+        friend_id, goal_id = self._create_related_entities()
+        original = self._complete_draft(friend_id, goal_id)
+        self.assertIsNone(checkin_service.save_checkin_bundle(self.selected_date, original, None))
+        stale_entry = data_store.load_entry(self.selected_date)
+
+        data_store.save_entry_fields(self.selected_date, {"phone_hours": 4.25})
+
+        stale_weight_draft = _initial_draft(stale_entry)
+        stale_weight_draft["weight_kg"] = 79.1
+        stale_weight_draft["_completed"] = {2}
+        stale_weight_draft["_skipped"] = set(range(CHECKIN_DATA_STEP_COUNT)) - {2}
+        stale_weight_draft["_saving_step"] = 2
+        with patch.object(checkin_service, "load_entry", return_value=stale_entry):
+            self.assertIsNone(
+                checkin_service.save_checkin_bundle(
+                    self.selected_date, stale_weight_draft, stale_entry
+                )
+            )
+
+        reloaded = data_store.load_entry(self.selected_date)
+        self.assertEqual(reloaded["weight_kg"], 79.1)
+        self.assertEqual(reloaded["phone_hours"], 4.25)
+        self.assertEqual(reloaded["body_fat_pct"], 18.5)
+
+    def test_targeted_update_rejects_unknown_columns(self):
+        with self.assertRaises(ValueError):
+            data_store.save_entry_fields(self.selected_date, {"entry_date": "2030-01-01"})
+
     def test_isolated_work_times_are_saved_and_can_be_completed_later(self):
         morning = _initial_draft(None)
         morning.update({

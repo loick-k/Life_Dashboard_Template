@@ -20,8 +20,8 @@ et 348 lignes restaurées et vérifiées, puis schéma temporaire supprimé.
 
 ## Étape 1 - Fiabilisation des écritures existantes
 
-- Ajouter des tests de concurrence et de non-effacement entre étapes.
-- Remplacer les écritures de ligne complète par des mises à jour ciblées.
+- [x] Ajouter des tests de concurrence et de non-effacement entre étapes.
+- [x] Remplacer les autosauvegardes de ligne complète par des mises à jour ciblées.
 - Donner des identifiants stables aux séances et relations.
 - Conserver Streamlit fonctionnel sans changement visuel.
 

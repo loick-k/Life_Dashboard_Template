@@ -20,6 +20,21 @@ from performance_monitor import measure_performance, record_performance
 
 DB_PATH = Path("life_dashboard.sqlite")
 
+DAILY_ENTRY_MUTABLE_COLUMNS = frozenset({
+    "alcohol_glasses", "sleep_hours", "sleep_bedtime", "sleep_wake_time", "nap_minutes",
+    "work_hours", "work_travel", "work_start_time", "work_morning_end_time",
+    "work_afternoon_start_time", "work_end_time", "work_third_start_time",
+    "work_third_end_time", "work_duration_hours", "weight_kg", "waist_cm", "belly_cm",
+    "body_fat_pct", "sport_type", "sport_hours", "phone_hours", "kcal",
+    "sport_kcal_burned", "proteins_g", "carbs_g", "fats_g", "meal_breakfast",
+    "meal_lunch", "meal_dinner", "meal_other", "me_time_writing_minutes",
+    "me_time_meditation_minutes", "me_time_relaxation_minutes", "me_time_outings_minutes",
+    "self_listening_score", "close_relations_listening_score", "nutrition_analysis_hash",
+    "nutrition_analysis_model", "nutrition_analysis_confidence",
+    "nutrition_analysis_assumptions", "nutrition_analyzed_at", "checkin_completed_steps",
+    "checkin_skipped_steps", "checkin_finished", "checkin_version",
+})
+
 
 def get_database_url():
     url = os.getenv("DATABASE_URL", "").strip()
@@ -479,6 +494,45 @@ def save_entry(data: dict, conn=None):
     if owns_connection:
         conn.commit()
         conn.close()
+
+
+@measure_performance("Sauvegarde · champs ciblés de la journée")
+def save_entry_fields(entry_date: date, fields: dict, conn=None):
+    """Met à jour uniquement les champs fournis afin d'éviter les écrasements concurrents."""
+    unknown = set(fields) - DAILY_ENTRY_MUTABLE_COLUMNS
+    if unknown:
+        raise ValueError("Champs de journée non autorisés : " + ", ".join(sorted(unknown)))
+    if not fields:
+        return
+
+    owns_connection = conn is None
+    conn = conn or get_conn()
+    try:
+        updated_at = timestamp_paris()
+        conn.execute(
+            """
+            INSERT INTO daily_entries (entry_date, updated_at)
+            VALUES (?, ?)
+            ON CONFLICT(entry_date) DO NOTHING
+            """,
+            (entry_date.isoformat(), updated_at),
+        )
+        ordered_fields = sorted(fields)
+        assignments = ", ".join(f"{field} = ?" for field in ordered_fields)
+        values = [fields[field] for field in ordered_fields]
+        conn.execute(
+            f"UPDATE daily_entries SET {assignments}, updated_at = ? WHERE entry_date = ?",
+            (*values, updated_at, entry_date.isoformat()),
+        )
+        if owns_connection:
+            conn.commit()
+    except Exception:
+        if owns_connection:
+            conn.rollback()
+        raise
+    finally:
+        if owns_connection:
+            conn.close()
 
 def delete_entry(entry_date: date):
     conn = get_conn()

@@ -10,7 +10,8 @@ from app_config import CHECKIN_DATA_STEP_COUNT, CHECKIN_VERSION
 from data_store import (
     clear_nutrition_analysis, delete_goal_log, delete_goal_logs_for_date,
     get_conn, load_entry, save_api_usage, save_entry, save_goal_log,
-    save_nutrition_analysis, save_social_logs_for_date, save_sport_sessions,
+    save_entry_fields, save_nutrition_analysis, save_social_logs_for_date,
+    save_sport_sessions,
 )
 from nutrition_analysis import (
     NUTRITION_MODEL, NutritionAnalysisUnavailable, analyze_meals,
@@ -21,6 +22,32 @@ from work_tracking import compute_work_duration, parse_optional_time
 
 
 LOGGER = logging.getLogger(__name__)
+
+PROGRESS_FIELDS = {
+    "checkin_completed_steps", "checkin_skipped_steps", "checkin_finished", "checkin_version",
+}
+STEP_ENTRY_FIELDS = {
+    0: {"sleep_hours", "sleep_bedtime", "sleep_wake_time", "nap_minutes"},
+    1: {"alcohol_glasses"},
+    2: {"weight_kg"},
+    3: {"body_fat_pct"},
+    4: {"waist_cm", "belly_cm"},
+    5: {
+        "work_hours", "work_travel", "work_start_time", "work_morning_end_time",
+        "work_afternoon_start_time", "work_end_time", "work_third_start_time",
+        "work_third_end_time", "work_duration_hours",
+    },
+    6: {"sport_type", "sport_hours"},
+    7: {"phone_hours"},
+    8: {"meal_breakfast", "meal_lunch", "meal_dinner", "meal_other"},
+    9: {
+        "me_time_writing_minutes", "me_time_meditation_minutes",
+        "me_time_relaxation_minutes", "me_time_outings_minutes",
+    },
+    10: {"self_listening_score", "close_relations_listening_score"},
+    11: set(),
+    12: set(),
+}
 
 
 def has_daily_data(data):
@@ -169,7 +196,16 @@ def save_checkin_bundle(selected_date, draft, existing):
     conn = get_conn()
     entry_removed = False
     try:
-        save_entry(data, conn=conn)
+        if saving_step is None and deleting_step is None:
+            save_entry(data, conn=conn)
+        else:
+            active_step = deleting_step if deleting_step is not None else saving_step
+            fields_to_save = PROGRESS_FIELDS | STEP_ENTRY_FIELDS.get(active_step, set())
+            save_entry_fields(
+                selected_date,
+                {field: data.get(field) for field in fields_to_save},
+                conn=conn,
+            )
 
         if nutrition_source_changed:
             clear_nutrition_analysis(selected_date, conn=conn)
