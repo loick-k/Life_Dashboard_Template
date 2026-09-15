@@ -22,11 +22,13 @@ et 348 lignes restaurées et vérifiées, puis schéma temporaire supprimé.
 
 - [x] Ajouter des tests de concurrence et de non-effacement entre étapes.
 - [x] Remplacer les autosauvegardes de ligne complète par des mises à jour ciblées.
-- Donner des identifiants stables aux séances et relations.
-- Conserver Streamlit fonctionnel sans changement visuel.
+- [x] Donner des identifiants stables aux séances et relations.
+- [x] Conserver Streamlit fonctionnel sans changement visuel.
 
 Condition de sortie : aucune étape ne peut effacer une autre étape, même avec une
-copie locale ancienne.
+copie locale ancienne. Condition remplie le 15/09/2026 : écritures quotidiennes
+ciblées par étape, UUID stable pour chaque séance sportive, clé stable date/personne
+pour les relations, suppressions explicites et 52 tests de non-régression validés.
 
 ## Étape 2 - Extraction du domaine
 
