@@ -4,63 +4,46 @@ import pandas as pd
 
 from dashboard_metrics import setting_float, week_bounds
 from app_clock import today_paris
+from domain.models import WorkSchedule, normalize_optional_time
+from domain.work import (
+    DAILY_WORK_TARGET_MINUTES,
+    duration_between as _duration_between_minutes,
+    time_to_minutes,
+    work_duration_minutes,
+)
 
 
-DAILY_WORK_TARGET_MINUTES = 7 * 60 + 42
 DAILY_WORK_TARGET_HOURS = DAILY_WORK_TARGET_MINUTES / 60
 
 
 def parse_optional_time(raw, label, errors):
     """Normalise une heure HH:MM, H:MM, 8h30 ou 0830."""
-    if raw is None:
+    try:
+        return normalize_optional_time(raw)
+    except ValueError as exc:
+        detail = "format attendu HH:MM, par exemple 08:30." if "format" in str(exc) else "heure invalide."
+        errors.append(f"{label} : {detail}")
         return None
-    text = str(raw).strip().lower().replace("h", ":").replace(".", ":")
-    if not text:
-        return None
-    if text.isdigit() and len(text) in (3, 4):
-        text = text[:-2] + ":" + text[-2:]
-    parts = text.split(":")
-    if len(parts) != 2 or not all(part.isdigit() for part in parts):
-        errors.append(f"{label} : format attendu HH:MM, par exemple 08:30.")
-        return None
-    hour, minute = map(int, parts)
-    if not 0 <= hour <= 23 or not 0 <= minute <= 59:
-        errors.append(f"{label} : heure invalide.")
-        return None
-    return f"{hour:02d}:{minute:02d}"
-
-
-def time_to_minutes(value):
-    if not value:
-        return None
-    hour, minute = value.split(":")
-    return int(hour) * 60 + int(minute)
 
 
 def duration_between(start_time, end_time):
-    start = time_to_minutes(start_time)
-    end = time_to_minutes(end_time)
-    if start is None or end is None:
+    if not start_time or not end_time:
         return None
-    if end < start:
-        end += 24 * 60
-    return (end - start) / 60
+    return _duration_between_minutes(start_time, end_time) / 60
 
 
 def compute_work_duration(start_time, morning_end_time, afternoon_start_time, end_time, errors,
                           third_start_time=None, third_end_time=None):
-    times = [start_time, morning_end_time, afternoon_start_time, end_time, third_start_time, third_end_time]
-    if not any(times):
+    try:
+        minutes = work_duration_minutes(WorkSchedule(
+            start_time=start_time, morning_end_time=morning_end_time,
+            afternoon_start_time=afternoon_start_time, end_time=end_time,
+            third_start_time=third_start_time, third_end_time=third_end_time,
+        ))
+        return None if minutes is None else round(minutes / 60, 2)
+    except ValueError:
+        errors.append("Suivi travail : chaque créneau commencé doit comporter une heure de début et une heure de fin.")
         return None
-    if start_time and end_time and not morning_end_time and not afternoon_start_time and not third_start_time and not third_end_time:
-        return round(duration_between(start_time, end_time), 2)
-    pairs = [(start_time, morning_end_time), (afternoon_start_time, end_time), (third_start_time, third_end_time)]
-    if all((start and end) or (not start and not end) for start, end in pairs):
-        return round(sum(duration_between(start, end) for start, end in pairs if start and end), 2)
-    errors.append(
-        "Suivi travail : chaque créneau commencé doit comporter une heure de début et une heure de fin."
-    )
-    return None
 
 
 def format_hour_decimal(value):
