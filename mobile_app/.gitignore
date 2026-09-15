@@ -1,0 +1,16 @@
+# Les sauvegardes contiennent des données personnelles et ne doivent jamais être versionnées.
+backups/
+exports/
+.env
+.env.*
+!.env.example
+.venv-tools/
+
+# Futur projet Expo
+node_modules/
+.expo/
+dist/
+web-build/
+*.jks
+*.keystore
+google-services.json

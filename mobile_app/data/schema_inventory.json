@@ -1,0 +1,27 @@
+{
+  "baseline_commit": "d9a24be613092955f8409002820df8585c658a05",
+  "source": "data/migrations.py",
+  "tables": {
+    "daily_entries": "Mesures et réponses quotidiennes, une ligne par date",
+    "sport_sessions": "Jusqu'à trois séances associées à une date",
+    "friends": "Répertoire des relations",
+    "social_logs": "Relations vues par date",
+    "goals": "Objectifs configurés",
+    "goal_logs": "Contribution quotidienne aux objectifs",
+    "settings": "Réglages globaux de l'instance",
+    "checkin_progress": "Étapes terminées ou passées",
+    "api_usage_logs": "Consommation et estimation de coût OpenAI",
+    "schema_migrations": "Journal des migrations",
+    "todo_categories": "Anciennes catégories Todo locales",
+    "todo_items": "Anciennes tâches locales migrées vers Todoist"
+  },
+  "mobile_schema_gaps": [
+    "user_id",
+    "stable_uuid",
+    "server_version",
+    "idempotency_key",
+    "client_updated_at",
+    "deleted_at"
+  ]
+}
+

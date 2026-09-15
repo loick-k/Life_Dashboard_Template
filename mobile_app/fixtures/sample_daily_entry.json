@@ -1,0 +1,33 @@
+{
+  "entry_date": "2030-01-15",
+  "sleep_bedtime": "23:15",
+  "sleep_wake_time": "07:00",
+  "sleep_hours": 7.75,
+  "nap_minutes": 20,
+  "alcohol_glasses": 0,
+  "weight_kg": 75.4,
+  "body_fat_pct": 18.2,
+  "belly_cm": 84.5,
+  "work_travel": "Bureau",
+  "work_start_time": "08:30",
+  "work_morning_end_time": "12:30",
+  "work_afternoon_start_time": "13:30",
+  "work_end_time": "17:20",
+  "work_duration_hours": 7.8333,
+  "phone_hours": 2.6167,
+  "sport_sessions": [
+    {
+      "session_id": "00000000-0000-4000-8000-000000000001",
+      "sport_type": "Course",
+      "duration_minutes": 37,
+      "distance_km": 6.2
+    }
+  ],
+  "me_time_writing_minutes": 15,
+  "me_time_meditation_minutes": 10,
+  "me_time_relaxation_minutes": 30,
+  "me_time_outings_minutes": 45,
+  "self_listening_score": 8,
+  "close_relations_listening_score": 7
+}
+
