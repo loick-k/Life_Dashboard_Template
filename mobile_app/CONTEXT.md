@@ -294,6 +294,30 @@ sans dépendance tierce et sans modifier l'environnement V1.
 
 ## Données réelles et Git
 
+## Reprise persistante de l'assistant (25/09/2026)
+
+`OnboardingProgress` conserve étape, choix de source et état terminé dans une clé
+dédiée de settings, avec version et contrôle de concurrence sur la valeur stockée.
+Navigation adjacente uniquement, pas de fin avant récapitulatif, choix obligatoire
+pour sortir de l'étape données. Les autres réglages restent intacts. Un état futur
+ou corrompu bloque au lieu d'être remplacé par des valeurs initiales.
+Trois nouveaux tests SQLite couvrent réouverture, fin persistante, concurrence et
+refus sûr : suite Node 31/31, TypeScript valide. Ce repository n'est pas encore
+branché à une interface ; il ne réalise ni import, ni restauration, ni biométrie.
+Ces opérations doivent réussir dans leurs services avant que l'UI avance.
+
+Préparation émulateur suspendue techniquement : C: ne dispose que d'environ 425 Mo
+libres ; Win32_Processor rapporte VirtualizationFirmwareEnabled=false et
+SecondLevelAddressTranslationExtensions=false. Aucun téléchargement d'image lancé,
+aucun fichier utilisateur supprimé, aucun réglage système modifié. Les compilations
+lourdes attendent davantage d'espace. Continuer les lots de code indépendants :
+préférences validées, assistant UI, reprise quotidienne, import et sauvegardes.
+Il faudra libérer de l'espace ou disposer d'un environnement Android de test pour
+lever la validation native ; ne pas déclarer l'objectif bloqué tant que ces lots
+indépendants peuvent progresser.
+
+## Confidentialité du dépôt
+
 Les exports et bases restent dans des chemins ignorés (`backups/`, `local_data/`).
 Ne pas lire ni publier leur contenu pour une tâche d'architecture. L'import réel
 sera contrôlé avec l'utilisateur ; les préparatifs utilisent des fixtures fictives.

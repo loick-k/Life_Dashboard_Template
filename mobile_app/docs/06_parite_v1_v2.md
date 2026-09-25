@@ -35,7 +35,7 @@ compléter pendant chaque portage. « À porter » ne signifie jamais implément
 | Migrations atomiques | Interruption et reprise dans le runtime réel | Python : 9 tests ; TypeScript/SQLite : 4 tests ; Android à faire |
 | SQLCipher + Keystore | Fichier illisible sans clé, réouverture et mauvaise clé refusée | Adaptateur natif écrit ; 5 tests de coordination, validation Android à faire |
 | Autosauvegarde | Saisie, retour, concurrence, arrêt forcé et redémarrage | Repository quotidien CAS et tests fichier SQLite ; UI et arrêt Android à faire |
-| Assistant initial | Hors ligne, interruption/reprise, ne réapparaît pas après fin | À faire |
+| Assistant initial | Hors ligne, interruption/reprise, ne réapparaît pas après fin | Repository de progression testé sur SQLite (3 tests) ; écrans et opérations métier à faire |
 | Protection locale | Verrouillage, biométrie, reprise sûre et récupération | À faire |
 | Sauvegarde chiffrée | Nouveau téléphone, mauvais mot de passe, altération, interruption | À faire |
 | Import V1 | Fixtures synthétiques, relations, collisions et rejeu | À faire |
