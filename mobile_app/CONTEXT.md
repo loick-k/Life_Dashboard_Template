@@ -231,10 +231,24 @@ traité séparément). Durées encore affichées en minutes sauf sport : harmoni
 heures/minutes et vérification des règles sommeil V1 à réaliser.
 
 Build limité terminé en échec : Ninja refuse un chemin d'en-tête React Native
-de plus de 260 caractères. Alias réversible `L:` créé par subst vers mobile_app,
+de plus de 260 caractères. Alias réversible `L:` créé par subst vers le dépôt,
 sans déplacer les fichiers ni changer le registre. Le script vérifie que ce
 lecteur pointe sur le bon dépôt (refus s'il appartient à autre chose), puis utilise
-L:\ pour Java/SDK/cache/source. Relancer le script. Pas d'APK confirmé.
+L:\mobile_app pour Java/SDK/cache/source. Expo ignore package.json directement
+à la racine d'un lecteur : premier alias vers mobile_app corrigé vers le parent.
+Le nouveau build dépasse autolinking et compile les modules. Pas d'APK confirmé.
+
+## Social et objectifs connectés
+
+Migration 003 ajoute les révisions des catalogues et journaux. `Catalogs` utilise
+des identifiants SQL fixes, valeurs liées, créations sans doublon par journée et
+sujet, suppression/archivage contrôlés par révision. Archiver conserve l'historique.
+Objectifs limités à trois actifs par une condition SQL atomique. Réactivation
+d'un journal importé worked=0 préserve ses notes et incrémente la révision.
+`CatalogForm` offre ajout/sélection, catégories de personnes, archivage et affichage
+des archives ; navigation attend l'opération et refuse un ajout non terminé.
+Historique détaillé, renommage et bilans de récurrence restent à réaliser.
+28 tests Node réussis ; TypeScript valide. Pas de validation UI Android encore.
 
 Vérification du 25/09/2026 : `.venv-tools` ne démarre plus car son Python de base
 est indisponible. Les neuf tests SQLite ont été exécutés avec le Python du runtime

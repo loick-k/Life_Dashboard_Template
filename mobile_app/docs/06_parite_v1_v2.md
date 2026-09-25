@@ -18,8 +18,8 @@ compléter pendant chaque portage. « À porter » ne signifie jamais implément
 | Alimentation | Repas, calcul explicite, kcal nettes, absence n.c., résultat unique | Repas et affichage kcal connectés ; analyse à faire |
 | Temps pour moi | Activités distinctes, sorties/détente, total immédiat | Saisie et total connectés ; validation native à faire |
 | Écoute | Scores et libellé configurable des proches | Saisie connectée ; libellé réglable à faire |
-| Social | Personnes, catégories, récurrence, périodes, historique et journal quotidien | À porter |
-| Objectifs | Ajout, actifs, complétés, critères, journal et historique | À porter |
+| Social | Personnes, catégories, récurrence, périodes, historique et journal quotidien | Ajout/catégories/sélection/archives connectés ; récurrence et historique détaillé à faire |
+| Objectifs | Ajout, actifs, complétés, critères, journal et historique | Ajout/journal/archives connectés, limite 3 actifs ; critères et historique détaillé à faire |
 | Bilan / dashboard_metrics | Courbes par catégorie, vue hebdomadaire, objectifs, évaluation semaine courante | À porter |
 | Scores / dashboard_metrics | Sommeil, alcool, tabac, sport, portable, nutrition, corps, social, objectifs, travail, temps positif, écoute | À porter |
 | Travail PDF / work_report | Tableau hebdomadaire, types, durée et compteur cumulé, graphique | À porter |

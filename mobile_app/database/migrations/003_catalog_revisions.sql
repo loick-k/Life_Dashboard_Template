@@ -1,0 +1,4 @@
+ALTER TABLE friends ADD COLUMN revision INTEGER NOT NULL DEFAULT 1 CHECK (revision >= 1);
+ALTER TABLE goals ADD COLUMN revision INTEGER NOT NULL DEFAULT 1 CHECK (revision >= 1);
+ALTER TABLE social_logs ADD COLUMN revision INTEGER NOT NULL DEFAULT 1 CHECK (revision >= 1);
+ALTER TABLE goal_logs ADD COLUMN revision INTEGER NOT NULL DEFAULT 1 CHECK (revision >= 1);

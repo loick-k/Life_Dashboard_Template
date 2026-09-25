@@ -30,7 +30,7 @@ class AtomicMigrationTests(unittest.TestCase):
         self.conn.set_authorizer(None)
         self.assertFalse(self.conn.in_transaction)
         self.assertEqual(self.conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall(), [])
-        self.assertEqual(apply_local_migrations(self.conn), ["001_local_v2", "002_partial_sport"])
+        self.assertEqual(apply_local_migrations(self.conn), ["001_local_v2", "002_partial_sport", "003_catalog_revisions"])
         self.conn.close()
         self.conn = connect_local_database(self.path)
         self.assertEqual(apply_local_migrations(self.conn), [])

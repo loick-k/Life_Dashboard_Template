@@ -8,6 +8,7 @@ import { parisDate, shiftDate } from '../domain/dates';
 import { parseInput } from '../domain/input';
 import { SportForm, type SportFormHandle } from './SportForm';
 import { CHECKIN_SECTIONS as sections, type CheckinField as Field } from '../domain/checkinConfig';
+import { CatalogForm, type CatalogFormHandle } from './CatalogForm';
 
 /** Vertical development slice, not the final daily journey. Synthetic data only. */
 export function DailyForm({ database }: { database: SQLiteDatabase }) {
@@ -18,6 +19,7 @@ export function DailyForm({ database }: { database: SQLiteDatabase }) {
   const [invalid, setInvalid] = useState<Set<string>>(new Set());
   const [error, setError] = useState('');
   const sports = useRef<SportFormHandle>(null);
+  const catalog = useRef<CatalogFormHandle>(null);
   const [, repaint] = useState(0);
   const refresh = () => repaint(value => value + 1);
   useEffect(() => {
@@ -30,7 +32,7 @@ export function DailyForm({ database }: { database: SQLiteDatabase }) {
   const navigate = async (action: () => void) => {
     if (!draft) return;
     if (invalid.size) { setError('Termine la valeur en cours ou utilise Effacer pour une suppression volontaire.'); return; }
-    try { await draft.flush(); if (sports.current) await sports.current.flush(); setError(''); action(); } catch { setError('Saisie invalide ou sauvegarde non confirmée. Reste sur cette page et réessaie.'); }
+    try { await draft.flush(); if (sports.current) await sports.current.flush(); if (catalog.current) await catalog.current.flush(); setError(''); action(); } catch { setError('Saisie invalide, ajout non terminé ou sauvegarde non confirmée. Termine la saisie avant de continuer.'); }
     refresh();
   };
   useEffect(() => {
@@ -67,7 +69,7 @@ export function DailyForm({ database }: { database: SQLiteDatabase }) {
     {draft?.status === 'failed' && <Pressable style={styles.secondary} onPress={() => { void draft.retry().then(() => { setError(''); refresh(); }, refresh); }}><Text>Réessayer la sauvegarde</Text></Pressable>}
     {!draft ? <Text>Chargement local…</Text> : <>
       {section.id === 'sport' && <SportForm key={draft.snapshot.entry_id} ref={sports} database={database} entryId={draft.snapshot.entry_id} />}
-      {['social', 'goals'].includes(section.id) && <Text>Formulaire en cours de portage. Aucune donnée de cette catégorie n’est modifiée ici.</Text>}
+      {['social', 'goals'].includes(section.id) && <CatalogForm key={`${draft.snapshot.entry_id}:${section.id}`} ref={catalog} database={database} entryId={draft.snapshot.entry_id} kind={section.id === 'social' ? 'friends' : 'goals'} />}
       {section.id === 'work' && <View style={styles.row}>{['Télétravail', 'Day off', 'Bureau', 'Déplacement'].map(mode => <Pressable accessibilityRole="button" accessibilityState={{ selected: snapshot?.work_mode === mode }} key={mode} style={[styles.secondary, snapshot?.work_mode === mode && styles.selected]} onPress={() => save('work_mode', mode)}><Text>{mode}</Text></Pressable>)}</View>}
       {section.fields.map(item => <View key={item.key} style={styles.field}>
         <Text style={styles.label}>{item.label}</Text>
