@@ -190,10 +190,15 @@ sans convertir l'absence en zéro. Reconstruction transactionnelle conservant
 UUID, révisions et valeurs existantes. `SportSessions` gère trois positions,
 écritures ciblées CAS et suppression à révision contrôlée ; aucun remplacement
 global de la liste. Distance et minutes précises indépendantes, null explicite.
-UI sportive et file d'autosauvegarde restent à connecter.
+UI sportive connectée dans le sous-parcours technique : trois séances, heures et
+minutes distinctes, distance décimale et effacement séparé confirmé. La file FIFO
+`WriteQueue` est partagée par DailyDraft et SportDraft, avec les mêmes contrôles.
+La navigation attend les files des trois séances et refuse les champs invalides.
+Les trois emplacements vides sont actuellement des lignes nulles : ne pas les
+compter comme séances actives dans les bilans/imports.
 
-Validation : suite Node 25 tests passée, puis troisième test sport ajouté et les
-3 tests sport repassés (26 tests présents). TypeScript valide. Les 9 tests Python
+Validation : suite Node complète 26 tests réussis après mutualisation, TypeScript
+valide. Les 9 tests Python
 de schéma/migration passent depuis la racine ; première commande lancée par erreur
 depuis mobile_app avait échoué à importer les modules (corrigé en changeant cwd).
 Le test racine modifié est exclusivement `tests/test_mobile_local_database.py` ;
@@ -202,6 +207,14 @@ aucun code de fonctionnement V1 modifié.
 Build Android toujours en cours après installation du NDK complémentaire : atteint
 les tâches CMake SQLCipher et Expo. Attendre le même processus, ne pas lancer un
 second build simplement faute de nouvelles lignes.
+
+Le build a atteint fusion native et signature debug, puis Windows a signalé une
+mémoire virtuelle insuffisante (erreur 1455 lors d'une édition de fichier).
+Compilation arrêtée par Ctrl+C, processus terminé avec code 1. Après arrêt :
+~8 Go de mémoire virtuelle libre. Ce n'est pas un timeout : ne pas attendre cet
+ancien handle. Script désormais limité à 2 workers, sans parallélisme Gradle,
+heap 1536 Mo, Kotlin dans le processus et CMake limité. Relancer ce script pour
+utiliser les caches existants ; aucun APK confirmé à ce stade.
 
 Vérification du 25/09/2026 : `.venv-tools` ne démarre plus car son Python de base
 est indisponible. Les neuf tests SQLite ont été exécutés avec le Python du runtime

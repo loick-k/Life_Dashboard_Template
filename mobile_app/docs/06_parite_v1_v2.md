@@ -13,7 +13,7 @@ compléter pendant chaque portage. « À porter » ne signifie jamais implément
 | Alcool | Quantité, zéro distinct d'absence | À porter |
 | Corps | Poids, masse graisseuse, tour de ventre indépendants | Première UI de test connectée ; validation native et mesures précédentes à faire |
 | Travail / work_tracking | Trois créneaux, heures isolées, standards, veille, mode ; solde cumulé unique | UI trois créneaux/mode/durée connectée en test ; solde, standards et veille à faire |
-| Sport | Types V1, plusieurs séances, minutes et distances précises | Repository CAS et migration partielle testés ; UI et validation Android à faire |
+| Sport | Types V1, plusieurs séances, minutes et distances précises | Repository, migration et UI d'essai connectés ; validation Android à faire |
 | Portable | Durée précise, historique et seuil configurable | À porter |
 | Alimentation | Repas, calcul explicite, kcal nettes, absence n.c., résultat unique | À porter |
 | Temps pour moi | Activités distinctes, sorties/détente, total immédiat | À porter |

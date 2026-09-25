@@ -4,6 +4,7 @@ $env:JAVA_HOME = Join-Path $mobileRoot '.tools/jdk-17.0.20.1+1'
 $env:ANDROID_HOME = Join-Path $mobileRoot '.tools/android-sdk'
 $env:GRADLE_USER_HOME = Join-Path $mobileRoot '.tools/gradle-cache'
 $env:EXPO_NO_TELEMETRY = '1'
+$env:CMAKE_BUILD_PARALLEL_LEVEL = '2'
 $javaTmp = Join-Path $mobileRoot '.tools/tmp'
 New-Item -ItemType Directory -Path $javaTmp -Force | Out-Null
 # Windows AF_UNIX sockets used by Java selectors fail in some redirected temp paths.
@@ -22,7 +23,7 @@ try {
     }
     Push-Location android
     try {
-        & .\gradlew.bat assembleDebug --no-daemon --console=plain '-PreactNativeArchitectures=arm64-v8a,x86_64'
+        & .\gradlew.bat assembleDebug --no-daemon --console=plain --no-parallel --max-workers=2 '-Dorg.gradle.jvmargs=-Xmx1536m -XX:MaxMetaspaceSize=512m' '-Pkotlin.compiler.execution.strategy=in-process' '-PreactNativeArchitectures=arm64-v8a,x86_64'
         if ($LASTEXITCODE -ne 0) { throw 'Android build failed.' }
     } finally { Pop-Location }
 } finally { Pop-Location }

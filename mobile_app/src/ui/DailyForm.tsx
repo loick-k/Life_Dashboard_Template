@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Alert, BackHandler, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import * as Crypto from 'expo-crypto';
 import type { SQLiteDatabase } from 'expo-sqlite';
@@ -6,6 +6,7 @@ import { DailyEntries, dailyRules, type DailyField } from '../storage/dailyEntri
 import { DailyDraft } from '../storage/dailyDraft';
 import { parisDate, shiftDate } from '../domain/dates';
 import { parseInput, type InputKind } from '../domain/input';
+import { SportForm, type SportFormHandle } from './SportForm';
 
 type Field = { key: DailyField; label: string; kind: InputKind };
 const field = (key: DailyField, label: string, kind: InputKind = 'number'): Field => ({ key, label, kind });
@@ -14,6 +15,7 @@ const sections = [
   { title: 'Masse graisseuse', fields: [field('body_fat_pct', 'Masse graisseuse (%)')] },
   { title: 'Tour de ventre', fields: [field('belly_cm', 'Tour de ventre (cm)')] },
   { title: 'Temps de travail', fields: [field('work_start_time', 'Heure de début', 'time'), field('work_morning_end_time', 'Fin de matinée', 'time'), field('work_afternoon_start_time', 'Début d’après-midi', 'time'), field('work_end_time', 'Fin de journée', 'time'), field('work_third_start_time', 'Créneau 3 · début', 'time'), field('work_third_end_time', 'Créneau 3 · fin', 'time')] },
+  { title: 'Séances de sport', fields: [] },
 ];
 
 /** Vertical development slice, not the final daily journey. Synthetic data only. */
@@ -24,6 +26,7 @@ export function DailyForm({ database }: { database: SQLiteDatabase }) {
   const [raw, setRaw] = useState<Record<string, string>>({});
   const [invalid, setInvalid] = useState<Set<string>>(new Set());
   const [error, setError] = useState('');
+  const sports = useRef<SportFormHandle>(null);
   const [, repaint] = useState(0);
   const refresh = () => repaint(value => value + 1);
   useEffect(() => {
@@ -36,7 +39,7 @@ export function DailyForm({ database }: { database: SQLiteDatabase }) {
   const navigate = async (action: () => void) => {
     if (!draft) return;
     if (invalid.size) { setError('Termine la valeur en cours ou utilise Effacer pour une suppression volontaire.'); return; }
-    try { await draft.flush(); setError(''); action(); } catch { setError('Sauvegarde non confirmée. Reste sur cette page et réessaie.'); }
+    try { await draft.flush(); if (sports.current) await sports.current.flush(); setError(''); action(); } catch { setError('Saisie invalide ou sauvegarde non confirmée. Reste sur cette page et réessaie.'); }
     refresh();
   };
   useEffect(() => {
@@ -71,6 +74,7 @@ export function DailyForm({ database }: { database: SQLiteDatabase }) {
     {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
     {draft?.status === 'failed' && <Pressable style={styles.secondary} onPress={() => { void draft.retry().then(() => { setError(''); refresh(); }, refresh); }}><Text>Réessayer la sauvegarde</Text></Pressable>}
     {!draft ? <Text>Chargement local…</Text> : <>
+      {step === 4 && <SportForm key={draft.snapshot.entry_id} ref={sports} database={database} entryId={draft.snapshot.entry_id} />}
       {step === 3 && <View style={styles.row}>{['Télétravail', 'Day off', 'Bureau', 'Déplacement'].map(mode => <Pressable accessibilityRole="button" accessibilityState={{ selected: snapshot?.work_mode === mode }} key={mode} style={[styles.secondary, snapshot?.work_mode === mode && styles.selected]} onPress={() => save('work_mode', mode)}><Text>{mode}</Text></Pressable>)}</View>}
       {section.fields.map(item => <View key={item.key} style={styles.field}>
         <Text style={styles.label}>{item.label}</Text>
@@ -86,7 +90,7 @@ export function DailyForm({ database }: { database: SQLiteDatabase }) {
       {draft.status === 'saving' && <Text accessibilityLiveRegion="polite">Enregistrement en cours…</Text>}
       <View style={styles.row}>
         <Pressable disabled={step === 0} style={styles.secondary} onPress={() => void navigate(() => setStep(step - 1))}><Text>← Retour</Text></Pressable>
-        <Pressable disabled={step === 3} style={styles.primary} onPress={() => void navigate(() => setStep(step + 1))}><Text style={styles.white}>Continuer →</Text></Pressable>
+        <Pressable disabled={step === sections.length - 1} style={styles.primary} onPress={() => void navigate(() => setStep(step + 1))}><Text style={styles.white}>Continuer →</Text></Pressable>
       </View>
     </>}
   </ScrollView>;

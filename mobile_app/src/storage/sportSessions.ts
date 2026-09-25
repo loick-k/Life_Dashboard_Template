@@ -1,5 +1,6 @@
 import type { BindValue, SqlConnection } from './migrations';
 import { RevisionConflict } from './dailyEntries.ts';
+import { WriteQueue } from './writeQueue.ts';
 
 export const SPORT_TYPES = ['Course', 'Vélo', 'Musculation', 'Sport collectif', 'Escalade', 'Badminton', 'Autre'] as const;
 export type SportPatch = { sport_type?: string | null; duration_minutes?: number | null; distance_km?: number | null };
@@ -51,5 +52,12 @@ export class SportSessions {
   async delete(id: string, revision: number): Promise<void> {
     const result = await this.db.runAsync('DELETE FROM sport_sessions WHERE session_id = ? AND revision = ?', id, revision);
     if (result.changes !== 1) throw new RevisionConflict();
+  }
+}
+
+export class SportDraft extends WriteQueue<SportSession, SportPatch> {
+  constructor(repo: SportSessions, row: SportSession) {
+    super(row, patch => Object.fromEntries(fields(patch)),
+      (current, patch) => repo.patch(current.session_id, current.revision, patch));
   }
 }

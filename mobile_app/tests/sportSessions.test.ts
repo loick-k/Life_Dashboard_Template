@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
 import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
-import { SportSessions } from '../src/storage/sportSessions.ts';
+import { SportDraft, SportSessions } from '../src/storage/sportSessions.ts';
 import { DailyEntries, RevisionConflict } from '../src/storage/dailyEntries.ts';
 import { migrate, type SqlConnection, type BindValue } from '../src/storage/migrations.ts';
 
@@ -27,7 +27,13 @@ test('distance-only session survives precise duration updates and other sessions
     assert.equal(first.sport_type, null);
     first = await repo.patch(first.session_id, first.revision, { sport_type: 'Course', duration_minutes: 43 });
     const second = await repo.getOrCreate(day.entry_id, 2);
-    await repo.patch(second.session_id, second.revision, { sport_type: 'Vélo', duration_minutes: 91 });
+    const draft = new SportDraft(repo, second);
+    draft.edit({ sport_type: 'Vélo', duration_minutes: 90 });
+    draft.edit({ duration_minutes: 91 });
+    draft.edit({ distance_km: 12.5 });
+    await draft.flush();
+    assert.equal(draft.status, 'saved');
+    assert.equal(draft.snapshot.distance_km, 12.5);
     assert.deepEqual(await repo.getOrCreate(day.entry_id, 1), first);
     await assert.rejects(repo.patch(first.session_id, 1, { distance_km: 0 }), RevisionConflict);
     first = await repo.patch(first.session_id, first.revision, { duration_minutes: null });
