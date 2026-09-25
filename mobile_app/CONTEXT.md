@@ -11,6 +11,30 @@ remplacement forcé de la V1 et aucune synchronisation automatique des deux base
 
 ## État vérifié dans le dépôt
 
+**État courant prioritaire (25/09/2026, après 9a4fe96)** : le premier APK debug
+a été compilé avec succès (Gradle 7 min 55 s, 242 tâches). Les paragraphes historiques
+ci-dessous décrivant une compilation en cours ou aucun APK sont dépassés. Fichier :
+`android/app/build/outputs/apk/debug/app-debug.apk` (95 416 222 octets), version
+0.1.0/code 1, Android minimum API 24, ABI arm64-v8a et x86_64. Signature vérifiée
+par apksigner. SHA-256 :
+`FC1047600624DB216C7FB44B455306821BA60B7F81DCE706DD18AF3AEF00701F`.
+Ce fichier ne contient PAS le bundle JavaScript : Metro reste nécessaire. Ce n'est
+ni un APK final ni une preuve de fonctionnement natif du chiffrement. Aucun appareil
+ni émulateur connecté à adb lors de la vérification. La V1 n'a pas été modifiée.
+
+`scripts/verify-android-apk.ps1` inspecte l'artefact réellement compilé : signature,
+identité, backup désactivé, permissions stockage absentes et module SQLite des deux
+ABI. En mode Release (défaut), refuse debug, overlay, cleartext et absence de bundle.
+L'APK debug est accepté comme Debug et refusé comme Release (test négatif exécuté).
+Le manifeste debug réintroduit SYSTEM_ALERT_WINDOW et cleartext pour les outils
+de développement malgré blockedPermissions : ne pas distribuer cet APK comme release.
+Les règles de sauvegarde/transfert Android et le chiffrement effectif restent à
+auditer sur runtime. Suite Node : 28/28 ; TypeScript et 9 tests Python SQLite passent.
+
+Prochain travail prioritaire : installer/configurer un émulateur isolé et vérifier
+ouverture SQLCipher + formulaires avec données synthétiques ; puis assistant,
+reprise, sauvegardes, bilans et APK release autonome. L'objectif reste incomplet.
+
 - `d7f0aa3` : modèles Python et calculs métier dans `../domain/`.
 - `fe942d1` : repositories SQL injectables, ciblant encore le schéma historique V1.
 - `85f085a` : séparation de l'adaptateur Streamlit et de l'analyse nutritionnelle.
