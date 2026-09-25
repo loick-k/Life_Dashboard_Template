@@ -36,7 +36,7 @@ test('journal failure rolls schema back and retry succeeds', async () => {
     assert.equal(sqlite.prepare("SELECT count(*) AS n FROM sqlite_master WHERE type='table'").get()?.n, 0);
     connection.runAsync = run;
     await migrate(connection, migrations);
-    assert.equal(sqlite.prepare('SELECT count(*) AS n FROM schema_migrations').get()?.n, 1);
+    assert.equal(sqlite.prepare('SELECT count(*) AS n FROM schema_migrations').get()?.n, migrations.length);
   } finally { sqlite.close(); }
 });
 
@@ -55,6 +55,6 @@ test('older app refuses a future schema without deleting its journal', async () 
     await migrate(connection, migrations);
     sqlite.exec("INSERT INTO schema_migrations VALUES ('999_future', 'future', '2026-01-01')");
     await assert.rejects(migrate(connection, migrations), /newer application/);
-    assert.equal(sqlite.prepare('SELECT count(*) AS n FROM schema_migrations').get()?.n, 2);
+    assert.equal(sqlite.prepare('SELECT count(*) AS n FROM schema_migrations').get()?.n, migrations.length + 1);
   } finally { sqlite.close(); }
 });

@@ -183,6 +183,26 @@ Prochain travail : vérifier le build natif, tests installation/ouverture chiffr
 puis étendre au parcours complet et à la première utilisation. Garder l'APK
 intermédiaire identifié comme essai technique, jamais livraison finale.
 
+## Persistance sportive V2
+
+Migration immuable `002_partial_sport.sql` : durée et type peuvent être absents
+sans convertir l'absence en zéro. Reconstruction transactionnelle conservant
+UUID, révisions et valeurs existantes. `SportSessions` gère trois positions,
+écritures ciblées CAS et suppression à révision contrôlée ; aucun remplacement
+global de la liste. Distance et minutes précises indépendantes, null explicite.
+UI sportive et file d'autosauvegarde restent à connecter.
+
+Validation : suite Node 25 tests passée, puis troisième test sport ajouté et les
+3 tests sport repassés (26 tests présents). TypeScript valide. Les 9 tests Python
+de schéma/migration passent depuis la racine ; première commande lancée par erreur
+depuis mobile_app avait échoué à importer les modules (corrigé en changeant cwd).
+Le test racine modifié est exclusivement `tests/test_mobile_local_database.py` ;
+aucun code de fonctionnement V1 modifié.
+
+Build Android toujours en cours après installation du NDK complémentaire : atteint
+les tâches CMake SQLCipher et Expo. Attendre le même processus, ne pas lancer un
+second build simplement faute de nouvelles lignes.
+
 Vérification du 25/09/2026 : `.venv-tools` ne démarre plus car son Python de base
 est indisponible. Les neuf tests SQLite ont été exécutés avec le Python du runtime
 Codex (`.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe`),
