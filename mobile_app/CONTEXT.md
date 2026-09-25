@@ -11,6 +11,21 @@ remplacement forcé de la V1 et aucune synchronisation automatique des deux base
 
 ## État vérifié dans le dépôt
 
+### Audit disque demandé par l'utilisateur (25/09/2026)
+
+Priorité temporaire : audit et préparation, **aucune suppression sans validation**.
+Rapport complet et plan à trois niveaux : `docs/08_audit_stockage.md`.
+Inventaire mobile_app : 12,43 Gio ; C: libre 4,76 Gio. Cache+builds+archives :
+5,78 Gio récupérables sans retirer SDK/JDK, dépendances npm/Maven ou APK actuel.
+NDK 27.0 ET 27.1 utilisés ; leur harmonisation requiert un build avant désinstallation.
+Pas d'installation système de remplacement trouvée dans PATH/emplacements standards.
+`clean-dev-storage.ps1` : simulation par défaut, liste blanche, refus jonctions,
+fichiers Git/sensibles, -Apply + confirmation requis. Rétention anciens APK debug
+préparée mais non activée. Aucun hook destructif automatique. Installateur corrigé
+pour ne pas retélécharger les archives lorsque les outils extraits sont déjà là.
+Attendre l'accord de nettoyage, sans interpréter une continuation du développement
+mobile comme autorisation de supprimer ou déplacer les outils.
+
 **État courant prioritaire (25/09/2026, après 9a4fe96)** : le premier APK debug
 a été compilé avec succès (Gradle 7 min 55 s, 242 tâches). Les paragraphes historiques
 ci-dessous décrivant une compilation en cours ou aucun APK sont dépassés. Fichier :

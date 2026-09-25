@@ -9,6 +9,7 @@
   },
   "main": "index.ts",
   "scripts": {
+    "clean-dev-storage": "pwsh -NoProfile -File scripts/clean-dev-storage.ps1",
     "migrations:bundle": "node scripts/bundle-migrations.mjs",
     "pretypecheck": "npm run migrations:bundle",
     "pretest": "npm run migrations:bundle",

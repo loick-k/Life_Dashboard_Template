@@ -23,3 +23,9 @@ artifacts/
 *.hprof
 signing.properties
 local.properties
+
+# Local diagnostics and disposable caches (never source directories).
+coverage/
+.cache/
+*.log
+storage-audit.local.json
