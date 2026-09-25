@@ -11,8 +11,8 @@ compléter pendant chaque portage. « À porter » ne signifie jamais implément
 | Parcours / app_config, checkin | 13 étapes + récapitulatif, reprise, passer, retour, accès direct | À porter |
 | Sommeil | Durée, horaires, sieste ; valeurs partielles préservées | À porter |
 | Alcool | Quantité, zéro distinct d'absence | À porter |
-| Corps | Poids, masse graisseuse, tour de ventre indépendants | À porter |
-| Travail / work_tracking | Trois créneaux, heures isolées, standards, veille, mode ; solde cumulé unique | À porter |
+| Corps | Poids, masse graisseuse, tour de ventre indépendants | Première UI de test connectée ; validation native et mesures précédentes à faire |
+| Travail / work_tracking | Trois créneaux, heures isolées, standards, veille, mode ; solde cumulé unique | UI trois créneaux/mode/durée connectée en test ; solde, standards et veille à faire |
 | Sport | Types V1, plusieurs séances, minutes et distances précises | À porter |
 | Portable | Durée précise, historique et seuil configurable | À porter |
 | Alimentation | Repas, calcul explicite, kcal nettes, absence n.c., résultat unique | À porter |

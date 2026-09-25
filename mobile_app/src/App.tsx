@@ -1,20 +1,25 @@
 import React, { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { openLocalDatabase } from './storage/nativeDatabase';
+import type { SQLiteDatabase } from 'expo-sqlite';
+import { DailyForm } from './ui/DailyForm';
 
 /** Bootstrap only: do not collect personal data until native storage is verified. */
 export default function App() {
   const [attempt, setAttempt] = useState(0);
   const [status, setStatus] = useState<'opening' | 'ready' | 'failed'>('opening');
+  const [database, setDatabase] = useState<SQLiteDatabase>();
+  const [testing, setTesting] = useState(false);
   useEffect(() => {
     let active = true;
     setStatus('opening');
     openLocalDatabase().then(
-      () => { if (active) setStatus('ready'); },
+      db => { if (active) { setDatabase(db); setStatus('ready'); } },
       () => { if (active) setStatus('failed'); },
     );
     return () => { active = false; };
   }, [attempt]);
+  if (testing && database) return <DailyForm database={database} />;
   return (
     <View style={styles.page}>
       <Text accessibilityRole="header" style={styles.title}>🌱 Life Dashboard</Text>
@@ -25,6 +30,7 @@ export default function App() {
         <Text accessibilityLiveRegion="polite" style={styles.status}>
           {status === 'opening' ? 'Ouverture du stockage sécurisé…' : status === 'ready' ? 'Base chiffrée ouverte et schéma vérifié.' : 'Stockage indisponible. Les fichiers existants sont conservés.'}
         </Text>
+        {__DEV__ && status === 'ready' && <Pressable style={styles.button} onPress={() => setTesting(true)}><Text style={styles.buttonText}>Tester les formulaires avec des données fictives</Text></Pressable>}
         {status === 'failed' && <Pressable accessibilityRole="button" onPress={() => setAttempt(value => value + 1)} style={styles.button}>
           <Text style={styles.buttonText}>Réessayer</Text>
         </Pressable>}

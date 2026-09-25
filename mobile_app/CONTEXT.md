@@ -166,6 +166,22 @@ pas corrigé. Un répertoire temporaire local `.tools/tmp` pour `java.io.tmpdir`
 `jdk.net.unixdomain.tmpdir` permet au daemon Gradle de démarrer ; configuration
 ajoutée au script de build. Aucun changement de pare-feu ni paramètre système.
 Le résultat complet de la compilation reste à vérifier ; ne pas annoncer d'APK.
+La compilation atteint maintenant les modules Expo/SQLCipher ; expo-sqlite demande
+en complément NDK 27.0.12077973, installé automatiquement par Gradle.
+
+## Première tranche UI connectée (développement uniquement)
+
+`DailyForm` branche poids, masse graisseuse, tour de ventre et six horaires de
+travail sur DailyDraft/SQLite. Entrée via bouton visible seulement en __DEV__,
+avec avertissement données fictives. Ce sous-parcours technique de quatre écrans
+n'est PAS le parcours final de 13 étapes et ne remplace pas le futur onboarding.
+Dates Aujourd'hui/Hier centralisées Europe/Paris ; virgule décimale acceptée.
+Texte incomplet reste en mémoire, bloque navigation et n'est pas une suppression.
+Effacement explicite confirmé ; bouton Retour Android attend les écritures.
+23 tests Node réussis et TypeScript valide. Pas encore de test UI sur émulateur.
+Prochain travail : vérifier le build natif, tests installation/ouverture chiffrée,
+puis étendre au parcours complet et à la première utilisation. Garder l'APK
+intermédiaire identifié comme essai technique, jamais livraison finale.
 
 Vérification du 25/09/2026 : `.venv-tools` ne démarre plus car son Python de base
 est indisponible. Les neuf tests SQLite ont été exécutés avec le Python du runtime
