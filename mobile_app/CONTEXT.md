@@ -318,6 +318,24 @@ indépendants peuvent progresser.
 
 ## Confidentialité du dépôt
 
+## Reprise quotidienne connectée (25/09/2026)
+
+`CheckinPositions` persiste un ID d'étape stable par date Paris, séparément des
+révisions de daily_entries. Contrôle de concurrence CAS sur la valeur settings ;
+étape inconnue, date invalide et état futur/corrompu refusés sans réinitialisation.
+`DailyForm` charge la position avec la journée, attend les files de sauvegarde puis
+persiste la destination avant d'afficher l'étape. Retour Android et Modifier utilisent
+ce chemin. Un verrou synchrone empêche les doubles navigations, les champs sont
+temporairement non éditables pendant le changement. Chaque journée retrouve sa
+propre position ; l'application commence toujours sur la date du jour Paris.
+Deux tests SQLite sur données synthétiques couvrent réouverture, indépendance des
+dates, retour/modification, non-effacement poids/horaires et refus d'une vue ancienne.
+Suite complète : 33 tests réussis, TypeScript valide. Pas de validation UI Android.
+La progression complété/passé, la page d'accueil et la navigation historique libre
+restent à développer ; le curseur seul ne les remplace pas.
+
+## Confidentialité et état Git
+
 Les exports et bases restent dans des chemins ignorés (`backups/`, `local_data/`).
 Ne pas lire ni publier leur contenu pour une tâche d'architecture. L'import réel
 sera contrôlé avec l'utilisateur ; les préparatifs utilisent des fixtures fictives.
