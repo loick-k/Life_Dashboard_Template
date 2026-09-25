@@ -29,10 +29,17 @@ de parité complète. Ne pas masquer cet échec ni modifier V1 sans diagnostic.
 
 ## Prochain lot concret
 
-Consolider le stockage local : rendre atomiques les migrations et leur journal,
-tester une interruption et une reprise, puis adapter les repositories au schéma
-V2. Actuellement `database/local_store.py` utilise `executescript` puis inscrit
-le journal séparément : l'atomicité globale n'est pas encore garantie.
+Les migrations Python de référence et leur journal sont maintenant atomiques
+(`BEGIN IMMEDIATE`, rollback sur interruption, synchronisation FULL). Les commandes
+de transaction dans une migration sont refusées avant exécution. Neuf tests passent
+le 25/09/2026 : journal refusé, reprise après réouverture, interruption, checksum,
+transaction appelante préservée, refus de COMMIT et corps de trigger, plus les trois
+tests de schéma existants. Ce résultat ne valide ni Android ni le chiffrement.
+
+Prochain travail : créer le runtime Expo/TypeScript et porter le contrat de
+stockage vers SQLite natif chiffré, avec repositories ciblés et contrôle de révision.
+Éviter de développer deux applications complètes Python et TypeScript : Python
+reste une référence de schéma et de calculs pour les tests de concordance.
 
 Ensuite : import synthétique V1 vers V2, socle Android, chiffrement, formulaires,
 sauvegardes/restauration, bilans/PDF, intégrations optionnelles, validation téléphone.
@@ -69,6 +76,24 @@ interpréteur existant vérifié ou un environnement dédié ; ne pas modifier c
 de la V1. Les tests de PDF exigent notamment `reportlab` et `pypdf`. Le dossier
 `mobile_app/.venv-tools` est destiné aux outils d'export ; vérifier ses dépendances
 avant de le réutiliser. Aucune commande Android n'existe encore.
+
+Vérification du 25/09/2026 : `.venv-tools` ne démarre plus car son Python de base
+est indisponible. Les neuf tests SQLite ont été exécutés avec le Python du runtime
+Codex (`.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe`),
+sans dépendance tierce et sans modifier l'environnement V1.
+
+## Exigences de livraison complémentaires
+
+- React Native, Expo et TypeScript ; pas de Streamlit/WebView ni serveur Python.
+- APK release signé stable, autonome, SHA-256 et guide de reconstruction.
+- Assistant français reprenable : données vides/import/restauration, préférences,
+  travail, protection locale/biométrie, récupération et intégrations facultatives.
+- Parcours minimal entièrement hors ligne et sans compte ni secret externe.
+- Sauvegarde chiffrée authentifiée restaurable sur un autre téléphone : récupération
+  indépendante du Keystore d'origine ; clés et jetons exclus de Git et des exports.
+- Import réel, push, build cloud et déploiement nécessitent un accord explicite.
+- Vérification d'installation, fermeture forcée, mise à jour et restauration sur
+  Android obligatoire ; APK et matrice de parité restent à réaliser.
 
 ## Données réelles et Git
 

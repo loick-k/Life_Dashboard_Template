@@ -1,7 +1,8 @@
 # Plan de migration contrôlée
 
-Chaque étape se termine par un commit indépendant, des tests et une validation
-explicite avant de commencer la suivante.
+Chaque lot se termine par un commit indépendant et des tests. Continuer les lots
+locaux autorisés sans confirmation de routine. Import réel, push et services
+externes nécessitent une autorisation explicite.
 
 ## Étape 0 - Référence et sauvegarde
 
@@ -67,8 +68,8 @@ Condition de sortie : chaque ligne source est retrouvée une seule fois dans SQL
 
 ## Lot préalable - Consolidation du stockage local
 
-- Rendre atomiques chaque migration SQLite et son inscription au journal.
-- Tester interruption, reprise et contrôle des checksums.
+- [x] Rendre atomiques les migrations Python de référence et leur journal.
+- [x] Tester interruption, reprise et contrôle des checksums (9 tests SQLite).
 - Adapter les repositories au schéma SQLite V2, distinct du schéma V1.
 - Vérifier les écritures ciblées et les conflits de révision locaux.
 
@@ -82,6 +83,8 @@ Ce lot précède l'import 3B. La préparation locale n'exige aucune connexion Ne
 - Aujourd'hui, Hier et reprise automatique.
 - Indiquer l'état réel de sauvegarde locale et les erreurs.
 - Démarrer sans Internet ni connexion Google obligatoire.
+- Assistant français reprenable, réglages, protection locale et récupération.
+- Porter et tester les migrations et repositories dans le runtime TypeScript.
 
 ## Étape 6 - Migration verticale des indicateurs
 
@@ -119,3 +122,8 @@ Valider l'application Android sur téléphone, réaliser un dernier import expli
 si souhaité et documenter installation, mise à jour et récupération. Conserver
 Streamlit V1 avec toutes ses fonctions et ses écritures ; aucune suppression ou
 conversion en lecture seule n'est prévue.
+
+Livrable : APK release signé localement, autonome sans Expo Go, versionné et
+accompagné du SHA-256, des commandes de reconstruction et des guides d'installation,
+mise à jour et récupération. Signature hors Git et stable entre mises à jour.
+Ne pas confondre compilation réussie et validation sur téléphone.
