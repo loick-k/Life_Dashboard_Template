@@ -33,7 +33,7 @@ compléter pendant chaque portage. « À porter » ne signifie jamais implément
 | Fonction | Preuve de sortie attendue | État |
 |---|---|---|
 | Migrations atomiques | Interruption et reprise dans le runtime réel | Référence Python : 9 tests réussis ; Android à faire |
-| SQLCipher + Keystore | Fichier illisible sans clé, réouverture et mauvaise clé refusée | Configuration native préparée, non vérifiée |
+| SQLCipher + Keystore | Fichier illisible sans clé, réouverture et mauvaise clé refusée | Adaptateur natif écrit ; 5 tests de coordination, validation Android à faire |
 | Autosauvegarde | Saisie, retour, concurrence, arrêt forcé et redémarrage | À faire |
 | Assistant initial | Hors ligne, interruption/reprise, ne réapparaît pas après fin | À faire |
 | Protection locale | Verrouillage, biométrie, reprise sûre et récupération | À faire |

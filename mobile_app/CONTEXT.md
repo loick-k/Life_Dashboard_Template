@@ -89,14 +89,29 @@ Depuis `mobile_app/` : `npm ci`, `npm test`, `npm run typecheck`,
 - Prebuild Android : réussi ; propriété SQLCipher true et allowBackup false
   observées dans les fichiers générés. Permissions externes inutiles bloquées
   dans app.json ; régénérer puis vérifier le manifeste fusionné à la compilation.
-- `npm audit --omit=dev` : dix alertes modérées propagées depuis uuid <11.1.1
-  via xcode/outils Expo (GHSA-w5hq-g745-h8pq). Pas de correction forcée vers Expo
-  46 : analyser une mise à jour/override compatible et revalider le prebuild.
+- `npm audit --omit=dev` : zéro vulnérabilité après override ciblé xcode/uuid
+  vers 11.1.1 (GHSA-w5hq-g745-h8pq). Appel generateUuid validé sur un objet
+  synthétique et prebuild Android réussi. Ne pas rétrograder Expo via audit fix.
 - Java/adb absents du PATH ; SDK Android non installé à l'emplacement standard.
-- Avertissement Expo : ajouter expo-system-ui pour appliquer le thème clair.
+- expo-system-ui installé ; nouveau prebuild réussi sans cet avertissement.
 - Matrice initiale : docs/06_parite_v1_v2.md ; aucun écran métier porté encore.
 - Prochain lot : environnement Android local, ouverture SQLCipher/Keystore et
   migrations TypeScript, puis formulaires et assistant. Pas de données réelles.
+
+## Ouverture sécurisée — code ajouté, validation native restante
+
+`src/storage/secureOpening.ts` coordonne une ouverture unique, persiste la clé
+avant création de fichier, refuse une base existante sans clé et conserve fichiers
+et clé en cas d'erreur. L'adaptateur natif utilise 32 octets aléatoires, SecureStore,
+SQLCipher obligatoire, lecture du schéma et integrity_check avant les écritures.
+Il n'est pas encore appelé depuis l'interface (aucune donnée personnelle collectée).
+Sept tests Node réussis au total et TypeScript valide. Les tests utilisent des
+ports simulés : ils prouvent l'ordre et le refus sûr, PAS le chiffrement Android.
+Les clés ne sont jamais renouvelées automatiquement après une erreur de lecture.
+
+Attention pour les migrations natives : les transactions exclusives Expo ouvrent
+une autre connexion ; vérifier l'application de la clé SQLCipher sur cette connexion
+ou utiliser une transaction sérialisée sur la connexion déjà déverrouillée.
 
 Vérification du 25/09/2026 : `.venv-tools` ne démarre plus car son Python de base
 est indisponible. Les neuf tests SQLite ont été exécutés avec le Python du runtime

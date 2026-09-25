@@ -2,6 +2,11 @@
   "name": "life-dashboard-mobile",
   "version": "0.1.0",
   "private": true,
+  "overrides": {
+    "xcode": {
+      "uuid": "11.1.1"
+    }
+  },
   "main": "index.ts",
   "scripts": {
     "start": "expo start --dev-client",
@@ -16,6 +21,7 @@
     "expo-file-system": "~57.0.7",
     "expo-secure-store": "~57.0.4",
     "expo-sqlite": "~57.0.3",
+    "expo-system-ui": "~57.0.4",
     "react": "19.2.3",
     "react-native": "0.86.3"
   },
