@@ -14,3 +14,12 @@ web-build/
 *.jks
 *.keystore
 google-services.json
+android/
+ios/
+artifacts/
+.tools/
+*.apk
+*.aab
+*.hprof
+signing.properties
+local.properties

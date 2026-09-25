@@ -1,0 +1,24 @@
+{
+  "expo": {
+    "name": "Life Dashboard",
+    "slug": "life-dashboard-mobile",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "platforms": ["android"],
+    "android": {
+      "package": "app.lifedashboard.mobile",
+      "versionCode": 1,
+      "allowBackup": false,
+      "blockedPermissions": [
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.SYSTEM_ALERT_WINDOW"
+      ]
+    },
+    "plugins": [
+      ["expo-sqlite", {"useSQLCipher": true}],
+      ["expo-secure-store", {"configureAndroidBackup": true}]
+    ]
+  }
+}

@@ -15,7 +15,9 @@ remplacement forcé de la V1 et aucune synchronisation automatique des deux base
 - `fe942d1` : repositories SQL injectables, ciblant encore le schéma historique V1.
 - `85f085a` : séparation de l'adaptateur Streamlit et de l'analyse nutritionnelle.
 - `3db45cb` : schéma SQLite V2 et outils Python locaux de référence (étape 3A).
-- Aucun projet Android/Expo installable actuellement dans `mobile_app/`.
+- Socle Expo SDK 57 / React Native 0.86.3 / TypeScript créé dans `mobile_app/`.
+  Dépendances verrouillées, configuration SQLCipher/SecureStore et écran de
+  développement sans saisie personnelle. Aucun APK compilé ni stockage ouvert.
 - Chiffrement Android, sauvegarde chiffrée, restauration V2 et convertisseur
   d'import : architecture documentée, implémentation à réaliser.
 - Les services Python n'ont pas tous leur indépendance transitive de Streamlit :
@@ -75,7 +77,26 @@ python tests/smoke_app.py
 interpréteur existant vérifié ou un environnement dédié ; ne pas modifier celui
 de la V1. Les tests de PDF exigent notamment `reportlab` et `pypdf`. Le dossier
 `mobile_app/.venv-tools` est destiné aux outils d'export ; vérifier ses dépendances
-avant de le réutiliser. Aucune commande Android n'existe encore.
+avant de le réutiliser.
+
+Depuis `mobile_app/` : `npm ci`, `npm test`, `npm run typecheck`,
+`npm run prebuild:android`, `npm run android`. Désactiver la télémétrie Expo avec
+`EXPO_NO_TELEMETRY=1`. Aucun service de build cloud n'a été utilisé.
+
+## Validation du socle Expo (25/09/2026)
+
+- TypeScript : réussi ; deux tests de configuration réussis (pas des tests natifs).
+- Prebuild Android : réussi ; propriété SQLCipher true et allowBackup false
+  observées dans les fichiers générés. Permissions externes inutiles bloquées
+  dans app.json ; régénérer puis vérifier le manifeste fusionné à la compilation.
+- `npm audit --omit=dev` : dix alertes modérées propagées depuis uuid <11.1.1
+  via xcode/outils Expo (GHSA-w5hq-g745-h8pq). Pas de correction forcée vers Expo
+  46 : analyser une mise à jour/override compatible et revalider le prebuild.
+- Java/adb absents du PATH ; SDK Android non installé à l'emplacement standard.
+- Avertissement Expo : ajouter expo-system-ui pour appliquer le thème clair.
+- Matrice initiale : docs/06_parite_v1_v2.md ; aucun écran métier porté encore.
+- Prochain lot : environnement Android local, ouverture SQLCipher/Keystore et
+  migrations TypeScript, puis formulaires et assistant. Pas de données réelles.
 
 Vérification du 25/09/2026 : `.venv-tools` ne démarre plus car son Python de base
 est indisponible. Les neuf tests SQLite ont été exécutés avec le Python du runtime
