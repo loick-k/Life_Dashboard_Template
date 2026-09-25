@@ -4,6 +4,11 @@ $env:JAVA_HOME = Join-Path $mobileRoot '.tools/jdk-17.0.20.1+1'
 $env:ANDROID_HOME = Join-Path $mobileRoot '.tools/android-sdk'
 $env:GRADLE_USER_HOME = Join-Path $mobileRoot '.tools/gradle-cache'
 $env:EXPO_NO_TELEMETRY = '1'
+$javaTmp = Join-Path $mobileRoot '.tools/tmp'
+New-Item -ItemType Directory -Path $javaTmp -Force | Out-Null
+# Windows AF_UNIX sockets used by Java selectors fail in some redirected temp paths.
+# Scope these properties to this build process; do not change system temp/firewall.
+$env:JAVA_TOOL_OPTIONS = "$env:JAVA_TOOL_OPTIONS -Djdk.net.unixdomain.tmpdir=$javaTmp -Djava.io.tmpdir=$javaTmp"
 if (-not (Test-Path -LiteralPath (Join-Path $env:JAVA_HOME 'bin/java.exe'))) { throw 'Run install-android-tools.ps1 first.' }
 Push-Location $mobileRoot
 try {

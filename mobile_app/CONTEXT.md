@@ -146,9 +146,26 @@ vues anciennes sans écrasement. Champs inconnus/valeurs invalides refusés, und
 omis, null suppression, zéro valeur réelle. Les six horaires sont conservés même
 incomplets ; la durée dérivée est recalculée dans la même mise à jour atomique.
 Le domaine travail porte les minutes précises, nuit et cible 462 minutes.
-18 tests Node réussis, TypeScript valide ; tests de réouverture sur fichier réel
+21 tests Node réussis, TypeScript valide ; tests de réouverture sur fichier réel
 synthétique, conflits, null/zéro et trois créneaux. Aucune interface de saisie
 encore connectée : sport, progression, social, objectifs, assistant restent à faire.
+
+`DailyDraft` sérialise les modifications valides d'une journée avec la dernière
+révision confirmée. Les saisies non confirmées restent visibles dans le brouillon.
+`flush()` doit être attendu avant navigation ; il refuse la sortie en cas d'échec.
+`retry()` explicite conserve la révision attendue et ne résout jamais un conflit
+en écrasant une version récente. Trois tests couvrent ordre, erreur et conflit.
+Cette file reste en mémoire : seule une écriture confirmée survit à un arrêt forcé.
+Brancher l'UI et son état de sauvegarde avant de considérer l'autosauvegarde livrée.
+
+## Diagnostic du premier build
+
+Premier échec avant compilation : Java `PipeImpl`/`UnixDomainSockets.connect`
+(`Unable to establish loopback connection`, Invalid argument). Préférer IPv4 n'a
+pas corrigé. Un répertoire temporaire local `.tools/tmp` pour `java.io.tmpdir` et
+`jdk.net.unixdomain.tmpdir` permet au daemon Gradle de démarrer ; configuration
+ajoutée au script de build. Aucun changement de pare-feu ni paramètre système.
+Le résultat complet de la compilation reste à vérifier ; ne pas annoncer d'APK.
 
 Vérification du 25/09/2026 : `.venv-tools` ne démarre plus car son Python de base
 est indisponible. Les neuf tests SQLite ont été exécutés avec le Python du runtime
