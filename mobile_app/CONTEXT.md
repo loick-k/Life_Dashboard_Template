@@ -133,6 +133,22 @@ utiliser android.exe et les chemins avec slash.
 `scripts/build-android-debug.ps1` prépare uniquement un APK de développement, pas
 une livraison autonome. Aucun APK encore compilé. Tester la fin d'installation
 SDK puis exécuter ce script ; le build release et sa signature restent à réaliser.
+Composants API 36, build-tools 36.0.0, NDK 27.1.12297006 et CMake 3.22.1 présents
+et contrôlés par existence de leurs exécutables/metadata. Android CLI a retourné
+1 malgré des extractions terminées : vérifier les erreurs du build avant de
+conclure à une installation pleinement validée. Première compilation lancée.
+
+## Écritures quotidiennes TypeScript
+
+`DailyEntries` crée une journée à UUID stable et applique uniquement les champs
+explicitement fournis. UPDATE RETURNING avec contrôle de révision refuse les
+vues anciennes sans écrasement. Champs inconnus/valeurs invalides refusés, undefined
+omis, null suppression, zéro valeur réelle. Les six horaires sont conservés même
+incomplets ; la durée dérivée est recalculée dans la même mise à jour atomique.
+Le domaine travail porte les minutes précises, nuit et cible 462 minutes.
+18 tests Node réussis, TypeScript valide ; tests de réouverture sur fichier réel
+synthétique, conflits, null/zéro et trois créneaux. Aucune interface de saisie
+encore connectée : sport, progression, social, objectifs, assistant restent à faire.
 
 Vérification du 25/09/2026 : `.venv-tools` ne démarre plus car son Python de base
 est indisponible. Les neuf tests SQLite ont été exécutés avec le Python du runtime
