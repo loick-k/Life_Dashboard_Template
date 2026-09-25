@@ -10,11 +10,13 @@ import { SportForm, type SportFormHandle } from './SportForm';
 import { CHECKIN_SECTIONS as sections, type CheckinField as Field } from '../domain/checkinConfig';
 import { CatalogForm, type CatalogFormHandle } from './CatalogForm';
 import { CheckinPositions, type CheckinPosition } from '../storage/checkinPosition';
+import { readProgress, setCheckinProgress } from '../storage/checkinProgress';
 
 /** Vertical development slice, not the final daily journey. Synthetic data only. */
 export function DailyForm({ database }: { database: SQLiteDatabase }) {
   const [date, setDate] = useState(parisDate);
   const [step, setStep] = useState(0);
+  const [home, setHome] = useState(true);
   const [draft, setDraft] = useState<DailyDraft>();
   const [raw, setRaw] = useState<Record<string, string>>({});
   const [invalid, setInvalid] = useState<Set<string>>(new Set());
@@ -28,7 +30,7 @@ export function DailyForm({ database }: { database: SQLiteDatabase }) {
   const refresh = () => repaint(value => value + 1);
   useEffect(() => {
     let active = true;
-    setDraft(undefined); setRaw({}); setInvalid(new Set()); setError(''); position.current = null;
+    setDraft(undefined); setRaw({}); setInvalid(new Set()); setError(''); setHome(true); position.current = null;
     const repo = new DailyEntries(database, Crypto.randomUUID);
     Promise.all([repo.getOrCreate(date), new CheckinPositions(database).read(date)]).then(([row, cursor]) => {
       if (active) { position.current = cursor; setStep(sections.findIndex(item => item.id === cursor.step)); setDraft(new DailyDraft(repo, row)); }
@@ -46,11 +48,19 @@ export function DailyForm({ database }: { database: SQLiteDatabase }) {
     if (!position.current || !sections[target]) throw new Error('Position indisponible');
     position.current = await new CheckinPositions(database).move(date, position.current.revision, sections[target]!.id);
     setStep(target);
+    setHome(false);
+  };
+  const advance = async (status: 'completed' | 'skipped') => {
+    if (!draft) return;
+    const updated = await setCheckinProgress(database, draft.snapshot, { step: sections[step]!.id, status });
+    setDraft(new DailyDraft(new DailyEntries(database, Crypto.randomUUID), updated));
+    await moveStep(step + 1);
   };
   useEffect(() => {
     const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
       void navigate(async () => {
-        if (step > 0) await moveStep(step - 1);
+        if (!home && step > 0) await moveStep(step - 1);
+        else if (!home) setHome(true);
         else Alert.alert('Quitter', 'Les écritures sont confirmées.', [{ text: 'Rester' }, { text: 'Quitter', onPress: () => BackHandler.exitApp() }]);
       });
       return true;
@@ -72,15 +82,23 @@ export function DailyForm({ database }: { database: SQLiteDatabase }) {
   };
   const section = sections[step]!;
   const snapshot = draft?.snapshot;
+  let progress: ReturnType<typeof readProgress> | undefined;
+  try { if (snapshot) progress = readProgress(snapshot); } catch { /* Preserve data; offer no progress mutations below. */ }
   return <ScrollView contentContainerStyle={styles.page} keyboardShouldPersistTaps="handled">
     <Text style={styles.notice}>Essai technique · données fictives uniquement</Text>
     <View style={styles.row}>{[['Aujourd’hui', parisDate()], ['Hier', shiftDate(parisDate(), -1)]].map(([label, target]) => <Pressable accessibilityRole="button" disabled={busy || !draft} key={label} style={styles.secondary} onPress={() => void navigate(() => { if (target !== date) { setDraft(undefined); setDate(target!); } })}><Text>{label}</Text></Pressable>)}</View>
     <Text>{date}</Text><Text style={styles.title}>Mon point quotidien</Text>
-    <Text>Étape {step + 1} sur {sections.length}</Text>
-    <Text style={styles.heading}>{section.title}</Text>
+    {!home && <Text>Étape {step + 1} sur {sections.length}</Text>}
+    <Text style={styles.heading}>{home ? 'Ta saisie du jour' : section.title}</Text>
+    {progress && <Text>Progression · {progress.count}/13 indicateurs traités</Text>}
     {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
     {draft?.status === 'failed' && <Pressable style={styles.secondary} onPress={() => { void draft.retry().then(() => { setError(''); refresh(); }, refresh); }}><Text>Réessayer la sauvegarde</Text></Pressable>}
-    {!draft ? <Text>Chargement local…</Text> : <View pointerEvents={busy ? 'none' : 'auto'}>
+    {!draft ? <Text>Chargement local…</Text> : !progress ? <Text style={styles.error}>Progression incompatible. Les données sont conservées.</Text> : home ? <View pointerEvents={busy ? 'none' : 'auto'}>
+      <Pressable style={styles.primary} onPress={() => void navigate(() => moveStep(progress.finished ? sections.length - 1 : step))}><Text style={styles.white}>{progress.finished ? 'Voir le récapitulatif' : progress.count ? 'Reprendre mon point quotidien' : 'Commencer mon point quotidien'}</Text></Pressable>
+      <Text style={styles.heading}>Accès direct</Text>
+      <View style={styles.row}>{sections.filter(item => item.id !== 'summary').map(item => <Pressable key={item.id} style={styles.secondary} onPress={() => void navigate(() => moveStep(sections.indexOf(item)))}><Text>{item.title}{progress.completed.includes(item.id) ? ' ✓' : progress.skipped.includes(item.id) ? ' · passé' : ''}</Text></Pressable>)}</View>
+    </View> : <View pointerEvents={busy ? 'none' : 'auto'}>
+      <Pressable style={styles.secondary} onPress={() => void navigate(() => setHome(true))}><Text>Accueil de la journée</Text></Pressable>
       {section.id === 'sport' && <SportForm key={draft.snapshot.entry_id} ref={sports} database={database} entryId={draft.snapshot.entry_id} />}
       {['social', 'goals'].includes(section.id) && <CatalogForm key={`${draft.snapshot.entry_id}:${section.id}`} ref={catalog} database={database} entryId={draft.snapshot.entry_id} kind={section.id === 'social' ? 'friends' : 'goals'} />}
       {section.id === 'work' && <View style={styles.row}>{['Télétravail', 'Day off', 'Bureau', 'Déplacement'].map(mode => <Pressable accessibilityRole="button" accessibilityState={{ selected: snapshot?.work_mode === mode }} key={mode} style={[styles.secondary, snapshot?.work_mode === mode && styles.selected]} onPress={() => save('work_mode', mode)}><Text>{mode}</Text></Pressable>)}</View>}
@@ -105,7 +123,13 @@ export function DailyForm({ database }: { database: SQLiteDatabase }) {
       {draft.status === 'saving' && <Text accessibilityLiveRegion="polite">Enregistrement en cours…</Text>}
       <View style={styles.row}>
         <Pressable disabled={step === 0 || busy} style={styles.secondary} onPress={() => void navigate(() => moveStep(step - 1))}><Text>← Retour</Text></Pressable>
-        <Pressable disabled={step === sections.length - 1 || busy} style={styles.primary} onPress={() => void navigate(() => moveStep(step + 1))}><Text style={styles.white}>Continuer →</Text></Pressable>
+        {section.id !== 'summary' ? <>
+          <Pressable disabled={busy} style={styles.secondary} onPress={() => void navigate(() => advance('skipped'))}><Text>Passer</Text></Pressable>
+          <Pressable disabled={busy} style={styles.primary} onPress={() => void navigate(() => advance('completed'))}><Text style={styles.white}>Continuer →</Text></Pressable>
+        </> : <Pressable disabled={busy || progress.count !== 13} style={styles.primary} onPress={() => void navigate(async () => {
+          const updated = await setCheckinProgress(database, draft.snapshot, { finish: true });
+          setDraft(new DailyDraft(new DailyEntries(database, Crypto.randomUUID), updated)); setHome(true);
+        })}><Text style={styles.white}>{progress.count === 13 ? 'Terminer mon point quotidien' : 'Traite les étapes restantes depuis l’accueil'}</Text></Pressable>}
       </View>
     </View>}
   </ScrollView>;

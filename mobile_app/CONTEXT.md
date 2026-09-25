@@ -336,6 +336,30 @@ restent à développer ; le curseur seul ne les remplace pas.
 
 ## Confidentialité et état Git
 
+## Accueil et progression du point quotidien (25/09/2026)
+
+Accueil relié au formulaire : démarrer/reprendre, récapitulatif après fin, accès
+direct aux 13 catégories et compteur des indicateurs traités. Continuer marque
+l'étape traitée, Passer la marque passée sans effacer aucune valeur. Ces deux
+états sont exclusifs et réversibles. Terminer exige 13 étapes traitées ou passées.
+Un indicateur traité ne garantit pas que tous ses champs facultatifs sont remplis.
+
+`setCheckinProgress` utilise les colonnes existantes de daily_entries, jamais une
+seconde copie de progression dans settings. Mise à jour ciblée CAS avec incrément
+de révision ; le formulaire adopte la ligne confirmée après flush et avant de
+changer de curseur. Si le curseur échoue après progression, les mesures et la
+progression restent conservées, la navigation ne prétend pas avoir réussi.
+Les IDs d'étapes V2 devront être rapprochés des valeurs V1 lors du futur import.
+
+35 tests Node passent et TypeScript valide. Tests progression : exclusivité,
+changement passé/traité, refus de fin anticipée, conflit ancien, indépendance des
+dates, modification après fin et non-effacement des autres colonnes. Aucun écran
+n'a été exécuté sur Android ; l'APK debug précédent ne contient pas ces ajouts.
+Prochains travaux : historique libre, récapitulatif sport/social/objectifs complet,
+réglages et assistant, puis sauvegardes/import/bilans et validation native.
+
+## Confidentialité et état Git (rappel)
+
 Les exports et bases restent dans des chemins ignorés (`backups/`, `local_data/`).
 Ne pas lire ni publier leur contenu pour une tâche d'architecture. L'import réel
 sera contrôlé avec l'utilisateur ; les préparatifs utilisent des fixtures fictives.

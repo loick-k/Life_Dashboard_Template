@@ -82,7 +82,8 @@ Ce lot précède l'import 3B. La préparation locale n'exige aucune connexion Ne
 - SQLite local chiffré et protection des clés Android.
 - Aujourd'hui, Hier et reprise automatique.
   Curseur d'étape par date relié au formulaire ; tests de réouverture SQLite réussis,
-  validation native et accueil/progression restant à réaliser.
+  accueil/progression maintenant connectés et testés côté stockage ; validation
+  native et récapitulatif des relations/sport restant à réaliser.
 - Indiquer l'état réel de sauvegarde locale et les erreurs.
 - Démarrer sans Internet ni connexion Google obligatoire.
 - Assistant français reprenable, réglages, protection locale et récupération.
