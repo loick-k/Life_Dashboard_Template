@@ -9,15 +9,15 @@ compléter pendant chaque portage. « À porter » ne signifie jamais implément
 |---|---|---|
 | Navigation principale / app | Aujourd'hui, Todo, Bilan, Réglages ; date du jour Paris | À porter |
 | Parcours / app_config, checkin | 13 étapes + récapitulatif, reprise, passer, retour, accès direct | À porter |
-| Sommeil | Durée, horaires, sieste ; valeurs partielles préservées | À porter |
-| Alcool | Quantité, zéro distinct d'absence | À porter |
+| Sommeil | Durée, horaires, sieste ; valeurs partielles préservées | Saisie connectée ; calculs horaires et validation native à faire |
+| Alcool | Quantité, zéro distinct d'absence | Saisie connectée ; validation native à faire |
 | Corps | Poids, masse graisseuse, tour de ventre indépendants | Première UI de test connectée ; validation native et mesures précédentes à faire |
 | Travail / work_tracking | Trois créneaux, heures isolées, standards, veille, mode ; solde cumulé unique | UI trois créneaux/mode/durée connectée en test ; solde, standards et veille à faire |
 | Sport | Types V1, plusieurs séances, minutes et distances précises | Repository, migration et UI d'essai connectés ; validation Android à faire |
-| Portable | Durée précise, historique et seuil configurable | À porter |
-| Alimentation | Repas, calcul explicite, kcal nettes, absence n.c., résultat unique | À porter |
-| Temps pour moi | Activités distinctes, sorties/détente, total immédiat | À porter |
-| Écoute | Scores et libellé configurable des proches | À porter |
+| Portable | Durée précise, historique et seuil configurable | Minutes connectées ; réglages/historique à faire |
+| Alimentation | Repas, calcul explicite, kcal nettes, absence n.c., résultat unique | Repas et affichage kcal connectés ; analyse à faire |
+| Temps pour moi | Activités distinctes, sorties/détente, total immédiat | Saisie et total connectés ; validation native à faire |
+| Écoute | Scores et libellé configurable des proches | Saisie connectée ; libellé réglable à faire |
 | Social | Personnes, catégories, récurrence, périodes, historique et journal quotidien | À porter |
 | Objectifs | Ajout, actifs, complétés, critères, journal et historique | À porter |
 | Bilan / dashboard_metrics | Courbes par catégorie, vue hebdomadaire, objectifs, évaluation semaine courante | À porter |

@@ -216,6 +216,23 @@ ancien handle. Script désormais limité à 2 workers, sans parallélisme Gradle
 heap 1536 Mo, Kotlin dans le processus et CMake limité. Relancer ce script pour
 utiliser les caches existants ; aucun APK confirmé à ce stade.
 
+## Extension du parcours d'indicateurs
+
+Configuration déclarative `domain/checkinConfig.ts` dans l'ordre V1 : 13 catégories
+et récapitulatif. Les branchements UI utilisent des IDs stables, pas des indices.
+Sommeil/sieste, alcool, portable, repas, temps pour moi et écoute sont maintenant
+reliés à l'autosauvegarde existante. Total temps pour moi immédiat ; kcal affichées
+avec n.c. en absence d'estimation, analyse externe encore indisponible. Récapitulatif
+des champs quotidiens avec accès Modifier. Social/objectifs restent explicitement
+non portés (aucune fausse saisie). Reprise d'étape et progression restent à faire.
+27 tests Node réussis, TypeScript valide. Le test de configuration garantit que
+chaque champ quotidien éditable est présent exactement une fois (mode travail
+traité séparément). Durées encore affichées en minutes sauf sport : harmonisation
+heures/minutes et vérification des règles sommeil V1 à réaliser.
+
+Build limité relancé, atteint compilation Kotlin Expo avec avertissements de
+dépréciation ; pas d'APK confirmé. Conserver le processus actif tant qu'il avance.
+
 Vérification du 25/09/2026 : `.venv-tools` ne démarre plus car son Python de base
 est indisponible. Les neuf tests SQLite ont été exécutés avec le Python du runtime
 Codex (`.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe`),

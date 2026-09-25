@@ -5,18 +5,9 @@ import type { SQLiteDatabase } from 'expo-sqlite';
 import { DailyEntries, dailyRules, type DailyField } from '../storage/dailyEntries';
 import { DailyDraft } from '../storage/dailyDraft';
 import { parisDate, shiftDate } from '../domain/dates';
-import { parseInput, type InputKind } from '../domain/input';
+import { parseInput } from '../domain/input';
 import { SportForm, type SportFormHandle } from './SportForm';
-
-type Field = { key: DailyField; label: string; kind: InputKind };
-const field = (key: DailyField, label: string, kind: InputKind = 'number'): Field => ({ key, label, kind });
-const sections = [
-  { title: 'Poids', fields: [field('weight_kg', 'Poids (kg)')] },
-  { title: 'Masse graisseuse', fields: [field('body_fat_pct', 'Masse graisseuse (%)')] },
-  { title: 'Tour de ventre', fields: [field('belly_cm', 'Tour de ventre (cm)')] },
-  { title: 'Temps de travail', fields: [field('work_start_time', 'Heure de début', 'time'), field('work_morning_end_time', 'Fin de matinée', 'time'), field('work_afternoon_start_time', 'Début d’après-midi', 'time'), field('work_end_time', 'Fin de journée', 'time'), field('work_third_start_time', 'Créneau 3 · début', 'time'), field('work_third_end_time', 'Créneau 3 · fin', 'time')] },
-  { title: 'Séances de sport', fields: [] },
-];
+import { CHECKIN_SECTIONS as sections, type CheckinField as Field } from '../domain/checkinConfig';
 
 /** Vertical development slice, not the final daily journey. Synthetic data only. */
 export function DailyForm({ database }: { database: SQLiteDatabase }) {
@@ -70,23 +61,32 @@ export function DailyForm({ database }: { database: SQLiteDatabase }) {
     <Text style={styles.notice}>Essai technique · données fictives uniquement</Text>
     <View style={styles.row}>{[['Aujourd’hui', parisDate()], ['Hier', shiftDate(parisDate(), -1)]].map(([label, target]) => <Pressable accessibilityRole="button" key={label} style={styles.secondary} onPress={() => void navigate(() => setDate(target!))}><Text>{label}</Text></Pressable>)}</View>
     <Text>{date}</Text><Text style={styles.title}>Mon point quotidien</Text>
+    <Text>Étape {step + 1} sur {sections.length}</Text>
     <Text style={styles.heading}>{section.title}</Text>
     {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
     {draft?.status === 'failed' && <Pressable style={styles.secondary} onPress={() => { void draft.retry().then(() => { setError(''); refresh(); }, refresh); }}><Text>Réessayer la sauvegarde</Text></Pressable>}
     {!draft ? <Text>Chargement local…</Text> : <>
-      {step === 4 && <SportForm key={draft.snapshot.entry_id} ref={sports} database={database} entryId={draft.snapshot.entry_id} />}
-      {step === 3 && <View style={styles.row}>{['Télétravail', 'Day off', 'Bureau', 'Déplacement'].map(mode => <Pressable accessibilityRole="button" accessibilityState={{ selected: snapshot?.work_mode === mode }} key={mode} style={[styles.secondary, snapshot?.work_mode === mode && styles.selected]} onPress={() => save('work_mode', mode)}><Text>{mode}</Text></Pressable>)}</View>}
+      {section.id === 'sport' && <SportForm key={draft.snapshot.entry_id} ref={sports} database={database} entryId={draft.snapshot.entry_id} />}
+      {['social', 'goals'].includes(section.id) && <Text>Formulaire en cours de portage. Aucune donnée de cette catégorie n’est modifiée ici.</Text>}
+      {section.id === 'work' && <View style={styles.row}>{['Télétravail', 'Day off', 'Bureau', 'Déplacement'].map(mode => <Pressable accessibilityRole="button" accessibilityState={{ selected: snapshot?.work_mode === mode }} key={mode} style={[styles.secondary, snapshot?.work_mode === mode && styles.selected]} onPress={() => save('work_mode', mode)}><Text>{mode}</Text></Pressable>)}</View>}
       {section.fields.map(item => <View key={item.key} style={styles.field}>
         <Text style={styles.label}>{item.label}</Text>
         <TextInput accessibilityLabel={item.label} value={raw[item.key] ?? String(snapshot?.[item.key] ?? '')}
           onChangeText={value => edit(item, value)} style={[styles.input, invalid.has(item.key) && styles.invalid]}
           keyboardType={item.kind === 'number' ? 'decimal-pad' : 'default'}
+          multiline={item.kind === 'text'}
           placeholder={item.kind === 'time' ? 'HH:MM' : 'Non renseigné'} />
         <Pressable accessibilityLabel={`Effacer ${item.label}`} onPress={() => Alert.alert('Effacer cette valeur ?', item.label, [{ text: 'Annuler' }, { text: 'Effacer', style: 'destructive', onPress: () => {
           setRaw(previous => ({ ...previous, [item.key]: '' })); setInvalid(previous => { const next = new Set(previous); next.delete(item.key); return next; }); save(item.key, null);
         } }])}><Text style={styles.clear}>Effacer</Text></Pressable>
       </View>)}
-      {step === 3 && <Text style={styles.total}>Temps travaillé : {snapshot?.work_duration_minutes ?? 'n.c.'} min</Text>}
+      {section.id === 'work' && <Text style={styles.total}>Temps travaillé : {snapshot?.work_duration_minutes ?? 'n.c.'} min</Text>}
+      {section.id === 'me-time' && <Text style={styles.total}>Temps pour moi total : {section.fields.reduce((sum, item) => sum + Number(snapshot?.[item.key] ?? 0), 0)} min</Text>}
+      {section.id === 'nutrition' && <Text style={styles.total}>Kcal : {snapshot?.kcal ?? 'n.c.'} · Sport : {snapshot?.sport_kcal_burned ?? 'n.c.'} · Net : {typeof snapshot?.kcal === 'number' && typeof snapshot?.sport_kcal_burned === 'number' ? snapshot.kcal - snapshot.sport_kcal_burned : 'n.c.'}\nAnalyse externe non encore disponible.</Text>}
+      {section.id === 'summary' && sections.filter(item => item.fields.length).map(item => <View style={styles.field} key={item.id}>
+        <Text style={styles.label}>{item.title}</Text>{item.fields.map(input => <Text key={input.key}>{input.label} : {snapshot?.[input.key] ?? 'Non renseigné'}</Text>)}
+        <Pressable style={styles.secondary} onPress={() => void navigate(() => setStep(sections.indexOf(item)))}><Text>Modifier</Text></Pressable>
+      </View>)}
       {draft.status === 'saving' && <Text accessibilityLiveRegion="polite">Enregistrement en cours…</Text>}
       <View style={styles.row}>
         <Pressable disabled={step === 0} style={styles.secondary} onPress={() => void navigate(() => setStep(step - 1))}><Text>← Retour</Text></Pressable>
