@@ -65,42 +65,57 @@ du socle mobile, car elle dépendra de la bibliothèque retenue.
 
 Condition de sortie : chaque ligne source est retrouvée une seule fois dans SQLite V2.
 
-## Étape 4 - API sécurisée
+## Lot préalable - Consolidation du stockage local
 
-- Authentification Google et autorisation par utilisateur.
-- Endpoints de lecture et mise à jour par étape.
-- Clés d'idempotence et contrôle de version.
-- Journalisation sans données sensibles.
-- Tests de contrat et limites de débit.
+- Rendre atomiques chaque migration SQLite et son inscription au journal.
+- Tester interruption, reprise et contrôle des checksums.
+- Adapter les repositories au schéma SQLite V2, distinct du schéma V1.
+- Vérifier les écritures ciblées et les conflits de révision locaux.
+
+Ce lot précède l'import 3B. La préparation locale n'exige aucune connexion Neon.
 
 ## Étape 5 - Socle Android
 
 - Expo, TypeScript et navigation.
-- Connexion Google.
-- SQLite et file de synchronisation.
+- Valider les bibliothèques natives et isoler les dépendances V2.
+- SQLite local chiffré et protection des clés Android.
 - Aujourd'hui, Hier et reprise automatique.
-- Indicateur `Local`, `Synchronisation`, `Synchronisé`, `Erreur`.
+- Indiquer l'état réel de sauvegarde locale et les erreurs.
+- Démarrer sans Internet ni connexion Google obligatoire.
 
 ## Étape 6 - Migration verticale des indicateurs
 
 Ordre : sommeil, alcool, corps, travail, sport, portable, alimentation, temps pour
 moi, écoute, social, objectifs.
 
-Chaque indicateur doit réussir : saisie en ligne, saisie hors ligne, fermeture de
-l'application, resynchronisation et modification depuis un second appareil.
+Chaque indicateur doit réussir : saisie hors ligne, fermeture forcée, redémarrage,
+reprise, absence d'effacement et comparaison fonctionnelle/visuelle avec la V1.
+
+## Lot sauvegarde et restauration
+
+- Implémenter export chiffré, authentification du fichier et clé de récupération.
+- Restaurer sur une installation vierge et vérifier valeurs et relations.
+- Tester fichier altéré, mauvais mot de passe et restauration interrompue.
+- Ajouter une destination automatique facultative après validation de l'export.
 
 ## Étape 7 - Bilan et intégrations
 
 - KPI, graphiques et rapport PDF.
 - Todoist.
 - Analyse OpenAI asynchrone.
+- API éventuelle uniquement pour les intégrations nécessitant des secrets serveur.
+- Réseau facultatif : les indisponibilités externes ne bloquent pas SQLite.
 
 ## Étape 8 - Double exploitation
 
-Android est utilisé pour la saisie et Streamlit reste disponible pour le contrôle.
+Android et Streamlit restent autonomes avec leurs bases respectives. Comparer des
+jeux de données identiques et préciser la date de chaque import pour éviter de
+confondre deux historiques indépendants.
 La période d'observation minimale est de deux semaines sans perte de données.
 
-## Étape 9 - Bascule
+## Étape 9 - Livraison et coexistence
 
-Streamlit devient une interface de bilan et d'administration. L'ancien mécanisme
-d'écriture n'est retiré qu'après sauvegarde et validation finale.
+Valider l'application Android sur téléphone, réaliser un dernier import explicite
+si souhaité et documenter installation, mise à jour et récupération. Conserver
+Streamlit V1 avec toutes ses fonctions et ses écritures ; aucune suppression ou
+conversion en lecture seule n'est prévue.
