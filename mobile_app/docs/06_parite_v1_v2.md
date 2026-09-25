@@ -8,7 +8,7 @@ compléter pendant chaque portage. « À porter » ne signifie jamais implément
 | Rubrique V1 / source | Contrat V2 à vérifier | État Android |
 |---|---|---|
 | Navigation principale / app | Aujourd'hui, Todo, Bilan, Réglages ; date du jour Paris | À porter |
-| Parcours / app_config, checkin | 13 étapes + récapitulatif, reprise, passer, retour, accès direct | Accueil, accès directs, curseur par date, progression traitée/passée, fin, retour/Modifier connectés ; résumé des relations/sport à compléter et UI Android non validée |
+| Parcours / app_config, checkin | 13 étapes + récapitulatif, reprise, passer, retour, accès direct | Accueil, accès directs, curseur par date, progression, fin, retour/Modifier, résumé sport/relations/objectifs et ouverture historique connectés ; UI Android non validée |
 | Sommeil | Durée, horaires, sieste ; valeurs partielles préservées | Saisie connectée ; calculs horaires et validation native à faire |
 | Alcool | Quantité, zéro distinct d'absence | Saisie connectée ; validation native à faire |
 | Corps | Poids, masse graisseuse, tour de ventre indépendants | Première UI de test connectée ; validation native et mesures précédentes à faire |

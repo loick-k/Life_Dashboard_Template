@@ -6,6 +6,8 @@ import { readFileSync } from 'node:fs';
 import { Catalogs, type QueryConnection } from '../src/storage/catalogs.ts';
 import { DailyEntries, RevisionConflict } from '../src/storage/dailyEntries.ts';
 import { migrate, type BindValue } from '../src/storage/migrations.ts';
+import { readRelatedSummary } from '../src/storage/dailySummary.ts';
+import { SportSessions } from '../src/storage/sportSessions.ts';
 
 test('social selection is idempotent, independent and survives archiving', async () => {
   const sqlite = new DatabaseSync(':memory:');
@@ -44,5 +46,21 @@ test('social selection is idempotent, independent and survives archiving', async
     await goals.setActive((await goals.list()).find(item => item.id === goal)!, false);
     assert.equal((await goals.logs(day.entry_id)).length, 1);
     assert.equal((await people.logs(day.entry_id)).length, 1);
+    const sports = new SportSessions(db, randomUUID);
+    await sports.getOrCreate(day.entry_id, 1); // Empty UI slot must not appear as a workout.
+    let distanceOnly = await sports.getOrCreate(day.entry_id, 2);
+    distanceOnly = await sports.patch(distanceOnly.session_id, distanceOnly.revision, { distance_km: 0 });
+    const before = sqlite.prepare('SELECT total_changes() AS count').get()!.count;
+    const summary = await readRelatedSummary(db, day.entry_id);
+    assert.equal(sqlite.prepare('SELECT total_changes() AS count').get()!.count, before);
+    assert.equal(summary.sports.length, 1);
+    assert.equal(summary.sports[0]!.distance_km, 0);
+    assert.equal(summary.sports[0]!.duration_minutes, null);
+    assert.equal(summary.social[0]!.name, 'Personne B');
+    assert.equal(summary.social[0]!.category, 'Famille');
+    assert.equal(summary.goals[0]!.title, 'Objectif fictif A');
+    assert.equal(summary.goals[0]!.note, 'Note synthétique à préserver');
+    const other = await new DailyEntries(db, randomUUID).getOrCreate('2026-09-24');
+    assert.deepEqual(await readRelatedSummary(db, other.entry_id), { sports: [], social: [], goals: [] });
   } finally { sqlite.close(); }
 });

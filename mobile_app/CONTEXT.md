@@ -360,6 +360,28 @@ réglages et assistant, puis sauvegardes/import/bilans et validation native.
 
 ## Confidentialité et état Git (rappel)
 
+## Récapitulatif lié et historique (25/09/2026)
+
+`readRelatedSummary` lit séances, journaux sociaux et objectifs sans écriture.
+Les personnes/objectifs archivés restent visibles dans leur journée ; les séances
+entièrement nulles sont exclues, les distances zéro et séances partielles conservées.
+`RelatedSummary` affiche valeurs, notes disponibles et liens Modifier ; erreur de
+lecture distincte d'une liste vide, possibilité de réessayer. Branché au récapitulatif.
+Le test catalogue est étendu : aucune écriture pendant la lecture (total_changes),
+relations archivées, notes, distance zéro et isolation d'une autre journée.
+
+Accueil : jour précédent/suivant et date AAAA-MM-JJ explicite pour ouvrir une journée
+historique. Validation calendaire stricte, futur refusé ; utilise le même flush que
+les boutons Aujourd'hui/Hier. Le champ texte évite une dépendance native nouvelle,
+mais un sélecteur calendrier tactile et le format français restent une amélioration
+ergonomique à faire. Ouvrir une journée absente crée une ligne vide, comme Aujourd'hui.
+
+Suite complète toujours 35 tests, assertions étendues ; TypeScript valide. Aucun
+test tactile ou nouveau build APK. Récapitulatif des données liées maintenant présent,
+mais bilans/graphiques/PDF, réglages, assistant, import et sauvegardes restent ouverts.
+
+## Confidentialité et Git
+
 Les exports et bases restent dans des chemins ignorés (`backups/`, `local_data/`).
 Ne pas lire ni publier leur contenu pour une tâche d'architecture. L'import réel
 sera contrôlé avec l'utilisateur ; les préparatifs utilisent des fixtures fictives.

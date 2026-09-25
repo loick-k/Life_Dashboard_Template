@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Alert, BackHandler, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import * as Crypto from 'expo-crypto';
 import type { SQLiteDatabase } from 'expo-sqlite';
-import { DailyEntries, dailyRules, type DailyField } from '../storage/dailyEntries';
+import { DailyEntries, dailyRules, validateDate, type DailyField } from '../storage/dailyEntries';
 import { DailyDraft } from '../storage/dailyDraft';
 import { parisDate, shiftDate } from '../domain/dates';
 import { parseInput } from '../domain/input';
@@ -11,12 +11,14 @@ import { CHECKIN_SECTIONS as sections, type CheckinField as Field } from '../dom
 import { CatalogForm, type CatalogFormHandle } from './CatalogForm';
 import { CheckinPositions, type CheckinPosition } from '../storage/checkinPosition';
 import { readProgress, setCheckinProgress } from '../storage/checkinProgress';
+import { RelatedSummary } from './RelatedSummary';
 
 /** Vertical development slice, not the final daily journey. Synthetic data only. */
 export function DailyForm({ database }: { database: SQLiteDatabase }) {
   const [date, setDate] = useState(parisDate);
   const [step, setStep] = useState(0);
   const [home, setHome] = useState(true);
+  const [chosenDate, setChosenDate] = useState('');
   const [draft, setDraft] = useState<DailyDraft>();
   const [raw, setRaw] = useState<Record<string, string>>({});
   const [invalid, setInvalid] = useState<Set<string>>(new Set());
@@ -49,6 +51,11 @@ export function DailyForm({ database }: { database: SQLiteDatabase }) {
     position.current = await new CheckinPositions(database).move(date, position.current.revision, sections[target]!.id);
     setStep(target);
     setHome(false);
+  };
+  const changeDate = (target: string) => {
+    validateDate(target);
+    if (target > parisDate()) throw new Error('Date future');
+    if (target !== date) { setDraft(undefined); setDate(target); }
   };
   const advance = async (status: 'completed' | 'skipped') => {
     if (!draft) return;
@@ -88,6 +95,19 @@ export function DailyForm({ database }: { database: SQLiteDatabase }) {
     <Text style={styles.notice}>Essai technique · données fictives uniquement</Text>
     <View style={styles.row}>{[['Aujourd’hui', parisDate()], ['Hier', shiftDate(parisDate(), -1)]].map(([label, target]) => <Pressable accessibilityRole="button" disabled={busy || !draft} key={label} style={styles.secondary} onPress={() => void navigate(() => { if (target !== date) { setDraft(undefined); setDate(target!); } })}><Text>{label}</Text></Pressable>)}</View>
     <Text>{date}</Text><Text style={styles.title}>Mon point quotidien</Text>
+    {home && <>
+      <View style={styles.row}>
+        <Pressable disabled={busy || !draft} style={styles.secondary} onPress={() => void navigate(() => changeDate(shiftDate(date, -1)))}><Text>← Jour précédent</Text></Pressable>
+        <Pressable disabled={busy || !draft || date >= parisDate()} style={styles.secondary} onPress={() => void navigate(() => changeDate(shiftDate(date, 1)))}><Text>Jour suivant →</Text></Pressable>
+      </View>
+      <Text style={styles.label}>Ouvrir une date de l’historique (AAAA-MM-JJ)</Text>
+      <TextInput accessibilityLabel="Date de l’historique" editable={!busy} style={styles.input} value={chosenDate} onChangeText={setChosenDate} placeholder="2026-09-25" autoCapitalize="none" maxLength={10} />
+      <Pressable disabled={busy || !draft} style={styles.secondary} onPress={() => {
+        try { validateDate(chosenDate); if (chosenDate > parisDate()) throw new Error('future'); }
+        catch { setError('Indique une date existante au format AAAA-MM-JJ, au plus tard aujourd’hui.'); return; }
+        void navigate(() => changeDate(chosenDate));
+      }}><Text>Ouvrir cette journée</Text></Pressable>
+    </>}
     {!home && <Text>Étape {step + 1} sur {sections.length}</Text>}
     <Text style={styles.heading}>{home ? 'Ta saisie du jour' : section.title}</Text>
     {progress && <Text>Progression · {progress.count}/13 indicateurs traités</Text>}
@@ -120,6 +140,7 @@ export function DailyForm({ database }: { database: SQLiteDatabase }) {
         <Text style={styles.label}>{item.title}</Text>{item.fields.map(input => <Text key={input.key}>{input.label} : {snapshot?.[input.key] ?? 'Non renseigné'}</Text>)}
         <Pressable style={styles.secondary} onPress={() => void navigate(() => moveStep(sections.indexOf(item)))}><Text>Modifier</Text></Pressable>
       </View>)}
+      {section.id === 'summary' && <RelatedSummary database={database} entryId={draft.snapshot.entry_id} onModify={id => void navigate(() => moveStep(sections.findIndex(item => item.id === id)))} />}
       {draft.status === 'saving' && <Text accessibilityLiveRegion="polite">Enregistrement en cours…</Text>}
       <View style={styles.row}>
         <Pressable disabled={step === 0 || busy} style={styles.secondary} onPress={() => void navigate(() => moveStep(step - 1))}><Text>← Retour</Text></Pressable>
