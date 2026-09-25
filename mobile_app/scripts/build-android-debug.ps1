@@ -1,5 +1,17 @@
 $ErrorActionPreference = 'Stop'
 $mobileRoot = Split-Path $PSScriptRoot -Parent
+$expectedMapping = "L:\: => $mobileRoot"
+$existingMapping = @(subst.exe) | Where-Object { $_ -like 'L:\:*' }
+if ($existingMapping) {
+    if ($existingMapping.Trim() -ne $expectedMapping) { throw 'Drive L: belongs to another workspace. Do not overwrite it.' }
+} elseif (Test-Path -LiteralPath 'L:\') {
+    throw 'Drive L: already exists. Choose an unused build drive before continuing.'
+} else {
+    & subst.exe L: $mobileRoot
+    if ($LASTEXITCODE -ne 0) { throw 'Unable to create short build path.' }
+}
+# Reversible alias only: source files remain in the original repository.
+$mobileRoot = 'L:\'
 $env:JAVA_HOME = Join-Path $mobileRoot '.tools/jdk-17.0.20.1+1'
 $env:ANDROID_HOME = Join-Path $mobileRoot '.tools/android-sdk'
 $env:GRADLE_USER_HOME = Join-Path $mobileRoot '.tools/gradle-cache'

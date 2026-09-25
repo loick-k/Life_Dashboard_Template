@@ -230,8 +230,11 @@ chaque champ quotidien éditable est présent exactement une fois (mode travail
 traité séparément). Durées encore affichées en minutes sauf sport : harmonisation
 heures/minutes et vérification des règles sommeil V1 à réaliser.
 
-Build limité relancé, atteint compilation Kotlin Expo avec avertissements de
-dépréciation ; pas d'APK confirmé. Conserver le processus actif tant qu'il avance.
+Build limité terminé en échec : Ninja refuse un chemin d'en-tête React Native
+de plus de 260 caractères. Alias réversible `L:` créé par subst vers mobile_app,
+sans déplacer les fichiers ni changer le registre. Le script vérifie que ce
+lecteur pointe sur le bon dépôt (refus s'il appartient à autre chose), puis utilise
+L:\ pour Java/SDK/cache/source. Relancer le script. Pas d'APK confirmé.
 
 Vérification du 25/09/2026 : `.venv-tools` ne démarre plus car son Python de base
 est indisponible. Les neuf tests SQLite ont été exécutés avec le Python du runtime
