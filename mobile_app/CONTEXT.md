@@ -104,14 +104,35 @@ Depuis `mobile_app/` : `npm ci`, `npm test`, `npm run typecheck`,
 avant création de fichier, refuse une base existante sans clé et conserve fichiers
 et clé en cas d'erreur. L'adaptateur natif utilise 32 octets aléatoires, SecureStore,
 SQLCipher obligatoire, lecture du schéma et integrity_check avant les écritures.
-Il n'est pas encore appelé depuis l'interface (aucune donnée personnelle collectée).
-Sept tests Node réussis au total et TypeScript valide. Les tests utilisent des
+Il est maintenant appelé depuis l'écran de développement (aucune donnée personnelle
+collectée) et applique les migrations avant d'afficher prêt.
+Onze tests Node réussis au total et TypeScript valide. Les tests de clé utilisent des
 ports simulés : ils prouvent l'ordre et le refus sûr, PAS le chiffrement Android.
 Les clés ne sont jamais renouvelées automatiquement après une erreur de lecture.
 
 Attention pour les migrations natives : les transactions exclusives Expo ouvrent
 une autre connexion ; vérifier l'application de la clé SQLCipher sur cette connexion
 ou utiliser une transaction sérialisée sur la connexion déjà déverrouillée.
+
+## Migrations TypeScript et préparation de compilation
+
+`scripts/bundle-migrations.mjs` transforme les SQL de référence en JSON embarqué
+avec SHA-256 normalisé LF (même convention Python). `migrate()` crée schéma et
+journal sur la connexion déverrouillée, dans BEGIN IMMEDIATE, avant de donner
+accès aux repositories. Les tests Node SQLite réels couvrent rejeu, journal en
+échec, checksum modifié et refus d'un schéma futur. Validation Android restante.
+
+JDK Temurin 17.0.20.1+1 et Android CLI 23 téléchargés et contrôlés via checksums
+officiels, isolés sous `.tools/` (ignoré). Scripts reproductibles dans `scripts/`.
+Commande composants : `.tools/android-cli23/cmdline-tools/bin/android.exe`
+avec `--sdk=<chemin absolu .tools/android-sdk> sdk install platforms/android-36
+build-tools/36.0.0 ndk/27.1.12297006 cmake/3.22.1`. La commande sdkmanager.bat de
+cette distribution découpe mal les anciens identifiants avec point-virgule ;
+utiliser android.exe et les chemins avec slash.
+
+`scripts/build-android-debug.ps1` prépare uniquement un APK de développement, pas
+une livraison autonome. Aucun APK encore compilé. Tester la fin d'installation
+SDK puis exécuter ce script ; le build release et sa signature restent à réaliser.
 
 Vérification du 25/09/2026 : `.venv-tools` ne démarre plus car son Python de base
 est indisponible. Les neuf tests SQLite ont été exécutés avec le Python du runtime

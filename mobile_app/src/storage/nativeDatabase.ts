@@ -3,6 +3,8 @@ import * as SecureStore from 'expo-secure-store';
 import * as Crypto from 'expo-crypto';
 import { File } from 'expo-file-system';
 import { createSecureOpener } from './secureOpening';
+import { migrate } from './migrations';
+import migrations from './generated/migrations.json';
 
 const databaseName = 'life-dashboard-v2.db';
 const keyName = 'life-dashboard.database-key.v1';
@@ -24,6 +26,7 @@ export const openLocalDatabase = createSecureOpener<SQLite.SQLiteDatabase>({
     const integrity = await database.getFirstAsync<{ integrity_check: string }>('PRAGMA integrity_check');
     if (integrity?.integrity_check !== 'ok') throw new Error('Integrity check failed');
     await database.execAsync('PRAGMA foreign_keys = ON; PRAGMA journal_mode = WAL; PRAGMA synchronous = FULL;');
+    await migrate(database, migrations);
   },
   close: database => database.closeAsync(),
 });
