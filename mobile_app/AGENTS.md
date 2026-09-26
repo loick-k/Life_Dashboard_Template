@@ -20,6 +20,25 @@ Lire `CONTEXT.md`, puis les documents utiles dans `docs/`. Ce fichier complète
 
 ## Architecture et données
 
+### Limite disque prioritaire (demande du 26/09/2026)
+
+- Ne pas consommer plus de **5 000 000 000 octets supplémentaires cumulés** pour
+  le développement à partir du relevé du 26/09/2026 dans CONTEXT.md. Ce n'est pas
+  un budget renouvelable par build/lot. Compter aussi les caches/outils externes,
+  téléchargements et fichiers temporaires, pas seulement les fichiers Git.
+- Avant toute opération volumineuse, mesurer l'espace et estimer son pic. Si ce
+  pic ne peut pas être contenu dans le budget, demander une décision avant lancement.
+- Surveiller l'occupation pendant les opérations lourdes ; garder une marge
+  d'au moins 1 Go sous le plafond pour pouvoir arrêter proprement avant dépassement.
+  Ne pas démarrer simultanément plusieurs builds/installations. Pas d'émulateur,
+  nouvelle image SDK ou copie complète du toolchain sans vérifier ce budget.
+- Ne pas interpréter le gain d'espace produit par l'utilisateur/autres applications
+  comme une augmentation du budget. Ne pas déplacer des téléchargements ailleurs
+  sur le même disque pour masquer leur coût. Garder SDK/JDK et dépendances existants.
+- Toute nouvelle suppression hors du plan déjà approuvé exige validation préalable.
+  Ces consignes ne constituent pas un quota Windows automatique : refuser un build
+  dont le pic est inconnu plutôt que prétendre garantir une limite non surveillée.
+
 - Isoler les dépendances mobiles de celles de Streamlit. Le Python existant sert
   de référence métier ; il ne s'exécute pas automatiquement dans une app TypeScript.
 - Ne pas réutiliser aveuglément `../repositories/sql.py` : il cible le schéma V1.

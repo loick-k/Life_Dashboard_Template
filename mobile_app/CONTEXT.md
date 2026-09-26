@@ -11,6 +11,26 @@ remplacement forcé de la V1 et aucune synchronisation automatique des deux base
 
 ## État vérifié dans le dépôt
 
+### Budget disque et nettoyage validé — 26/09/2026 (prioritaire)
+
+Utilisateur : ne pas mobiliser plus de **5 Go supplémentaires**, soit 5 000 000 000
+octets cumulés pour les travaux à venir, y compris outils/caches hors dépôt. Ne pas
+réinitialiser cette enveloppe à chaque lot. Règles de marge et surveillance dans AGENTS.md.
+Référence au 26/09/2026 18:50 Europe/Paris : mobile_app **11 844 623 989 octets**,
+C: libre **17 372 258 304 octets**. Les fluctuations dues à d'autres applications
+ne constituent pas une autorisation d'augmenter le budget. Pas de quota OS installé.
+Pas de nouvelle opération lourde tant que son pic n'est pas estimé dans cette enveloppe.
+
+Le nettoyage approuvé Caches/Builds/Downloads a été exécuté : 5,780 Gio logiques
+retirés ; APK original copié/vérifié dans artifacts/preserved (95 Mo). Taille juste
+après : 7 237 733 342 octets. La reconstruction demandée a réussi en 21 min 12 s,
+242 tâches, et a recréé des caches (taille actuelle ci-dessus). Tests : 35 Node,
+9 Python SQLite, TypeScript et npm ls valides. APK debug vérifié par apksigner,
+même SHA-256 que l'original ; pas un APK autonome. Aucun build encore actif au relevé.
+SDK/JDK, dépendances, données et reproductibilité conservés ; pas de second nettoyage.
+Le statut « aucune suppression » de l'audit initial est historique : exécution et
+preuves désormais consignées dans docs/08_audit_stockage.md. Aucun push effectué.
+
 ### Audit disque demandé par l'utilisateur (25/09/2026)
 
 Priorité temporaire : audit et préparation, **aucune suppression sans validation**.

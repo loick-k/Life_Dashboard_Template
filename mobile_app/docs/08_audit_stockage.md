@@ -1,5 +1,32 @@
 # Audit disque et nettoyage proposé — 25 septembre 2026
 
+## Exécution approuvée et contrôle du 26 septembre
+
+Le plan Caches + Builds + Downloads a ensuite été explicitement approuvé et exécuté,
+après réaffichage des 19 chemins exacts. Aucun SDK/JDK, dépendance npm/Maven, donnée,
+clé ou code source supprimé. Archives supprimées : jdk17.zip et android-cli23.zip,
+récupérables via l'installateur aux hashes conservés. Les autres éléments retirés
+sont recréables par compilation, pas par Corbeille.
+
+Après nettoyage : mobile_app 7 237 733 342 octets (6,741 Gio), incluant 95 416 222 octets
+de copie conservée de l'APK original sous `artifacts/preserved/`. L'espace libre C:
+est passé de 5 162 221 568 à 9 232 539 648 octets : gain physique observé ~3,79 Gio,
+distinct des 5,78 Gio de tailles logiques. Ne pas confondre ces deux mesures ni
+attribuer les changements d'espace d'autres applications au nettoyage.
+
+Tests après nettoyage : 35 Node + 9 Python SQLite réussis ; TypeScript et npm ls valides.
+Reconstruction complète : **BUILD SUCCESSFUL in 21m 12s**, 242 tâches (214 exécutées,
+28 à jour), relevé dans le journal du daemon Gradle 17972. APK debug reconstruit :
+signature vérifiée, SHA-256 inchangé `FC1047600624DB216C7FB44B455306821BA60B7F81DCE706DD18AF3AEF00701F`.
+La copie pré-nettoyage présente le même hash. Ce debug n'embarque toujours pas le JS
+et ne constitue pas la livraison autonome. Une partie des caches a été recréée par
+ce test : 6,741 Gio est le résultat avant reconstruction, pas un plafond permanent.
+Aucun push. Aucun nouveau nettoyage lancé après le build.
+
+Nouvelle contrainte utilisateur : **au maximum 5 Go décimaux supplémentaires** pour
+la poursuite du développement ; règles ajoutées dans AGENTS.md. Les sections suivantes
+conservent les observations de l'audit initial et ne décrivent plus l'état post-build.
+
 **Aucune suppression, aucun déplacement, aucune désinstallation effectués.**
 Tailles logiques des fichiers (pas l'allocation NTFS) ; 1 Gio = 1 073 741 824 octets.
 Base des chemins relatifs ci-dessous : `C:\Dev\Life_Dashboard_Public\mobile_app`.
