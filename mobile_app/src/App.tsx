@@ -4,6 +4,7 @@ import { openLocalDatabase } from './storage/nativeDatabase';
 import type { SQLiteDatabase } from 'expo-sqlite';
 import { DailyForm } from './ui/DailyForm';
 import { PreferencesForm } from './ui/PreferencesForm';
+import { WorkBilan } from './ui/WorkBilan';
 
 /** Bootstrap only: do not collect personal data until native storage is verified. */
 export default function App() {
@@ -13,6 +14,7 @@ export default function App() {
   const [testing, setTesting] = useState(false);
   const [preferences, setPreferences] = useState(false);
   const [dailyDate, setDailyDate] = useState<string>();
+  const [bilan, setBilan] = useState(false);
   useEffect(() => {
     let active = true;
     setStatus('opening');
@@ -23,7 +25,8 @@ export default function App() {
     return () => { active = false; };
   }, [attempt]);
   if (preferences && database) return <PreferencesForm database={database} onDone={() => setPreferences(false)} />;
-  if (testing && database) return <DailyForm database={database} initialDate={dailyDate} onSettings={date => { setDailyDate(date); setPreferences(true); }} />;
+  if (bilan && database) return <WorkBilan database={database} onDone={() => setBilan(false)} />;
+  if (testing && database) return <DailyForm database={database} initialDate={dailyDate} onBilan={date => { setDailyDate(date); setBilan(true); }} onSettings={date => { setDailyDate(date); setPreferences(true); }} />;
   return (
     <View style={styles.page}>
       <Text accessibilityRole="header" style={styles.title}>🌱 Life Dashboard</Text>
@@ -36,6 +39,7 @@ export default function App() {
         </Text>
         {__DEV__ && status === 'ready' && <Pressable style={styles.button} onPress={() => setTesting(true)}><Text style={styles.buttonText}>Tester les formulaires avec des données fictives</Text></Pressable>}
         {__DEV__ && status === 'ready' && <Pressable accessibilityRole="button" style={styles.button} onPress={() => setPreferences(true)}><Text style={styles.buttonText}>Tester les réglages locaux</Text></Pressable>}
+        {__DEV__ && status === 'ready' && <Pressable accessibilityRole="button" style={styles.button} onPress={() => setBilan(true)}><Text style={styles.buttonText}>Tester le bilan travail</Text></Pressable>}
         {status === 'failed' && <Pressable accessibilityRole="button" onPress={() => setAttempt(value => value + 1)} style={styles.button}>
           <Text style={styles.buttonText}>Réessayer</Text>
         </Pressable>}

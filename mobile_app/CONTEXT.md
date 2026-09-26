@@ -11,6 +11,32 @@ remplacement forcé de la V1 et aucune synchronisation automatique des deux base
 
 ## État vérifié dans le dépôt
 
+### Compteur partagé et premier bilan travail — 26/09/2026
+
+`domain/workReport.ts` et `storage/workReport.ts` servent le formulaire ET le Bilan :
+solde cumulé de toutes les journées calculables jusqu'à la date choisie, sans remise
+à zéro hebdomadaire. Référence 462 min/jour, Day off cible zéro, null exclu et zéro
+réel compté. Avant la journée toujours disponible, après seulement si calculable.
+Lecture des seules colonnes travail, aucune création/écriture pendant un bilan.
+Modification d'une ancienne journée prise en compte au prochain chargement.
+Objectif hebdomadaire lu depuis Preferences, distinct du solde total ; zéro respecté.
+
+WorkBalanceCard au-dessus du formulaire travail attend les écritures confirmées,
+garde le solde avant la journée pendant l'enregistrement et ne présente pas un
+nouveau solde comme enregistré avant acquittement. Accueil quotidien/menu technique
+donnent accès au Bilan : semaine courante, semaines historiques, compteur, durée,
+objectif/écart, graphique natif de sept barres et détail quotidien par cartes.
+Journées futures exclues ; semaines historiques affichées jusqu'au dimanche.
+Le tableau compact par cartes est une adaptation tactile, à valider visuellement.
+PDF, autres graphiques/bilans et navigation de production restent à développer.
+
+47 tests Node et TypeScript passent ; 1 test Python supplémentaire vérifie 10 cas
+de solde communs au domaine V1 et à TypeScript (fixtures synthétiques partagées).
+Tests bilan sur SQLite réel : réouverture, non-écriture, correction historique,
+horaires partiels, zéro, Day off, semaines/années et compteur jamais absent par
+simple manque de données hebdomadaires. Pas de validation tactile/runtime Android.
+Pas de téléchargement, dépendance, build ou modification V1. APK debug inchangé.
+
 ### Consommateurs des réglages — 26/09/2026, après d405cc5
 
 L'accueil quotidien donne accès aux Réglages après flush ; le retour conserve

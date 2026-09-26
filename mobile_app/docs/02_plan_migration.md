@@ -113,6 +113,9 @@ reprise, absence d'effacement et comparaison fonctionnelle/visuelle avec la V1.
 ## Étape 7 - Bilan et intégrations
 
 - KPI, graphiques et rapport PDF.
+  Compteur travail partagé formulaire/Bilan, semaines, objectif réglable, barres
+  quotidiennes et détail connectés en développement. Tests SQLite et fixtures de
+  solde communes Python/TypeScript ; PDF et validation Android restant à faire.
 - Todoist.
 - Analyse OpenAI asynchrone.
 - API éventuelle uniquement pour les intégrations nécessitant des secrets serveur.

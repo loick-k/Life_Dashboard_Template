@@ -15,9 +15,10 @@ import { RelatedSummary } from './RelatedSummary';
 import { Preferences } from '../storage/preferences';
 import { standardWorkPatch, previousWorkPatch } from '../storage/workShortcuts';
 import type { DailyPatch } from '../storage/dailyEntries';
+import { WorkBalanceCard } from './WorkBalanceCard';
 
 /** Vertical development slice, not the final daily journey. Synthetic data only. */
-export function DailyForm({ database, initialDate, onSettings }: { database: SQLiteDatabase; initialDate?: string; onSettings?(date: string): void }) {
+export function DailyForm({ database, initialDate, onSettings, onBilan }: { database: SQLiteDatabase; initialDate?: string; onSettings?(date: string): void; onBilan?(date: string): void }) {
   const [date, setDate] = useState(() => initialDate ?? parisDate());
   const [closeLabel, setCloseLabel] = useState('Écoute de mes proches');
   const [step, setStep] = useState(0);
@@ -121,6 +122,7 @@ export function DailyForm({ database, initialDate, onSettings }: { database: SQL
     <View style={styles.row}>{[['Aujourd’hui', parisDate()], ['Hier', shiftDate(parisDate(), -1)]].map(([label, target]) => <Pressable accessibilityRole="button" disabled={busy || !draft} key={label} style={styles.secondary} onPress={() => void navigate(() => { if (target !== date) { setDraft(undefined); setDate(target!); } })}><Text>{label}</Text></Pressable>)}</View>
     <Text>{date}</Text><Text style={styles.title}>Mon point quotidien</Text>
     {home && <>
+      {onBilan && <Pressable accessibilityRole="button" disabled={busy || !draft} style={styles.secondary} onPress={() => void navigate(() => onBilan(date))}><Text>Bilan</Text></Pressable>}
       {onSettings && <Pressable accessibilityRole="button" disabled={busy || !draft} style={styles.secondary} onPress={() => void navigate(() => onSettings(date))}><Text>Réglages</Text></Pressable>}
       <View style={styles.row}>
         <Pressable disabled={busy || !draft} style={styles.secondary} onPress={() => void navigate(() => changeDate(shiftDate(date, -1)))}><Text>← Jour précédent</Text></Pressable>
@@ -145,6 +147,7 @@ export function DailyForm({ database, initialDate, onSettings }: { database: SQL
       <View style={styles.row}>{sections.filter(item => item.id !== 'summary').map(item => <Pressable key={item.id} style={styles.secondary} onPress={() => void navigate(() => moveStep(sections.indexOf(item)))}><Text>{item.title}{progress.completed.includes(item.id) ? ' ✓' : progress.skipped.includes(item.id) ? ' · passé' : ''}</Text></Pressable>)}</View>
     </View> : <View pointerEvents={busy ? 'none' : 'auto'}>
       <Pressable style={styles.secondary} onPress={() => void navigate(() => setHome(true))}><Text>Accueil de la journée</Text></Pressable>
+      {section.id === 'work' && <WorkBalanceCard database={database} date={date} revision={draft.snapshot.revision} saved={draft.status === 'saved'} />}
       {section.id === 'sport' && <SportForm key={draft.snapshot.entry_id} ref={sports} database={database} entryId={draft.snapshot.entry_id} />}
       {['social', 'goals'].includes(section.id) && <CatalogForm key={`${draft.snapshot.entry_id}:${section.id}`} ref={catalog} database={database} entryId={draft.snapshot.entry_id} kind={section.id === 'social' ? 'friends' : 'goals'} />}
       {section.id === 'work' && <View style={styles.row}>{['Télétravail', 'Day off', 'Bureau', 'Déplacement'].map(mode => <Pressable accessibilityRole="button" accessibilityState={{ selected: snapshot?.work_mode === mode }} key={mode} style={[styles.secondary, snapshot?.work_mode === mode && styles.selected]} onPress={() => save('work_mode', mode)}><Text>{mode}</Text></Pressable>)}</View>}

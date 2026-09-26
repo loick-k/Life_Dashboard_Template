@@ -1,0 +1,12 @@
+[
+  {"minutes": 480, "day_off": false, "balance": 18},
+  {"minutes": 400, "day_off": false, "balance": -62},
+  {"minutes": 462, "day_off": false, "balance": 0},
+  {"minutes": null, "day_off": false, "balance": null},
+  {"minutes": null, "day_off": true, "balance": null},
+  {"minutes": 60, "day_off": true, "balance": 60},
+  {"minutes": 0, "day_off": false, "balance": -462},
+  {"minutes": 0, "day_off": true, "balance": 0},
+  {"minutes": 463, "day_off": false, "balance": 1},
+  {"minutes": 461, "day_off": false, "balance": -1}
+]
