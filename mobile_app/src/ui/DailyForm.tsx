@@ -12,10 +12,14 @@ import { CatalogForm, type CatalogFormHandle } from './CatalogForm';
 import { CheckinPositions, type CheckinPosition } from '../storage/checkinPosition';
 import { readProgress, setCheckinProgress } from '../storage/checkinProgress';
 import { RelatedSummary } from './RelatedSummary';
+import { Preferences } from '../storage/preferences';
+import { standardWorkPatch, previousWorkPatch } from '../storage/workShortcuts';
+import type { DailyPatch } from '../storage/dailyEntries';
 
 /** Vertical development slice, not the final daily journey. Synthetic data only. */
-export function DailyForm({ database }: { database: SQLiteDatabase }) {
-  const [date, setDate] = useState(parisDate);
+export function DailyForm({ database, initialDate, onSettings }: { database: SQLiteDatabase; initialDate?: string; onSettings?(date: string): void }) {
+  const [date, setDate] = useState(() => initialDate ?? parisDate());
+  const [closeLabel, setCloseLabel] = useState('Écoute de mes proches');
   const [step, setStep] = useState(0);
   const [home, setHome] = useState(true);
   const [chosenDate, setChosenDate] = useState('');
@@ -34,8 +38,12 @@ export function DailyForm({ database }: { database: SQLiteDatabase }) {
     let active = true;
     setDraft(undefined); setRaw({}); setInvalid(new Set()); setError(''); setHome(true); position.current = null;
     const repo = new DailyEntries(database, Crypto.randomUUID);
-    Promise.all([repo.getOrCreate(date), new CheckinPositions(database).read(date)]).then(([row, cursor]) => {
-      if (active) { position.current = cursor; setStep(sections.findIndex(item => item.id === cursor.step)); setDraft(new DailyDraft(repo, row)); }
+    Promise.all([repo.getOrCreate(date), new CheckinPositions(database).read(date), new Preferences(database).read('close_relations_label').catch(() => null)]).then(([row, cursor, label]) => {
+      if (active) {
+        setCloseLabel(label ? String(label.value) : 'Écoute des proches · libellé indisponible');
+        if (!label) setError('Le libellé personnalisé est illisible. Les mesures restent accessibles ; vérifie les Réglages.');
+        position.current = cursor; setStep(sections.findIndex(item => item.id === cursor.step)); setDraft(new DailyDraft(repo, row));
+      }
     }, () => { if (active) setError('Impossible de charger cette journée.'); });
     return () => { active = false; };
   }, [database, date]);
@@ -87,6 +95,23 @@ export function DailyForm({ database }: { database: SQLiteDatabase }) {
     setInvalid(previous => { const next = new Set(previous); if (valid) next.delete(item.key); else next.add(item.key); return next; });
     if (valid) save(item.key, parsed!);
   };
+  const fieldLabel = (item: Field) => item.key === 'close_relations_listening_score' ? `${closeLabel} (1 à 10)` : item.label;
+  const applyShortcut = (source: 'standard' | 'previous') => {
+    void navigate(async () => {
+      const patch: DailyPatch = source === 'standard' ? await standardWorkPatch(database) : await previousWorkPatch(database, date);
+      if (!Object.keys(patch).length) { setError('Aucun horaire renseigné pour la veille.'); return; }
+      const preview = Object.entries(patch).map(([key, value]) => `${sections.find(item => item.id === 'work')!.fields.find(item => item.key === key)!.label} : ${value}`).join('\n');
+      // Keep the navigation lock while confirmation is visible; the target date cannot change.
+      const confirmed = await new Promise<boolean>(resolve => Alert.alert('Appliquer ces horaires ?',
+        `${preview}\n\nCes horaires remplaceront les champs correspondants. Les autres créneaux et indicateurs seront conservés.`,
+        [{ text: 'Annuler', style: 'cancel', onPress: () => resolve(false) }, { text: 'Appliquer', onPress: () => resolve(true) }],
+        { cancelable: false }));
+      if (!confirmed || !draft) return;
+      draft.edit(patch); refresh();
+      setRaw(previous => { const next = { ...previous }; for (const key of Object.keys(patch)) delete next[key]; return next; });
+      await draft.flush(); refresh();
+    });
+  };
   const section = sections[step]!;
   const snapshot = draft?.snapshot;
   let progress: ReturnType<typeof readProgress> | undefined;
@@ -96,6 +121,7 @@ export function DailyForm({ database }: { database: SQLiteDatabase }) {
     <View style={styles.row}>{[['Aujourd’hui', parisDate()], ['Hier', shiftDate(parisDate(), -1)]].map(([label, target]) => <Pressable accessibilityRole="button" disabled={busy || !draft} key={label} style={styles.secondary} onPress={() => void navigate(() => { if (target !== date) { setDraft(undefined); setDate(target!); } })}><Text>{label}</Text></Pressable>)}</View>
     <Text>{date}</Text><Text style={styles.title}>Mon point quotidien</Text>
     {home && <>
+      {onSettings && <Pressable accessibilityRole="button" disabled={busy || !draft} style={styles.secondary} onPress={() => void navigate(() => onSettings(date))}><Text>Réglages</Text></Pressable>}
       <View style={styles.row}>
         <Pressable disabled={busy || !draft} style={styles.secondary} onPress={() => void navigate(() => changeDate(shiftDate(date, -1)))}><Text>← Jour précédent</Text></Pressable>
         <Pressable disabled={busy || !draft || date >= parisDate()} style={styles.secondary} onPress={() => void navigate(() => changeDate(shiftDate(date, 1)))}><Text>Jour suivant →</Text></Pressable>
@@ -122,14 +148,18 @@ export function DailyForm({ database }: { database: SQLiteDatabase }) {
       {section.id === 'sport' && <SportForm key={draft.snapshot.entry_id} ref={sports} database={database} entryId={draft.snapshot.entry_id} />}
       {['social', 'goals'].includes(section.id) && <CatalogForm key={`${draft.snapshot.entry_id}:${section.id}`} ref={catalog} database={database} entryId={draft.snapshot.entry_id} kind={section.id === 'social' ? 'friends' : 'goals'} />}
       {section.id === 'work' && <View style={styles.row}>{['Télétravail', 'Day off', 'Bureau', 'Déplacement'].map(mode => <Pressable accessibilityRole="button" accessibilityState={{ selected: snapshot?.work_mode === mode }} key={mode} style={[styles.secondary, snapshot?.work_mode === mode && styles.selected]} onPress={() => save('work_mode', mode)}><Text>{mode}</Text></Pressable>)}</View>}
+      {section.id === 'work' && <View style={styles.row}>
+        <Pressable accessibilityRole="button" disabled={busy} style={styles.secondary} onPress={() => applyShortcut('previous')}><Text>Horaires d’hier</Text></Pressable>
+        <Pressable accessibilityRole="button" disabled={busy} style={styles.secondary} onPress={() => applyShortcut('standard')}><Text>Horaires standards</Text></Pressable>
+      </View>}
       {section.fields.map(item => <View key={item.key} style={styles.field}>
-        <Text style={styles.label}>{item.label}</Text>
-        <TextInput editable={!busy} accessibilityLabel={item.label} value={raw[item.key] ?? String(snapshot?.[item.key] ?? '')}
+        <Text style={styles.label}>{fieldLabel(item)}</Text>
+        <TextInput editable={!busy} accessibilityLabel={fieldLabel(item)} value={raw[item.key] ?? String(snapshot?.[item.key] ?? '')}
           onChangeText={value => edit(item, value)} style={[styles.input, invalid.has(item.key) && styles.invalid]}
           keyboardType={item.kind === 'number' ? 'decimal-pad' : 'default'}
           multiline={item.kind === 'text'}
           placeholder={item.kind === 'time' ? 'HH:MM' : 'Non renseigné'} />
-        <Pressable accessibilityLabel={`Effacer ${item.label}`} onPress={() => Alert.alert('Effacer cette valeur ?', item.label, [{ text: 'Annuler' }, { text: 'Effacer', style: 'destructive', onPress: () => {
+        <Pressable accessibilityLabel={`Effacer ${fieldLabel(item)}`} onPress={() => Alert.alert('Effacer cette valeur ?', fieldLabel(item), [{ text: 'Annuler' }, { text: 'Effacer', style: 'destructive', onPress: () => {
           setRaw(previous => ({ ...previous, [item.key]: '' })); setInvalid(previous => { const next = new Set(previous); next.delete(item.key); return next; }); save(item.key, null);
         } }])}><Text style={styles.clear}>Effacer</Text></Pressable>
       </View>)}
@@ -137,7 +167,7 @@ export function DailyForm({ database }: { database: SQLiteDatabase }) {
       {section.id === 'me-time' && <Text style={styles.total}>Temps pour moi total : {section.fields.reduce((sum, item) => sum + Number(snapshot?.[item.key] ?? 0), 0)} min</Text>}
       {section.id === 'nutrition' && <Text style={styles.total}>Kcal : {snapshot?.kcal ?? 'n.c.'} · Sport : {snapshot?.sport_kcal_burned ?? 'n.c.'} · Net : {typeof snapshot?.kcal === 'number' && typeof snapshot?.sport_kcal_burned === 'number' ? snapshot.kcal - snapshot.sport_kcal_burned : 'n.c.'}\nAnalyse externe non encore disponible.</Text>}
       {section.id === 'summary' && sections.filter(item => item.fields.length).map(item => <View style={styles.field} key={item.id}>
-        <Text style={styles.label}>{item.title}</Text>{item.fields.map(input => <Text key={input.key}>{input.label} : {snapshot?.[input.key] ?? 'Non renseigné'}</Text>)}
+        <Text style={styles.label}>{item.title}</Text>{item.fields.map(input => <Text key={input.key}>{fieldLabel(input)} : {snapshot?.[input.key] ?? 'Non renseigné'}</Text>)}
         <Pressable style={styles.secondary} onPress={() => void navigate(() => moveStep(sections.indexOf(item)))}><Text>Modifier</Text></Pressable>
       </View>)}
       {section.id === 'summary' && <RelatedSummary database={database} entryId={draft.snapshot.entry_id} onModify={id => void navigate(() => moveStep(sections.findIndex(item => item.id === id)))} />}

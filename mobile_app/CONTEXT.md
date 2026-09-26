@@ -11,6 +11,31 @@ remplacement forcé de la V1 et aucune synchronisation automatique des deux base
 
 ## État vérifié dans le dépôt
 
+### Consommateurs des réglages — 26/09/2026, après d405cc5
+
+L'accueil quotidien donne accès aux Réglages après flush ; le retour conserve
+la date choisie et recharge le curseur enregistré. Le libellé des proches est
+relu depuis Preferences et utilisé dans le formulaire et le récapitulatif.
+Libellé illisible : message explicite sans bloquer les mesures ni réécrire le réglage.
+Les boutons Horaires standards / Horaires d'hier préparent un patch en lecture
+seule, affichent les heures avant confirmation, puis appliquent une seule écriture
+CAS via DailyDraft. La navigation est verrouillée pendant cette confirmation.
+Horaires standards : quatre horaires configurés, troisième créneau préservé.
+Veille : seulement les horaires renseignés (y compris créneau 3), aucune création
+de journée absente, aucune suppression implicitement copiée. Valeur invalide refusée.
+Autres indicateurs et type de journée conservés ; durée recalculée atomiquement.
+
+43 tests Node et TypeScript passent. Trois tests supplémentaires couvrent lecture
+sans écriture, valeurs configurées, créneau 3, durée dérivée, conflit de révision,
+veille partielle / fin de mois, poids/masse graisseuse préservés et réglage invalide.
+Pas de test tactile Android, téléchargement ou compilation native dans ce lot.
+Relevé disque après les deux lots : mobile_app 11 844 663 616 octets, soit
++39 627 octets par rapport à la référence (hors petit delta de métadonnées Git
+et journaux npm). C: libre 17 360 154 624 octets. Aucun outil/cache lourd ajouté.
+Prochain lot : compteur de travail cumulé et bilans, puis assistant et sauvegardes.
+Les objectifs/seuils stockés attendent leurs consommateurs de bilan ; l'assistant
+et l'APK final restent incomplets. V1 et données réelles toujours intouchées.
+
 ### Réglages locaux — 26/09/2026
 
 Les 13 préférences de DEFAULT_SETTINGS V1 sont définies dans domain/preferences.ts

@@ -12,19 +12,19 @@ compléter pendant chaque portage. « À porter » ne signifie jamais implément
 | Sommeil | Durée, horaires, sieste ; valeurs partielles préservées | Saisie connectée ; calculs horaires et validation native à faire |
 | Alcool | Quantité, zéro distinct d'absence | Saisie connectée ; validation native à faire |
 | Corps | Poids, masse graisseuse, tour de ventre indépendants | Première UI de test connectée ; validation native et mesures précédentes à faire |
-| Travail / work_tracking | Trois créneaux, heures isolées, standards, veille, mode ; solde cumulé unique | UI trois créneaux/mode/durée connectée en test ; solde, standards et veille à faire |
+| Travail / work_tracking | Trois créneaux, heures isolées, standards, veille, mode ; solde cumulé unique | UI trois créneaux/mode/durée + standards et veille confirmés connectés en test ; solde et validation Android à faire |
 | Sport | Types V1, plusieurs séances, minutes et distances précises | Repository, migration et UI d'essai connectés ; validation Android à faire |
 | Portable | Durée précise, historique et seuil configurable | Minutes connectées ; réglages/historique à faire |
 | Alimentation | Repas, calcul explicite, kcal nettes, absence n.c., résultat unique | Repas et affichage kcal connectés ; analyse à faire |
 | Temps pour moi | Activités distinctes, sorties/détente, total immédiat | Saisie et total connectés ; validation native à faire |
-| Écoute | Scores et libellé configurable des proches | Saisie connectée ; libellé réglable à faire |
+| Écoute | Scores et libellé configurable des proches | Saisie et libellé réglable connectés (formulaire et récapitulatif) ; validation Android à faire |
 | Social | Personnes, catégories, récurrence, périodes, historique et journal quotidien | Ajout/catégories/sélection/archives connectés ; récurrence et historique détaillé à faire |
 | Objectifs | Ajout, actifs, complétés, critères, journal et historique | Ajout/journal/archives connectés, limite 3 actifs ; critères et historique détaillé à faire |
 | Bilan / dashboard_metrics | Courbes par catégorie, vue hebdomadaire, objectifs, évaluation semaine courante | À porter |
 | Scores / dashboard_metrics | Sommeil, alcool, tabac, sport, portable, nutrition, corps, social, objectifs, travail, temps positif, écoute | À porter |
 | Travail PDF / work_report | Tableau hebdomadaire, types, durée et compteur cumulé, graphique | À porter |
 | Todo / todoist_view | Interface/accès Todoist, projets et statistiques disponibles ; intégration facultative | À porter |
-| Réglages / app_config | Seuils, objectifs, horaires standards, jours de travail, date arrêt tabac | 13 préférences persistantes, validation/CAS, écran d'essai autosauvegardé ; consommation par indicateurs, assistant et validation Android à faire |
+| Réglages / app_config | Seuils, objectifs, horaires standards, jours de travail, date arrêt tabac | 13 préférences persistantes, validation/CAS, écran d'essai autosauvegardé ; standards et libellé consommés ; bilans, assistant et validation Android à faire |
 | Performance / app | Adapter suivi du coût API et diagnostic à l'usage mobile, sans données sensibles | À porter |
 | Données / app | Consultation entrées et journaux ; export sécurisé remplace téléchargement non chiffré | À porter |
 
@@ -49,6 +49,8 @@ compléter pendant chaque portage. « À porter » ne signifie jamais implément
 - Pas de Neon ni de serveur Python ; pas de synchronisation implicite V1/V2.
 - Secrets facultatifs saisis sur appareil, jamais distribués avec l'APK.
 - Aucune copie de données personnelles dans les fixtures ou captures comparatives.
+- Raccourcis horaires : confirmation avec aperçu ; seuls les horaires renseignés
+  sont copiés, les champs absents ne suppriment pas ceux de la journée cible.
 
 Les tests JavaScript et Python ne remplacent pas les preuves Android. La période
 de double exploitation et la validation téléphone restent des gates utilisateur.

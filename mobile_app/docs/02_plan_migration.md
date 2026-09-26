@@ -91,7 +91,8 @@ Ce lot précède l'import 3B. La préparation locale n'exige aucune connexion Ne
   Progression persistante et conflits testés dans le repository TypeScript ;
   branchement des écrans et des services de configuration restant à réaliser.
   Préférences : repository CAS par clé et écran autosauvegardé de développement
-  disponibles, 5 tests SQLite ; branchement à l'assistant et aux calculs restant.
+  disponibles, 5 tests SQLite ; libellé écoute et raccourcis horaires connectés
+  (3 tests supplémentaires). Branchement à l'assistant et aux bilans restant.
 - Porter et tester les migrations et repositories dans le runtime TypeScript.
 
 ## Étape 6 - Migration verticale des indicateurs

@@ -12,6 +12,7 @@ export default function App() {
   const [database, setDatabase] = useState<SQLiteDatabase>();
   const [testing, setTesting] = useState(false);
   const [preferences, setPreferences] = useState(false);
+  const [dailyDate, setDailyDate] = useState<string>();
   useEffect(() => {
     let active = true;
     setStatus('opening');
@@ -22,7 +23,7 @@ export default function App() {
     return () => { active = false; };
   }, [attempt]);
   if (preferences && database) return <PreferencesForm database={database} onDone={() => setPreferences(false)} />;
-  if (testing && database) return <DailyForm database={database} />;
+  if (testing && database) return <DailyForm database={database} initialDate={dailyDate} onSettings={date => { setDailyDate(date); setPreferences(true); }} />;
   return (
     <View style={styles.page}>
       <Text accessibilityRole="header" style={styles.title}>🌱 Life Dashboard</Text>
