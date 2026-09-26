@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { openLocalDatabase } from './storage/nativeDatabase';
 import type { SQLiteDatabase } from 'expo-sqlite';
 import { DailyForm } from './ui/DailyForm';
+import { PreferencesForm } from './ui/PreferencesForm';
 
 /** Bootstrap only: do not collect personal data until native storage is verified. */
 export default function App() {
@@ -10,6 +11,7 @@ export default function App() {
   const [status, setStatus] = useState<'opening' | 'ready' | 'failed'>('opening');
   const [database, setDatabase] = useState<SQLiteDatabase>();
   const [testing, setTesting] = useState(false);
+  const [preferences, setPreferences] = useState(false);
   useEffect(() => {
     let active = true;
     setStatus('opening');
@@ -19,6 +21,7 @@ export default function App() {
     );
     return () => { active = false; };
   }, [attempt]);
+  if (preferences && database) return <PreferencesForm database={database} onDone={() => setPreferences(false)} />;
   if (testing && database) return <DailyForm database={database} />;
   return (
     <View style={styles.page}>
@@ -31,6 +34,7 @@ export default function App() {
           {status === 'opening' ? 'Ouverture du stockage sécurisé…' : status === 'ready' ? 'Base chiffrée ouverte et schéma vérifié.' : 'Stockage indisponible. Les fichiers existants sont conservés.'}
         </Text>
         {__DEV__ && status === 'ready' && <Pressable style={styles.button} onPress={() => setTesting(true)}><Text style={styles.buttonText}>Tester les formulaires avec des données fictives</Text></Pressable>}
+        {__DEV__ && status === 'ready' && <Pressable accessibilityRole="button" style={styles.button} onPress={() => setPreferences(true)}><Text style={styles.buttonText}>Tester les réglages locaux</Text></Pressable>}
         {status === 'failed' && <Pressable accessibilityRole="button" onPress={() => setAttempt(value => value + 1)} style={styles.button}>
           <Text style={styles.buttonText}>Réessayer</Text>
         </Pressable>}

@@ -11,6 +11,33 @@ remplacement forcé de la V1 et aucune synchronisation automatique des deux base
 
 ## État vérifié dans le dépôt
 
+### Réglages locaux — 26/09/2026
+
+Les 13 préférences de DEFAULT_SETTINGS V1 sont définies dans domain/preferences.ts
+avec valeurs génériques et validation : seuils, objectifs, jours de travail,
+quatre horaires standards, libellé écoute et date arrêt tabac facultative.
+Clés V1 et heures conservées pour le futur import (calculs à convertir en minutes).
+Preferences les conserve sous preference.v1:<clé>, avec version et CAS indépendant
+par champ ; une lecture des valeurs par défaut n'écrit rien. Zéro conservé,
+null suppression explicite seulement pour les deux préférences facultatives.
+Valeur corrompue/future refusée sans réinitialisation ; aucune clé de secret admise.
+
+PreferencesForm est accessible depuis le menu technique __DEV__ : autosauvegarde
+FIFO, état après confirmation SQLite, brouillon invalide non écrit, retour écran/
+Android après flush, effacement confirmé. Échec : réessai sans rebase ; relecture
+avec abandon du seul brouillon concerné après confirmation explicite.
+Les réglages ne sont PAS encore utilisés dans les indicateurs/bilans ni branchés
+à l'assistant. Ces consommateurs et la navigation finale restent au prochain lot.
+Unités fixes métriques comme V1, pas de conversion impériale. Aucune validation
+tactile Android de cet écran ; l'APK debug existant n'a pas été reconstruit.
+
+Validation : 40 tests Node (5 nouveaux réglages), TypeScript valide après correction
+d'un cast volontaire dans le test de clés interdites. Tests sur SQLite réel/fichier
+synthétique : réouverture, CAS création et mise à jour, indépendance des champs,
+conservation de l'assistant, zéro/null, saisies rapides et échec sans écrasement.
+Lot sans téléchargement ni compilation native ; ajouts de code de quelques Ko.
+V1, SDK/JDK, dépendances, données et APK préservés. Commit local uniquement.
+
 ### Budget disque et nettoyage validé — 26/09/2026 (prioritaire)
 
 Utilisateur : ne pas mobiliser plus de **5 Go supplémentaires**, soit 5 000 000 000

@@ -24,7 +24,7 @@ compléter pendant chaque portage. « À porter » ne signifie jamais implément
 | Scores / dashboard_metrics | Sommeil, alcool, tabac, sport, portable, nutrition, corps, social, objectifs, travail, temps positif, écoute | À porter |
 | Travail PDF / work_report | Tableau hebdomadaire, types, durée et compteur cumulé, graphique | À porter |
 | Todo / todoist_view | Interface/accès Todoist, projets et statistiques disponibles ; intégration facultative | À porter |
-| Réglages / app_config | Seuils, objectifs, horaires standards, jours de travail, date arrêt tabac | À porter |
+| Réglages / app_config | Seuils, objectifs, horaires standards, jours de travail, date arrêt tabac | 13 préférences persistantes, validation/CAS, écran d'essai autosauvegardé ; consommation par indicateurs, assistant et validation Android à faire |
 | Performance / app | Adapter suivi du coût API et diagnostic à l'usage mobile, sans données sensibles | À porter |
 | Données / app | Consultation entrées et journaux ; export sécurisé remplace téléchargement non chiffré | À porter |
 
