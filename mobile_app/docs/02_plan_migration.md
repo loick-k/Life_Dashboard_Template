@@ -116,6 +116,9 @@ reprise, absence d'effacement et comparaison fonctionnelle/visuelle avec la V1.
   Compteur travail partagé formulaire/Bilan, semaines, objectif réglable, barres
   quotidiennes et détail connectés en développement. Tests SQLite et fixtures de
   solde communes Python/TypeScript ; PDF et validation Android restant à faire.
+  27 autres séries hebdomadaires et graphiques natifs connectés par catégorie,
+  moyennes/dernières valeurs/totaux testés avec null distinct de zéro. Scores V1,
+  granularités supplémentaires, récurrence sociale et PDF restent à porter.
 - Todoist.
 - Analyse OpenAI asynchrone.
 - API éventuelle uniquement pour les intégrations nécessitant des secrets serveur.

@@ -3,6 +3,7 @@ import { BackHandler, Pressable, ScrollView, Text } from 'react-native';
 import type { QueryConnection } from '../storage/catalogs';
 import { parisDate, shiftDate } from '../domain/dates';
 import { WorkBalanceCard } from './WorkBalanceCard';
+import { WeeklyIndicators } from './WeeklyIndicators';
 
 export function WorkBilan({ database, onDone }: { database: QueryConnection; onDone(): void }) {
   const [date, setDate] = useState(parisDate);
@@ -20,6 +21,7 @@ export function WorkBilan({ database, onDone }: { database: QueryConnection; onD
     <Pressable accessibilityRole="button" style={{ padding: 16 }} onPress={() => setDate(shiftDate(date, -weekday - 1))}><Text>← Semaine précédente</Text></Pressable>
     <Pressable accessibilityRole="button" disabled={date >= parisDate()} style={{ padding: 16 }} onPress={() => setDate(nextSunday > parisDate() ? parisDate() : nextSunday)}><Text>Semaine suivante →</Text></Pressable>
     <Pressable accessibilityRole="button" style={{ padding: 16 }} onPress={() => setDate(parisDate())}><Text>Semaine en cours</Text></Pressable>
+    <WeeklyIndicators database={database} date={date} />
     <Pressable accessibilityRole="button" style={{ padding: 16 }} onPress={onDone}><Text>Retour</Text></Pressable>
   </ScrollView>;
 }

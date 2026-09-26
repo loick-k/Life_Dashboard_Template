@@ -14,13 +14,13 @@ compléter pendant chaque portage. « À porter » ne signifie jamais implément
 | Corps | Poids, masse graisseuse, tour de ventre indépendants | Première UI de test connectée ; validation native et mesures précédentes à faire |
 | Travail / work_tracking | Trois créneaux, heures isolées, standards, veille, mode ; solde cumulé unique | Trois créneaux/mode/durée, standards/veille confirmés, solde avant/après partagé avec Bilan connectés ; tests SQLite et parité de solde V1 ; validation Android à faire |
 | Sport | Types V1, plusieurs séances, minutes et distances précises | Repository, migration et UI d'essai connectés ; validation Android à faire |
-| Portable | Durée précise, historique et seuil configurable | Minutes connectées ; réglages/historique à faire |
+| Portable | Durée précise, historique et seuil configurable | Saisie, seuil stocké et moyenne/série hebdomadaire connectés ; consommation du seuil par score et validation Android à faire |
 | Alimentation | Repas, calcul explicite, kcal nettes, absence n.c., résultat unique | Repas et affichage kcal connectés ; analyse à faire |
 | Temps pour moi | Activités distinctes, sorties/détente, total immédiat | Saisie et total connectés ; validation native à faire |
 | Écoute | Scores et libellé configurable des proches | Saisie et libellé réglable connectés (formulaire et récapitulatif) ; validation Android à faire |
 | Social | Personnes, catégories, récurrence, périodes, historique et journal quotidien | Ajout/catégories/sélection/archives connectés ; récurrence et historique détaillé à faire |
 | Objectifs | Ajout, actifs, complétés, critères, journal et historique | Ajout/journal/archives connectés, limite 3 actifs ; critères et historique détaillé à faire |
-| Bilan / dashboard_metrics | Courbes par catégorie, vue hebdomadaire, objectifs, évaluation semaine courante | Travail : compteur global, durée semaine, objectif réglable, barres et détail connectés ; autres catégories et validation native à faire |
+| Bilan / dashboard_metrics | Courbes par catégorie, vue hebdomadaire, objectifs, évaluation semaine courante | Travail et 27 séries hebdomadaires (corps, sommeil, sport, alimentation, temps, écoute, social, objectifs) connectés ; scores, autres granularités et validation native à faire |
 | Scores / dashboard_metrics | Sommeil, alcool, tabac, sport, portable, nutrition, corps, social, objectifs, travail, temps positif, écoute | À porter |
 | Travail PDF / work_report | Tableau hebdomadaire, types, durée et compteur cumulé, graphique | À porter |
 | Todo / todoist_view | Interface/accès Todoist, projets et statistiques disponibles ; intégration facultative | À porter |
@@ -51,6 +51,9 @@ compléter pendant chaque portage. « À porter » ne signifie jamais implément
 - Aucune copie de données personnelles dans les fixtures ou captures comparatives.
 - Raccourcis horaires : confirmation avec aperçu ; seuls les horaires renseignés
   sont copiés, les champs absents ne suppriment pas ceux de la journée cible.
+- Graphiques hebdomadaires : catégories sélectionnables pour limiter le défilement.
+  Courbes corporelles à échelle locale (aucune plage personnelle fixe), barres signées
+  pour les autres indicateurs ; jours manquants n.c., sans interpolation.
 
 Les tests JavaScript et Python ne remplacent pas les preuves Android. La période
 de double exploitation et la validation téléphone restent des gates utilisateur.

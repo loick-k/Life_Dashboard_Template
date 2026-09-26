@@ -11,6 +11,33 @@ remplacement forcé de la V1 et aucune synchronisation automatique des deux base
 
 ## État vérifié dans le dépôt
 
+### Bilans hebdomadaires multirubriques — lot repris après interruption
+
+27 séries locales ajoutées dans domain/weeklyMetrics.ts et branchées à Bilan :
+corps, sommeil/sieste, alcool, sport/distance/séances partielles, portable,
+nutrition/kcal nettes, temps pour soi, écoute, interactions et objectifs travaillés.
+Moyennes sur valeurs présentes seulement, dernière valeur corporelle DE LA SEMAINE,
+totaux partiels explicitement libellés. Absence reste null/n.c., zéro reste réel.
+Kcal nettes calculées uniquement si apports ET calories sportives sont présents.
+Les compteurs de journaux mesurent les lignes saisies, pas l'absence d'activité réelle.
+Requête unique des valeurs/journaux avec sous-requêtes indépendantes : pas de
+multiplication des séances par les relations sociales/objectifs. Archives conservées.
+Courbes natives pour le corps, barres signées pour les autres séries, trous non
+reliés, choix tactile de catégorie et valeurs quotidiennes accessibles. Aucune
+bibliothèque de graphique ou dépendance ajoutée. Validation visuelle Android à faire.
+
+50 tests Node et TypeScript passent après reprise (aucun test précédent encore
+actif). Les 3 nouveaux tests couvrent null/zéro, moyenne, total partiel, net négatif,
+bornes semaine/futur, valeurs invalides, SQL sans écriture, archives et réouverture.
+Le lot ne porte PAS encore les scores/évaluation globale V1, granularités mensuelles,
+récurrences sociales, statistiques Todoist ou PDF. Ces exigences restent ouvertes.
+L'application demeure un parcours technique __DEV__, pas une version livrable.
+Vérifications finales : 10 tests Python locaux passent (9 schéma/migrations,
+1 parité travail sur 10 cas). Relevé mobile_app : 11 844 723 237 octets,
++99 248 octets depuis la référence du budget 5 Go ; hors petits fichiers Git/npm.
+C: libre 17 361 272 832 octets. Aucun téléchargement, nouveau build ou nettoyage.
+Bilan global et ordre proposé des prochains lots : docs/09_etat_developpement.md.
+
 ### Compteur partagé et premier bilan travail — 26/09/2026
 
 `domain/workReport.ts` et `storage/workReport.ts` servent le formulaire ET le Bilan :
