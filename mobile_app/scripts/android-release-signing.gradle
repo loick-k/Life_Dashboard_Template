@@ -1,0 +1,39 @@
+// Applied by the versioned Expo plugin; no private values in generated Gradle files.
+def signingPath = System.getenv('LIFE_DASHBOARD_SIGNING_FILE')
+def signingData = null
+if (signingPath) {
+    try {
+        def source = new File(signingPath)
+        if (!source.isAbsolute() || !source.isFile()) throw new Exception()
+        signingData = new groovy.json.JsonSlurper().parse(source, 'UTF-8')
+        if (!['storeFile', 'storePassword', 'keyAlias', 'keyPassword', 'certificateSha256'].every {
+            signingData[it] instanceof String && !signingData[it].isEmpty()
+        }) throw new Exception()
+        if (!new File(signingData.storeFile).isAbsolute() || !new File(signingData.storeFile).isFile()) throw new Exception()
+        if (signingData.keyAlias == 'androiddebugkey' || !(signingData.certificateSha256 ==~ /[A-Fa-f0-9]{64}/)) throw new Exception()
+    } catch (Exception ignored) {
+        throw new GradleException('Local release signing configuration invalid. No debug-key fallback.')
+    }
+}
+
+android {
+    if (signingData != null) {
+        signingConfigs {
+            lifeDashboardRelease {
+                storeFile new File(signingData.storeFile)
+                storePassword signingData.storePassword
+                keyAlias signingData.keyAlias
+                keyPassword signingData.keyPassword
+                storeType 'PKCS12'
+            }
+        }
+        buildTypes.release.signingConfig = signingConfigs.lifeDashboardRelease
+    } else {
+        buildTypes.release.signingConfig = null
+    }
+}
+gradle.taskGraph.whenReady { graph ->
+    if (signingData == null && graph.allTasks.any { it.project == project && it.name.toLowerCase().contains('release') }) {
+        throw new GradleException('Release requires LIFE_DASHBOARD_SIGNING_FILE. Run prepare-android-signing.ps1; never use the debug key.')
+    }
+}

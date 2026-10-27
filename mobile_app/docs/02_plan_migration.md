@@ -93,8 +93,10 @@ Ce lot précède l'import 3B. La préparation locale n'exige aucune connexion Ne
 - Assistant français reprenable, réglages, protection locale et récupération.
   Progression persistante et conflits testés ; 7 écrans reliés en mode d'essai,
   préférences et sauvegarde/restauration branchées, reprise et completed relus au
-  démarrage. Protection biométrique supplémentaire, import V1 et validation native
-  du parcours complet restent à réaliser avant activation de production.
+  démarrage. Protection biométrique supplémentaire et import V1 connectés dans le
+  parcours d'essai, aussi en bundle production ; validation native complète restant
+  à réaliser avant utilisation personnelle. Signature et bundle préparés, pas d'APK
+  release livré ; le pic disque de compilation doit être établi au préalable.
   Préférences : repository CAS par clé et écran autosauvegardé de développement
   disponibles, 5 tests SQLite ; libellé écoute et raccourcis horaires connectés
   (3 tests supplémentaires). Branchement à l'assistant et aux bilans restant.

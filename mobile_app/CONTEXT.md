@@ -11,6 +11,42 @@ remplacement forcé de la V1 et aucune synchronisation automatique des deux base
 
 ## État vérifié dans le dépôt
 
+### Préparation autonome et signature — 27/10/2026
+
+Version source 0.2.0/code 2, parcours d'essai accessible aussi en production.
+Plugin Expo reproductible : FLAG_SECURE avant React, backup/cleartext interdits,
+suppression de la signature debug en release. Hook Gradle exige configuration
+privée et script crée/réutilise une clé RSA3072 dans %LOCALAPPDATA%/LifeDashboard/signing,
+hors Git, ACL compte Windows + SYSTEM. Aucun mot de passe affiché. La sauvegarde
+de ce dossier privé dans un coffre hors PC reste à faire par l'utilisateur.
+Vérificateur APK compare le certificat attendu ; ancien debug rejeté en release.
+
+Configuration/graphe Gradle release --offline --dry-run réussis (2m20 puis 30s, 28 tâches
+d'outillage à jour), PAS une compilation native applicative. Bundle Hermes production
+687 modules, 1 924 263 octets, SHA256
+39893BE9FCD970DB2D3CCBC944368A9FB2350521ABF13F9F9C159C7E9A5D883A.
+74 tests Node, TypeScript et 10 tests Python locaux réussis. Aucun nouveau
+téléchargement, dépendance, Neon, import réel ou push. Aucun appareil adb détecté.
+
+Incident : Expo a jugé l'ancien android/ incomplet et l'a régénéré sans --clean,
+retirant ses intermédiaires et son APK. Diagnostic initial exact non établi.
+APK debug rétabli depuis artifacts/preserved et empreinte/signature revérifiées,
+identique FC1047600624DB216C7FB44B455306821BA60B7F81DCE706DD18AF3AEF00701F.
+SDK/JDK/NDK, dépendances et données conservés. Prébuild sûr ajouté : configuration
+des mods seulement sur projet existant ; dossier incomplet => refus sans suppression,
+avec test synthétique. Ne jamais relancer automatiquement le prébuild Expo standard.
+
+Dernier relevé : mobile_app 8 444 672 051 octets, C: libre 13 166 698 496 octets.
+La baisse d'anciens caches (~3,4 Go depuis référence) ne renouvelle pas le budget.
+Suivi conservateur : réserve initiale 4 Go + 100 Mo externes, puis registre monotone
+.tools/dev-storage-ledger.local.json ; 700 048 062 octets comptabilisés / plafond
+5 Go, marge d'arrêt 1 Go. Ne pas effacer ce registre. Scripts release/bundle refusent
+un pic inconnu/excessif, surveillent l'arbre lancé et redirigent les temp dans .tools.
+Le pic natif release complet reste inconnu : build complet NON lancé ; ne pas fournir
+une estimation inventée pour contourner la limite. Aucun nouvel APK livré, ancien
+debug conservé ; prochaines gates : pic de build justifié et tests téléphone fictifs.
+Voir docs/13_preparation_apk_autonome.md et docs/12_protection_biometrique.md.
+
 ### Protection biométrique — 27/10/2026
 
 Clé SQLCipher migrable vers un service SecureStore/Keystore distinct exigeant la

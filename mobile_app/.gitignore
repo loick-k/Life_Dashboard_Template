@@ -23,6 +23,7 @@ artifacts/
 *.aab
 *.hprof
 signing.properties
+signing*.local.json
 local.properties
 
 # Local diagnostics and disposable caches (never source directories).

@@ -1,7 +1,7 @@
 import * as SQLite from 'expo-sqlite';
 import * as Crypto from 'expo-crypto';
 import { File } from 'expo-file-system';
-import { createSecureOpener } from './secureOpening';
+import { createSecureOpener, StorageUnavailable } from './secureOpening';
 import { migrate } from './migrations';
 import migrations from './generated/migrations.json';
 import { keyProtection } from './nativeProtection';
@@ -37,6 +37,7 @@ export function openLocalDatabase(): Promise<SQLite.SQLiteDatabase> {
   if (!opening) opening = (async () => {
     try {
       authorizedKey = await keyProtection.readKey();
+      if (authorizedKey === null && new File(SQLite.defaultDatabaseDirectory, databaseName).exists) throw new StorageUnavailable();
       return await openCachedDatabase();
     } finally { authorizedKey = undefined; }
   })().finally(() => { opening = undefined; });

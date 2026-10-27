@@ -13,13 +13,15 @@ Le SHA-256 affiché identifie exactement le fichier contrôlé. L'APK et les out
 restent ignorés par Git.
 
 Pour un futur APK autonome, employer `-Variant Release` (valeur par défaut).
+Ajouter `-ExpectedSignerSHA256` avec l'empreinte du certificat de livraison attendu.
+Préparation de la signature et commandes bornées : `13_preparation_apk_autonome.md`.
 Le contrôle exige un bundle JavaScript embarqué, une signature valide, le bon
 identifiant, l'absence de mode debug, de permission overlay, de trafic HTTP
 explicitement permis et de permissions générales de stockage externe. Les deux
 ABI actuellement compilées et le module natif SQLite sont contrôlés.
 
 Ce contrôle statique n'atteste pas la confidentialité effective de la base,
-l'identité de la clé de livraison, la continuité des mises à jour, le comportement
+la conservation future de la clé de livraison, le comportement
 des sauvegardes Android ni la parité fonctionnelle. Ces vérifications restent des
 tests distincts. Une signature debug valide ne constitue pas une signature de livraison.
 

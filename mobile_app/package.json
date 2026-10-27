@@ -1,6 +1,6 @@
 {
   "name": "life-dashboard-mobile",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "overrides": {
     "xcode": {
@@ -16,7 +16,7 @@
     "pretest": "npm run migrations:bundle",
     "start": "expo start --dev-client",
     "android": "expo run:android",
-    "prebuild:android": "expo prebuild --platform android --no-install",
+    "prebuild:android": "node scripts/prebuild-android-safe.cjs",
     "typecheck": "tsc --noEmit",
     "test": "node --experimental-strip-types --test tests/*.test.ts"
   },

@@ -37,7 +37,7 @@ function Dashboard() {
         const progress = await new OnboardingProgress(db).read();
         if (active) {
           setDatabase(db); setStatus('ready');
-          if (__DEV__) { setOnboarding(!progress.completed); setTesting(progress.completed); }
+          setOnboarding(!progress.completed); setTesting(progress.completed);
         }
       } catch { if (active) setStatus('failed'); }
     })();
