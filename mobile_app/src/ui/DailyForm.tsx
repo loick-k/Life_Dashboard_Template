@@ -29,12 +29,14 @@ import { PreviousMeasureCard } from './PreviousMeasureCard';
 import { FrenchCalendar } from './FrenchCalendar';
 import { palette } from './palette';
 import type { CatalogKind } from '../storage/catalogs';
+import { useParisToday } from './useParisToday';
 
 type DailyReview = { latest: DailyEntry; pending: DailyPatch; choices: Record<string, 'draft' | 'database'> };
 
 /** Vertical development slice, not the final daily journey. Synthetic data only. */
 export const DailyForm = forwardRef<EditorHandle, { database: SQLiteDatabase; initialDate?: string; active?: boolean; onDate?(date: string): void; onSettings?(date: string): void; onBilan?(date: string): void; onManageCatalog?(kind: CatalogKind): void }>(function DailyForm({ database, initialDate, active = true, onDate, onSettings, onBilan, onManageCatalog }, ref) {
   const [date, setDate] = useState(() => initialDate ?? parisDate());
+  const today = useParisToday(active);
   const [closeLabel, setCloseLabel] = useState('Écoute de mes proches');
   const [step, setStep] = useState(0);
   const [home, setHome] = useState(true);
@@ -253,8 +255,9 @@ export const DailyForm = forwardRef<EditorHandle, { database: SQLiteDatabase; in
   const fieldsDisabled = busy || !!review;
   return <ScrollView ref={scroll} contentContainerStyle={styles.page} keyboardShouldPersistTaps="handled">
     <Text style={styles.notice}>Essai technique · données fictives uniquement</Text>
-    <View style={styles.row}>{[['Aujourd’hui', parisDate()], ['Hier', shiftDate(parisDate(), -1)]].map(([label, target]) => <Pressable accessibilityRole="button" disabled={busy || !draft} key={label} style={styles.secondary} onPress={() => void navigate(() => { if (target !== date) { setDraft(undefined); setDate(target!); } })}><Text>{label}</Text></Pressable>)}</View>
+    <View style={styles.row}>{[['Aujourd’hui', 0], ['Hier', -1]].map(([label, offset]) => <Pressable accessibilityRole="button" disabled={busy || !draft} key={label} style={styles.secondary} onPress={() => void navigate(() => changeDate(shiftDate(parisDate(), Number(offset))))}><Text>{label}</Text></Pressable>)}</View>
     <Text>{date}</Text><Text style={styles.title}>Mon point quotidien</Text>
+    {date !== today && <Text style={styles.notice}>Journée historique ouverte. Aujourd’hui à Paris : {today.split('-').reverse().join('/')}. Tes saisies restent associées au {date.split('-').reverse().join('/')}.</Text>}
     {home && <>
       {onBilan && <Pressable accessibilityRole="button" disabled={busy || !draft} style={styles.secondary} onPress={() => void navigate(() => onBilan(date))}><Text>Bilan</Text></Pressable>}
       {onSettings && <Pressable accessibilityRole="button" disabled={busy || !draft} style={styles.secondary} onPress={() => void navigate(() => onSettings(date))}><Text>Réglages</Text></Pressable>}

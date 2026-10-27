@@ -11,6 +11,26 @@ remplacement forcé de la V1 et aucune synchronisation automatique des deux base
 
 ## État vérifié dans le dépôt
 
+### Audit approfondi — sortie récupérable et horloge Paris vivante — 27/10/2026
+
+Conflit quotidien commité 5dacd47. Un répertoire autonome en échec de lecture
+permet maintenant Retour/Back : attente de l'opération en cours, contrôle des
+journaux et refus de perdre un ajout non terminé. La barrière stricte de validation
+quotidienne reste inchangée ; aucune réinitialisation de données pour quitter.
+
+Aujourd'hui/Hier recalculent Paris après la barrière de sauvegarde, jamais depuis
+une date capturée au rendu précédent. Référence actualisée au retour actif et
+chaque minute visible, minuterie arrêtée en arrière-plan/onglet caché. Elle ne
+change jamais la date sélectionnée ni ses brouillons ; avertissement historique
+explicite, évaluation de semaine courante actualisée indépendamment du Bilan choisi.
+
+176 tests Node et TypeScript réussis. Cinq nouveaux tests : lecture défaillante,
+ajout conservé, sortie attendant création/relecture lente, premier appui après
+minuit sans rendu, changements d'heure mars/octobre, retour actif avec heure
+incomplète, Bilan historique inchangé. Aucun build/téléchargement/accès réel/push.
+Travaux Todoist préexistants hors lot. Restent les brouillons durables, intégrations,
+finitions/parité et preuves matérielles Android ; objectif global actif.
+
 ### Audit approfondi — comparaison quotidienne figée sans perte — 27/10/2026
 
 Reprise de l'audit du dernier tour : perte 73 affiché/72 stocké reproduite avant

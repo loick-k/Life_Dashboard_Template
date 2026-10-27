@@ -23,7 +23,7 @@ export function CatalogScreen({ database, kind, onDone, date = parisDate(), init
   async function done() {
     if (leaving.current) return;
     leaving.current = true; setBusy(true);
-    try { await editor.current?.flush(); onDone(); }
+    try { await editor.current?.beforeClose(); onDone(); }
     catch { setError('Ajout incomplet ou opération non confirmée. Termine ou annule explicitement cet ajout, ou recharge les valeurs avant de revenir.'); }
     finally { leaving.current = false; setBusy(false); }
   }

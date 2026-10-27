@@ -24,6 +24,45 @@ function configured(native: DatabaseSync) {
   native.prepare('INSERT INTO settings (key,value,updated_at) VALUES (?,?,?)').run('onboarding.v1', JSON.stringify({ version: 1, revision: 1, step: 'review', completed: true, dataChoice: 'existing' }), new Date().toISOString());
 }
 
+test('unreadable standalone directories allow Return and Android Back without resetting storage or abandoning an addition', async () => {
+  const { native, sql } = await fixture(); let closed = 0, tree: any;
+  const port = { ...sql, getAllAsync: async <T>(statement: string, ...params: BindValue[]) => {
+    if (statement.includes('FROM friends')) throw new Error('Synthetic unavailable directory');
+    return sql.getAllAsync<T>(statement, ...params);
+  } }; const h = harness(port);
+  try {
+    const { CatalogScreen } = h.load('ui/CatalogScreen.tsx');
+    const props = { database: port, kind: 'friends', onDone() { closed++; } };
+    await h.act(async () => { tree = h.create(h.React.createElement(CatalogScreen, props)); });
+    assert.match(label(tree.root), /Opération non confirmée/);
+    await press(h, tree, 'Retour'); assert.equal(closed, 1);
+    await h.back(); assert.equal(closed, 2);
+    await h.act(async () => input(tree, 'Nom de la personne').props.onChangeText('Ajout fictif non enregistré'));
+    await h.back(); assert.equal(closed, 2);
+    assert.equal(input(tree, 'Nom de la personne').props.value, 'Ajout fictif non enregistré');
+    assert.equal(native.prepare('SELECT count(*) AS n FROM friends').get()!.n, 0);
+    assert.equal(native.prepare('SELECT count(*) AS n FROM daily_entries').get()!.n, 0);
+  } finally { if (tree) await h.act(async () => tree.unmount()); native.close(); }
+});
+
+test('closing a directory still waits for its creation and reread to settle', async () => {
+  const { native, sql } = await fixture(); let pause = false, closed = 0, tree: any, release!: () => void;
+  const gate = new Promise<void>(resolve => { release = resolve; });
+  const port = { ...sql, getAllAsync: async <T>(statement: string, ...params: BindValue[]) => {
+    if (pause && statement.includes('FROM friends')) await gate;
+    return sql.getAllAsync<T>(statement, ...params);
+  } }; const h = harness(port);
+  try {
+    const { CatalogScreen } = h.load('ui/CatalogScreen.tsx');
+    await h.act(async () => { tree = h.create(h.React.createElement(CatalogScreen, { database: port, kind: 'friends', onDone() { closed++; } })); });
+    await h.act(async () => input(tree, 'Nom de la personne').props.onChangeText('Personne fictive'));
+    pause = true; await press(h, tree, 'Ajouter la personne');
+    const back = h.back(); await new Promise(resolve => setImmediate(resolve)); assert.equal(closed, 0);
+    await h.act(async () => { release(); await back; });
+    assert.equal(closed, 1); assert.equal(native.prepare('SELECT count(*) AS n FROM friends').get()!.n, 1);
+  } finally { release(); if (tree) await h.act(async () => tree.unmount()); native.close(); }
+});
+
 test('standalone catalog adds people and goals without creating a day or any daily log', async () => {
   const { native, sql } = await fixture(); const h = harness(sql); let tree: any;
   try {

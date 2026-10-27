@@ -6,7 +6,7 @@ import { Catalogs, FRIEND_CATEGORIES, type CatalogItem, type CatalogKind, type L
 import { JournalEditor, type JournalEditorHandle } from './JournalEditor';
 import { settleWrites } from '../storage/settleWrites';
 
-export type CatalogFormHandle = { flush(): Promise<void>; settle(): Promise<void>; hasUnconfirmed(): boolean };
+export type CatalogFormHandle = { flush(): Promise<void>; settle(): Promise<void>; beforeClose(): Promise<void>; hasUnconfirmed(): boolean };
 export const CatalogForm = forwardRef<CatalogFormHandle, { database: SQLiteDatabase; entryId?: string; kind: CatalogKind; active?: boolean }>(function CatalogForm({ database, entryId, kind, active = true }, ref) {
   const repo = useMemo(() => new Catalogs(database, Crypto.randomUUID, kind), [database, kind]);
   const [items, setItems] = useState<CatalogItem[]>([]);
@@ -41,6 +41,13 @@ export const CatalogForm = forwardRef<CatalogFormHandle, { database: SQLiteDatab
   useImperativeHandle(ref, () => ({
     settle: async () => { if (pending.current) await pending.current; await settleWrites([...editors.current.values()].map(editor => editor.settle())); if (failed.current) throw new Error('Journal non confirmé'); },
     hasUnconfirmed: () => !!pending.current || failed.current || !!label.trim() || [...editors.current.values()].some(editor => editor.hasUnconfirmed()),
+    beforeClose: async () => {
+      // A failed read is not a draft. Wait for any action, but do not trap the
+      // standalone directory when its storage remains temporarily unreadable.
+      if (pending.current) try { await pending.current; } catch { /* Existing data stays in SQLite. */ }
+      await flushJournals();
+      if (label.trim()) throw new Error('Ajout non terminé');
+    },
     flush: async () => {
     if (pending.current) await pending.current;
     await flushJournals();
