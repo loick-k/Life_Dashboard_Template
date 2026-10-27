@@ -9,6 +9,7 @@ import { BackupScreen } from './BackupScreen';
 import { V1ImportScreen } from './V1ImportScreen';
 import { ProtectionScreen } from './ProtectionScreen';
 import { keyProtection } from '../storage/nativeProtection';
+import { palette } from './palette';
 
 const titles = ['Bienvenue', 'Tes données', 'Tes préférences', 'Protection du téléphone', 'Sauvegarde', 'Services facultatifs', 'Vérifier et commencer'];
 const choices = { empty: 'Démarrage à vide', existing: 'Données de cet appareil conservées', 'import-v1': 'Import V1', 'restore-v2': 'Sauvegarde V2 restaurée' };
@@ -119,6 +120,7 @@ export function OnboardingScreen({ database, onDone }: { database: QueryConnecti
         <Text style={styles.text}>La base locale est chiffrée et sa clé est conservée dans le stockage sécurisé Android. Active un code ou une biométrie pour déverrouiller ton téléphone.</Text>
         <Pressable accessibilityRole="button" style={styles.secondary} onPress={() => setRoute('protection')}><Text>Configurer la protection biométrique</Text></Pressable>
         <Text style={styles.text}>Facultative et propre à cet appareil. Crée d’abord une sauvegarde chiffrée si tu as déjà des données.</Text>
+        <Pressable accessibilityRole="button" disabled={busy} style={styles.secondary} onPress={() => setRoute('backup')}><Text>Créer une sauvegarde avant activation</Text></Pressable>
       </>}
       {state.step === 'backup' && <>
         <Text style={styles.text}>Crée une première sauvegarde et conserve son code dans ton gestionnaire de mots de passe. Garde une copie du fichier hors de ce téléphone.</Text>
@@ -153,7 +155,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 28, fontWeight: '700', color: '#31333f' }, heading: { fontSize: 23, fontWeight: '600', color: '#31333f' },
   text: { color: '#626570', fontSize: 16, lineHeight: 24 }, notice: { color: '#895000', lineHeight: 22 }, error: { color: '#b42318' },
   progress: { height: 8, backgroundColor: '#e6e8ed', borderRadius: 4 }, fill: { height: 8, backgroundColor: '#ff4b4b', borderRadius: 4 },
-  actions: { gap: 12 }, primary: { minHeight: 48, backgroundColor: '#ff4b4b', padding: 14, borderRadius: 10, alignItems: 'center' },
+  actions: { gap: 12 }, primary: { minHeight: 48, backgroundColor: palette.primary, padding: 14, borderRadius: 10, alignItems: 'center' },
   secondary: { minHeight: 48, borderWidth: 1, borderColor: '#d5d6dc', padding: 14, borderRadius: 10, justifyContent: 'center' },
   white: { color: '#fff', fontSize: 16, fontWeight: '600' }, disabled: { opacity: 0.5 },
 });

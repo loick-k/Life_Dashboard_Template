@@ -92,7 +92,9 @@ test('preference inputs retain incomplete drafts, V1 ranges and precise standard
   assert.equal(parsePreference('close_relations_label', ' Mes proches '), 'Mes proches');
   for (const input of ['', '7,', '-2', '1e1']) assert.throws(() => parsePreference('sleep_min_hours', input));
   for (const date of ['2025-02-29', '2026-13-01', '2026-02-30', '']) assert.throws(() => parsePreference('tobacco_stop_date', date));
-  for (const time of ['8:30', '08:', '24:00', '12:60', '']) assert.throws(() => parsePreference('work_standard_end', time));
+  for (const time of ['8:30', '0830', '8h30']) assert.equal(parsePreference('work_standard_end', time), '08:30');
+  for (const time of ['08:', '08:3', '24:00', '12:60', '']) assert.throws(() => parsePreference('work_standard_end', time));
+  assert.throws(() => validatePreference('work_standard_end', '8:30')); // Persisted values remain canonical HH:MM.
   assert.throws(() => validatePreference('work_days_per_week', 0));
   assert.throws(() => validatePreference('social_weekly_goal_days', 1.5));
   assert.throws(() => validatePreference('close_relations_label', ' '));

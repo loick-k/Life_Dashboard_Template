@@ -6,6 +6,7 @@ import { WriteQueue } from '../storage/writeQueue';
 import type { SqlConnection } from '../storage/migrations';
 import type { EditorHandle } from './editorHandle';
 import { settleWrites } from '../storage/settleWrites';
+import { palette } from './palette';
 
 type Draft = WriteQueue<PreferenceState, { value: PreferenceValue }>;
 export const PreferencesForm = forwardRef<EditorHandle, { database: SqlConnection; active?: boolean; preserveOnNavigate?: boolean; onDone(): void | Promise<void>; onBackup?(): void | Promise<void>; onImport?(): void | Promise<void>; onProtection?(): void | Promise<void>; onBack?(): void | Promise<void>; doneLabel?: string }>(function PreferencesForm({ database, active = true, preserveOnNavigate = false, onDone, onBackup, onImport, onProtection, onBack, doneLabel = 'Retour' }, ref) {
@@ -101,7 +102,7 @@ export const PreferencesForm = forwardRef<EditorHandle, { database: SqlConnectio
   return <ScrollView style={styles.page} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
     <Text accessibilityRole="header" style={styles.title}>Réglages</Text>
     <Text style={styles.help}>Enregistrement local automatique. Unités : kg, cm, km et heures. Les secrets des intégrations ne sont pas stockés ici.</Text>
-    {onBackup && <Pressable accessibilityRole="button" disabled={busy || !ready} style={styles.secondary} onPress={() => void done(onBackup)}><Text>Sauvegarde et récupération</Text></Pressable>}
+    {onBackup && <Pressable accessibilityRole="button" disabled={busy || (!ready && !preserveOnNavigate)} style={styles.secondary} onPress={() => void done(onBackup)}><Text>Sauvegarde et récupération</Text></Pressable>}
     {onImport && <Pressable accessibilityRole="button" disabled={busy || !ready} style={styles.secondary} onPress={() => void done(onImport)}><Text>Importer un export V1</Text></Pressable>}
     {onProtection && <Pressable accessibilityRole="button" disabled={busy || !ready} style={styles.secondary} onPress={() => void done(onProtection)}><Text>Protection biométrique</Text></Pressable>}
     {!!error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
@@ -138,6 +139,6 @@ const styles = StyleSheet.create({
   card: { padding: 16, borderRadius: 12, borderWidth: 1, borderColor: '#d5d6dc', gap: 8 },
   label: { color: '#31333f', fontSize: 16 }, input: { padding: 12, minHeight: 48, borderRadius: 8, backgroundColor: '#f0f2f6', color: '#31333f' },
   error: { color: '#b42318' }, secondary: { minHeight: 48, justifyContent: 'center' },
-  button: { minHeight: 48, backgroundColor: '#ff4b4b', borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  button: { minHeight: 48, backgroundColor: palette.primary, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
 });

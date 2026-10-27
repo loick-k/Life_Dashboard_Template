@@ -11,6 +11,33 @@ remplacement forcé de la V1 et aucune synchronisation automatique des deux base
 
 ## État vérifié dans le dépôt
 
+### Corrections audit — ergonomie de saisie et première utilisation — 27/10/2026
+
+Conservation sociale précédente commitée 4ad6aeb. Calendrier français replié par
+défaut (pas de grille coûteuse au premier affichage), semaine lundi/dimanche,
+jours futurs bloqués ; sélectionner une date n'ouvre rien sans confirmation.
+Saisie manuelle de date conservée. Horaires 8:48 / 0848 / 8h48 normalisés en HH:MM,
+formats incomplets conservés en brouillon ; valeurs persistées restent strictes.
+Portable, sieste et quatre activités en heures/minutes précises. Total temps pour
+moi n.c. si tout manque, zéro seulement si renseigné ; calcul immédiat depuis le
+brouillon valide. Message distingue valeurs enregistrées et validation de l'étape.
+
+Dernières mesures corporelles indépendantes, strictement antérieures et datées ;
+réutilisation volontaire confirmée, patch du seul indicateur. Récapitulatif travail
+ajoute type/durée/solde avant/jour/après via le même WorkBalanceCard. Une seule
+carte énergétique. Assistant : accès direct sauvegarde avant activation biométrique,
+retour à la même étape. Depuis les Réglages principaux, une lecture de préférences
+corrompues n'interdit plus d'ouvrir la récupération, sans réinitialisation silencieuse.
+Rouge d'action assombri #c83232 pour contraste blanc >=4,5:1 ; accent V1 conservé.
+
+109 tests Node, TypeScript et 10 tests Python locaux réussis. Dix nouveaux tests
+domaines/React/SQLite, avec minuit/dates, année bissextile, zéro/absence, durée
+incomplète, mesure datée/confirmation, résumé travail et assistant. Aucun nouveau
+paquet, téléchargement, build ou donnée réelle. Rendu/clavier/insets et grandes
+polices restent à vérifier sur téléphone. Scores, périodes longues, PDF, gestion
+catalogues/historiques et intégrations restent requis : objectif global non terminé.
+
+
 ### Corrections audit — conservation sociale et objectifs — 27/10/2026
 
 Lot navigation précédent commité b043eda. Migration additive 006_social_selection :

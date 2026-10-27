@@ -4,6 +4,7 @@ import { File } from 'expo-file-system';
 import type { QueryConnection } from '../storage/catalogs';
 import { importV1, V1ImportConflict, type V1ImportReport } from '../storage/v1Import';
 import { nativeBackupCrypto } from '../storage/nativeBackupCrypto';
+import { palette } from './palette';
 
 const warningLabels: Record<string, string> = {
   rounded_minutes: 'Durées arrondies à la minute (valeurs originales archivées)',
@@ -83,5 +84,5 @@ const styles = StyleSheet.create({
   page: { padding: 20, paddingTop: 48, paddingBottom: 40, gap: 14, backgroundColor: '#fff', flexGrow: 1 },
   title: { color: '#31333f', fontSize: 27, fontWeight: '700' }, heading: { color: '#31333f', fontSize: 20, fontWeight: '600' },
   text: { color: '#626570', lineHeight: 23 }, secondary: { minHeight: 48, padding: 14, borderRadius: 10, borderWidth: 1, borderColor: '#d5d6dc', justifyContent: 'center' },
-  primary: { minHeight: 48, backgroundColor: '#ff4b4b', borderRadius: 10, padding: 14, alignItems: 'center' },
+  primary: { minHeight: 48, backgroundColor: palette.primary, borderRadius: 10, padding: 14, alignItems: 'center' },
 });

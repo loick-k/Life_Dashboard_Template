@@ -6,6 +6,7 @@ import { nativeBackupEnvironment, readBackupFile } from '../storage/nativeBackup
 import { createBackup, restoreBackup } from '../storage/backupService';
 import { recoveryKey } from '../storage/backupFormat';
 import migrations from '../storage/generated/migrations.json';
+import { palette } from './palette';
 
 export function BackupScreen({ database, onDone, restoreOnly = false, onRestored, beforeRestore }: { database: QueryConnection; onDone(): void; restoreOnly?: boolean; onRestored?(): Promise<void>; beforeRestore?(): Promise<void> }) {
   const [key, setKey] = useState('');
@@ -92,6 +93,6 @@ const styles = StyleSheet.create({
   page: { flexGrow: 1, padding: 20, paddingTop: 48, paddingBottom: 40, backgroundColor: '#fff', gap: 14 },
   title: { fontSize: 26, fontWeight: '700', color: '#31333f' }, text: { color: '#626570', lineHeight: 23 },
   input: { minHeight: 48, borderRadius: 8, padding: 12, backgroundColor: '#f0f2f6', color: '#31333f' },
-  primary: { minHeight: 48, padding: 14, borderRadius: 10, backgroundColor: '#ff4b4b', alignItems: 'center' },
+  primary: { minHeight: 48, padding: 14, borderRadius: 10, backgroundColor: palette.primary, alignItems: 'center' },
   secondary: { minHeight: 48, padding: 14, borderRadius: 10, borderWidth: 1, borderColor: '#d5d6dc', justifyContent: 'center' },
 });

@@ -23,6 +23,11 @@ import { formatMinutes } from '../domain/workReport';
 import type { EditorHandle } from './editorHandle';
 import { resolveDailyDraft } from '../storage/dailyRecovery';
 import { settleWrites } from '../storage/settleWrites';
+import { durationFromParts, sumKnownMinutes } from '../domain/durationInput';
+import type { BodyMeasure, PreviousMeasure } from '../storage/previousMeasures';
+import { PreviousMeasureCard } from './PreviousMeasureCard';
+import { FrenchCalendar } from './FrenchCalendar';
+import { palette } from './palette';
 
 /** Vertical development slice, not the final daily journey. Synthetic data only. */
 export const DailyForm = forwardRef<EditorHandle, { database: SQLiteDatabase; initialDate?: string; active?: boolean; onDate?(date: string): void; onSettings?(date: string): void; onBilan?(date: string): void }>(function DailyForm({ database, initialDate, active = true, onDate, onSettings, onBilan }, ref) {
@@ -31,8 +36,10 @@ export const DailyForm = forwardRef<EditorHandle, { database: SQLiteDatabase; in
   const [step, setStep] = useState(0);
   const [home, setHome] = useState(true);
   const [chosenDate, setChosenDate] = useState('');
+  const [showCalendar, setShowCalendar] = useState(false);
   const [draft, setDraft] = useState<DailyDraft>();
   const [raw, setRaw] = useState<Record<string, string>>({});
+  const durationBuffers = useRef<Record<string, string>>({});
   const [invalid, setInvalid] = useState<Set<string>>(new Set());
   const [error, setError] = useState('');
   const [loadAttempt, setLoadAttempt] = useState(0);
@@ -50,6 +57,8 @@ export const DailyForm = forwardRef<EditorHandle, { database: SQLiteDatabase; in
   useEffect(() => {
     let active = true;
     setDraft(undefined); setRaw({}); setInvalid(new Set()); setError(''); setHome(true); setReview(undefined); position.current = null; history.current = [];
+    durationBuffers.current = {};
+    setChosenDate(''); setShowCalendar(false);
     const repo = new DailyEntries(database, Crypto.randomUUID);
     loading.current = (async () => {
       const results = await Promise.allSettled([repo.getOrCreate(date), new CheckinPositions(database).read(date), new Preferences(database).read('close_relations_label').catch(() => null)] as const);
@@ -144,6 +153,25 @@ export const DailyForm = forwardRef<EditorHandle, { database: SQLiteDatabase; in
     if (valid) save(item.key, parsed!);
   };
   const fieldLabel = (item: Field) => item.key === 'close_relations_listening_score' ? `${closeLabel} (1 à 10)` : item.label;
+  const editDuration = (item: Field, part: 'hours' | 'minutes', text: string) => {
+    if (!draft || navigating.current || !active) return;
+    durationBuffers.current[`${item.key}.${part}`] = text;
+    const stored = typeof draft.snapshot[item.key] === 'number' ? Number(draft.snapshot[item.key]) : null;
+    const hours = durationBuffers.current[`${item.key}.hours`] ?? (stored === null ? '' : String(Math.floor(stored / 60)));
+    const minutes = durationBuffers.current[`${item.key}.minutes`] ?? (stored === null ? '' : String(stored % 60));
+    setRaw(previous => ({ ...previous, ...durationBuffers.current }));
+    const value = durationFromParts(hours, minutes), valid = value !== undefined && dailyRules[item.key](value);
+    setInvalid(previous => { const next = new Set(previous); if (valid) next.delete(item.key); else next.add(item.key); return next; });
+    if (valid) save(item.key, value!);
+  };
+  const reuseBodyMeasure = (field: BodyMeasure, measure: PreviousMeasure) => void navigate(async () => {
+    const confirmed = await new Promise<boolean>(resolve => Alert.alert('Réutiliser cette mesure ?', `${measure.value} · mesuré le ${measure.date.split('-').reverse().join('/')}\nCette valeur sera enregistrée pour le ${date.split('-').reverse().join('/')}. Les autres mesures seront conservées.`, [
+      { text: 'Annuler', style: 'cancel', onPress: () => resolve(false) }, { text: 'Réutiliser', onPress: () => resolve(true) },
+    ], { cancelable: false }));
+    if (!confirmed || !draft) return;
+    draft.edit({ [field]: measure.value }); setRaw(previous => { const next = { ...previous }; delete next[field]; return next; });
+    await draft.flush(); refresh();
+  });
   const chooseSleepMode = (mode: 'manual' | 'calculated') => {
     setRaw(previous => { const next = { ...previous }; delete next.sleep_hours; return next; });
     setInvalid(previous => { const next = new Set(previous); next.delete('sleep_hours'); return next; });
@@ -187,7 +215,8 @@ export const DailyForm = forwardRef<EditorHandle, { database: SQLiteDatabase; in
       const resolved = await resolveDailyDraft(new DailyEntries(database, Crypto.randomUUID), review.latest, review.pending, Object.keys(review.choices).filter(key => review.choices[key] === 'draft'));
       setDraft(resolved);
       const replaced = Object.keys(review.choices).filter(key => review.choices[key] === 'database');
-      setRaw(previous => { const next = { ...previous }; for (const key of replaced) delete next[key]; return next; });
+      for (const key of replaced) { delete durationBuffers.current[`${key}.hours`]; delete durationBuffers.current[`${key}.minutes`]; }
+      setRaw(previous => { const next = { ...previous }; for (const key of replaced) { delete next[key]; delete next[`${key}.hours`]; delete next[`${key}.minutes`]; } return next; });
       setInvalid(previous => { const next = new Set(previous); replaced.forEach(key => next.delete(key)); return next; });
       setReview(undefined); setError('Choix enregistrés. Les autres champs sont conservés.');
     } catch { setError('La journée a encore changé ou l’écriture a échoué. Le brouillon initial reste conservé ; recharge la comparaison.'); }
@@ -205,6 +234,8 @@ export const DailyForm = forwardRef<EditorHandle, { database: SQLiteDatabase; in
         <Pressable disabled={busy || !draft || date >= parisDate()} style={styles.secondary} onPress={() => void navigate(() => changeDate(shiftDate(date, 1)))}><Text>Jour suivant →</Text></Pressable>
       </View>
       <Text style={styles.label}>Ouvrir une date de l’historique (AAAA-MM-JJ)</Text>
+      <Pressable accessibilityRole="button" accessibilityState={{ expanded: showCalendar }} style={styles.secondary} onPress={() => setShowCalendar(value => !value)}><Text>{showCalendar ? 'Masquer le calendrier' : 'Choisir dans le calendrier'}</Text></Pressable>
+      {showCalendar && <FrenchCalendar value={chosenDate || date} latest={parisDate()} disabled={busy} onSelect={setChosenDate} />}
       <TextInput accessibilityLabel="Date de l’historique" editable={!busy} style={styles.input} value={chosenDate} onChangeText={setChosenDate} placeholder="2026-09-25" autoCapitalize="none" maxLength={10} />
       <Pressable disabled={busy || !draft} style={styles.secondary} onPress={() => {
         try { validateDate(chosenDate); if (chosenDate > parisDate()) throw new Error('future'); }
@@ -240,6 +271,7 @@ export const DailyForm = forwardRef<EditorHandle, { database: SQLiteDatabase; in
     </View> : <View pointerEvents={busy ? 'none' : 'auto'}>
       <Pressable style={styles.secondary} onPress={() => void navigate(() => setHome(true))}><Text>Accueil de la journée</Text></Pressable>
       {section.id === 'work' && <WorkBalanceCard database={database} date={date} revision={draft.snapshot.revision} saved={draft.status === 'saved'} />}
+      {['weight', 'fat', 'belly'].includes(section.id) && <PreviousMeasureCard database={database} field={section.fields[0]!.key as BodyMeasure} date={date} disabled={busy} onReuse={measure => reuseBodyMeasure(section.fields[0]!.key as BodyMeasure, measure)} />}
       {section.id === 'sport' && <SportForm key={draft.snapshot.entry_id} ref={sports} database={database} entryId={draft.snapshot.entry_id} />}
       {['social', 'goals'].includes(section.id) && <CatalogForm key={`${draft.snapshot.entry_id}:${section.id}`} ref={catalog} database={database} entryId={draft.snapshot.entry_id} kind={section.id === 'social' ? 'friends' : 'goals'} />}
       {section.id === 'work' && <View style={styles.row}>{['Télétravail', 'Day off', 'Bureau', 'Déplacement'].map(mode => <Pressable accessibilityRole="button" accessibilityState={{ selected: snapshot?.work_mode === mode }} key={mode} style={[styles.secondary, snapshot?.work_mode === mode && styles.selected]} onPress={() => save('work_mode', mode)}><Text>{mode}</Text></Pressable>)}</View>}
@@ -258,25 +290,35 @@ export const DailyForm = forwardRef<EditorHandle, { database: SQLiteDatabase; in
       </>}
       {section.fields.map(item => <View key={item.key} style={styles.field}>
         <Text style={styles.label}>{fieldLabel(item)}</Text>
-        <TextInput editable={!busy && !(item.key === 'sleep_hours' && snapshot?.sleep_duration_mode === 'calculated')} accessibilityLabel={fieldLabel(item)} value={item.key === 'sleep_hours' && snapshot?.sleep_duration_mode === 'calculated' ? typeof snapshot.sleep_hours === 'number' ? String(Number(snapshot.sleep_hours.toFixed(2))) : '' : raw[item.key] ?? String(snapshot?.[item.key] ?? '')}
+        {item.key.endsWith('_minutes') ? <View style={styles.row}>{(['hours', 'minutes'] as const).map(part => {
+          const stored = typeof snapshot?.[item.key] === 'number' ? Number(snapshot[item.key]) : null;
+          const partValue = stored === null ? '' : String(part === 'hours' ? Math.floor(stored / 60) : stored % 60);
+          const partLabel = `${fieldLabel(item).replace(' (minutes)', '')} · ${part === 'hours' ? 'Heures' : 'Minutes'}`;
+          return <View key={part} style={{ flex: 1, minWidth: 100 }}><Text>{part === 'hours' ? 'Heures' : 'Minutes'}</Text><TextInput accessibilityLabel={partLabel} editable={!busy} value={raw[`${item.key}.${part}`] ?? partValue} onChangeText={text => editDuration(item, part, text)} keyboardType="number-pad" placeholder="Non renseigné" style={[styles.input, invalid.has(item.key) && styles.invalid]} /></View>;
+        })}</View> : <TextInput editable={!busy && !(item.key === 'sleep_hours' && snapshot?.sleep_duration_mode === 'calculated')} accessibilityLabel={fieldLabel(item)} value={item.key === 'sleep_hours' && snapshot?.sleep_duration_mode === 'calculated' ? typeof snapshot.sleep_hours === 'number' ? String(Number(snapshot.sleep_hours.toFixed(2))) : '' : raw[item.key] ?? String(snapshot?.[item.key] ?? '')}
           onChangeText={value => edit(item, value)} style={[styles.input, invalid.has(item.key) && styles.invalid]}
+          onBlur={() => { if (item.kind === 'time' && !invalid.has(item.key)) setRaw(previous => ({ ...previous, [item.key]: String(draft.snapshot[item.key] ?? '') })); }}
           keyboardType={item.kind === 'number' ? 'decimal-pad' : 'default'}
           multiline={item.kind === 'text'}
-          placeholder={item.kind === 'time' ? 'HH:MM' : 'Non renseigné'} />
+          placeholder={item.kind === 'time' ? 'HH:MM ou HHMM' : 'Non renseigné'} />}
         {!(item.key === 'sleep_hours' && snapshot?.sleep_duration_mode === 'calculated') && <Pressable accessibilityLabel={`Effacer ${fieldLabel(item)}`} onPress={() => Alert.alert('Effacer cette valeur ?', fieldLabel(item), [{ text: 'Annuler' }, { text: 'Effacer', style: 'destructive', onPress: () => {
-          setRaw(previous => ({ ...previous, [item.key]: '' })); setInvalid(previous => { const next = new Set(previous); next.delete(item.key); return next; }); save(item.key, null);
+          delete durationBuffers.current[`${item.key}.hours`]; delete durationBuffers.current[`${item.key}.minutes`];
+          setRaw(previous => { const next = { ...previous, [item.key]: '' }; delete next[`${item.key}.hours`]; delete next[`${item.key}.minutes`]; return next; }); setInvalid(previous => { const next = new Set(previous); next.delete(item.key); return next; }); save(item.key, null);
         } }])}><Text style={styles.clear}>Effacer</Text></Pressable>}
       </View>)}
       {section.id === 'work' && <Text style={styles.total}>Temps travaillé : {inspectWorkSchedule(snapshot as WorkTimes).issue === 'overlap' ? 'n.c.' : snapshot?.work_duration_minutes ?? 'n.c.'} min</Text>}
       {section.id === 'work' && inspectWorkSchedule(snapshot as WorkTimes).issue === 'overlap' && <Text accessibilityRole="alert" style={styles.error}>Des créneaux se chevauchent. Les horaires sont enregistrés, mais la journée est exclue du compteur jusqu’à correction.</Text>}
-      {section.id === 'me-time' && <Text style={styles.total}>Temps pour moi total : {section.fields.reduce((sum, item) => sum + Number(snapshot?.[item.key] ?? 0), 0)} min</Text>}
+      {section.id === 'me-time' && <Text style={styles.total}>Temps pour moi total : {formatMinutes(sumKnownMinutes(section.fields.map(item => snapshot?.[item.key])))}</Text>}
       {['nutrition', 'summary'].includes(section.id) && <EnergyCard database={database} entryId={draft.snapshot.entry_id} revision={draft.snapshot.revision} saved={draft.status === 'saved'} />}
       {section.id === 'summary' && sections.filter(item => item.fields.length).map(item => <View style={styles.field} key={item.id}>
         <Text style={styles.label}>{item.title}</Text>{item.fields.map(input => <Text key={input.key}>{fieldLabel(input)} : {snapshot?.[input.key] ?? 'Non renseigné'}</Text>)}
+        {item.id === 'work' && <><Text>Type de journée : {snapshot?.work_mode ?? 'Non renseigné'}</Text><WorkBalanceCard database={database} date={date} revision={draft.snapshot.revision} saved={draft.status === 'saved'} /></>}
         <Pressable style={styles.secondary} onPress={() => void navigate(() => moveStep(sections.indexOf(item)))}><Text>Modifier</Text></Pressable>
       </View>)}
       {section.id === 'summary' && <RelatedSummary database={database} entryId={draft.snapshot.entry_id} onModify={id => void navigate(() => moveStep(sections.findIndex(item => item.id === id)))} />}
       {draft.status === 'saving' && <Text accessibilityLiveRegion="polite">Enregistrement en cours…</Text>}
+      {invalid.size > 0 && <Text accessibilityRole="alert" style={styles.error}>Saisie incomplète ou hors limites : elle reste en brouillon. Les totaux utilisent les dernières valeurs valides.</Text>}
+      {section.fields.length > 0 && draft.status === 'saved' && !invalid.size && <Text style={styles.notice}>Valeurs enregistrées localement. Continuer valide l’étape ; Passer la marque comme passée.</Text>}
       <View style={styles.row}>
         <Pressable disabled={busy} style={styles.secondary} onPress={() => void navigate(back)}><Text>← Retour</Text></Pressable>
         {section.id !== 'summary' ? <>
@@ -300,7 +342,7 @@ const styles = StyleSheet.create({
   input: { backgroundColor: '#f0f2f6', borderRadius: 10, padding: 14, minHeight: 50, fontSize: 18, color: '#31333f', borderWidth: 1, borderColor: 'transparent' },
   invalid: { borderColor: '#b74a00' }, clear: { color: '#626570', paddingVertical: 12, alignSelf: 'flex-end' },
   secondary: { borderWidth: 1, borderColor: '#d5d6dc', borderRadius: 10, padding: 14, minHeight: 48 },
-  selected: { backgroundColor: '#ffe4e4', borderColor: '#ff4b4b' }, primary: { backgroundColor: '#ff4b4b', padding: 14, borderRadius: 10, minHeight: 48, flexGrow: 1, alignItems: 'center' },
+  selected: { backgroundColor: '#ffe4e4', borderColor: '#ff4b4b' }, primary: { backgroundColor: palette.primary, padding: 14, borderRadius: 10, minHeight: 48, flexGrow: 1, alignItems: 'center' },
   white: { color: '#fff', fontWeight: '600' }, total: { backgroundColor: '#e8f2fc', padding: 16, borderRadius: 12, fontSize: 18, marginVertical: 12 },
   error: { color: '#b42318', marginVertical: 12, lineHeight: 22 },
 });

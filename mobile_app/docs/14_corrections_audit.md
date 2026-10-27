@@ -22,12 +22,13 @@ données synthétiques, pas de Neon/push, plafond cumulatif disque 5 Go inchang�
 | Bilan actualisé après saisie | Relecture compteur et séries au retour, même date ; test +1 h et poids modifié | Android |
 | Barrière sur chargement sportif lent/en échec | Attend les trois initialisations et toutes les files ; échec réessayable ; tests React | Android |
 | Notes/durées sociales après décochage/recochage | Migration 006, included au lieu de DELETE ; UUID/détails conservés, compteurs filtrés, backup/import/rejeu/React testés | Android ; anciennes pertes nécessitent sauvegarde antérieure |
-| Formats heures/minutes et calendrier français | À corriger | Contrôles tactiles et tests |
+| Formats heures/minutes et calendrier français | Portable/sieste/activités h/min, horaires normalisés, calendrier français repliable ; tests React | Validation tactile Android, grandes polices |
 | Sport moins encombrant | Cartes repliables, champs invalides révélés lors du flush | Vérification téléphone |
-| Enregistré distinct d'étape validée ; absence distincte de zéro | À corriger | Progression, temps pour moi, messages |
-| Récapitulatif travail/calories complet | À corriger | Type/durée/cumul, provenance kcal |
-| Sauvegarde accessible avant biométrie | À corriger | Assistant reprenable et route directe |
-| Dernières mesures corporelles datées / réutilisation volontaire | À porter | Lecture bornée avant date, confirmation |
+| Enregistré distinct d'étape validée ; absence distincte de zéro | Message explicite, total n.c. si absent, zéro saisi distinct ; tests | Android |
+| Récapitulatif travail/calories complet | Type/durée/compteurs partagés ; carte kcal unique avec provenance ; tests React | Calcul distant à porter et Android |
+| Sauvegarde accessible avant biométrie | Route directe depuis protection, retour à la même étape ; test React | Sauvegarde/biométrie sur Android |
+| Dernières mesures corporelles datées / réutilisation volontaire | Lecture strictement avant date, chaque mesure indépendante ; confirmation et patch ciblé ; tests React/SQLite | Android |
+| Contraste des actions principales | Palette #c83232, contraste blanc >=4,5:1 testé ; accent V1 maintenu | Vérification visuelle sur téléphone |
 | Objectifs/réglages influencent les indicateurs | À porter | Sept réglages encore sans effet métier |
 | Scores et évaluation hebdomadaire V1 | À porter | Calculs/fixtures communes, UI |
 | Périodes mensuelles, annuelles et depuis le début | À porter | Agrégation et navigation |
@@ -92,3 +93,15 @@ refusée sans changer la destination. Rejeu V1 après réouverture et restaurati
 préserve la désélection et la note V2. Objectif archivé ≠ terminé, date de fin
 inchangée sauf action explicite ; réouverture soumise à la limite de trois actifs.
 99 tests Node, TypeScript et 10 tests Python réussis. Validation native encore requise.
+
+## Lot ergonomie et parcours initial
+
+109 tests Node et TypeScript réussis. Tests domaines et interactions réelles :
+normalisation d'horaires tout en conservant une validation stricte du stockage,
+dates bissextiles/calendrier lundi, sélection sans ouverture implicite, futur bloqué,
+durées h/min et retour sans perte, absence distincte de zéro, dernières mesures
+datées et réutilisation uniquement après confirmation. Résumé travail complet et
+carte énergétique unique ; sauvegarde avant activation accessible dans l'assistant.
+Récupération ouvrable malgré réglage corrompu, sans écraser ce réglage. Palette
+rouge adaptée au petit texte blanc. Aucun test ne prétend valider le rendu natif :
+clavier, insets, grandes polices, biométrie et arrêt forcé restent à réaliser.

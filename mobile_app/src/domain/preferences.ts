@@ -1,3 +1,4 @@
+import { normalizeClock } from './input.ts';
 export type PreferenceValue = string | number | null;
 export interface PreferenceDefinition {
   key: string;
@@ -55,6 +56,7 @@ export function validatePreference(key: string, value: unknown): PreferenceValue
 /** Empty or unfinished text is a draft, never an implicit deletion. */
 export function parsePreference(key: PreferenceKey, raw: string): PreferenceValue {
   const definition = preferenceDefinition(key);
+  if (definition.kind === 'time') return validatePreference(key, normalizeClock(raw) ?? raw.trim());
   if (definition.kind !== 'number') return validatePreference(key, raw.trim());
   if (!/^\d+(?:[.,]\d+)?$/.test(raw.trim())) throw new Error('Nombre incomplet.');
   return validatePreference(key, Number(raw.trim().replace(',', '.')));

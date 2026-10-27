@@ -7,19 +7,19 @@ compléter pendant chaque portage. « À porter » ne signifie jamais implément
 
 | Rubrique V1 / source | Contrat V2 à vérifier | État Android |
 |---|---|---|
-| Navigation principale / app | Aujourd'hui, Todo, Bilan, Réglages ; date du jour Paris | À porter |
+| Navigation principale / app | Aujourd'hui, Todo, Bilan, Réglages ; date du jour Paris | Menu principal connecté, éditeurs conservés, date et retours testés avec React ; Todoist et preuve Android à faire |
 | Parcours / app_config, checkin | 13 étapes + récapitulatif, reprise, passer, retour, accès direct | Accueil, accès directs, curseur par date, progression, fin, retour/Modifier, résumé sport/relations/objectifs et ouverture historique connectés ; UI Android non validée |
-| Sommeil | Durée, horaires, sieste ; valeurs partielles préservées | Saisie connectée ; calculs horaires et validation native à faire |
+| Sommeil | Durée, horaires, sieste ; valeurs partielles préservées | Horaires calculés, mode manuel/importé explicite, sieste h/min et désaccord signalé ; tests locaux ; validation native à faire |
 | Alcool | Quantité, zéro distinct d'absence | Saisie connectée ; validation native à faire |
-| Corps | Poids, masse graisseuse, tour de ventre indépendants | Première UI de test connectée ; validation native et mesures précédentes à faire |
+| Corps | Poids, masse graisseuse, tour de ventre indépendants | Saisie et dernières mesures datées connectées, réutilisation confirmée et ciblée testée ; validation native à faire |
 | Travail / work_tracking | Trois créneaux, heures isolées, standards, veille, mode ; solde cumulé unique | Trois créneaux/mode/durée, standards/veille confirmés, solde avant/après partagé avec Bilan connectés ; tests SQLite et parité de solde V1 ; validation Android à faire |
 | Sport | Types V1, plusieurs séances, minutes et distances précises | Repository, migration et UI d'essai connectés ; validation Android à faire |
 | Portable | Durée précise, historique et seuil configurable | Saisie, seuil stocké et moyenne/série hebdomadaire connectés ; consommation du seuil par score et validation Android à faire |
 | Alimentation | Repas, calcul explicite, kcal nettes, absence n.c., résultat unique | Repas et affichage kcal connectés ; analyse à faire |
-| Temps pour moi | Activités distinctes, sorties/détente, total immédiat | Saisie et total connectés ; validation native à faire |
+| Temps pour moi | Activités distinctes, sorties/détente, total immédiat | Saisie h/min et total immédiat connectés, absence distincte de zéro testée ; validation native à faire |
 | Écoute | Scores et libellé configurable des proches | Saisie et libellé réglable connectés (formulaire et récapitulatif) ; validation Android à faire |
 | Social | Personnes, catégories, récurrence, périodes, historique et journal quotidien | Ajout/catégories/sélection/archives connectés ; récurrence et historique détaillé à faire |
-| Objectifs | Ajout, actifs, complétés, critères, journal et historique | Ajout/journal/archives connectés, limite 3 actifs ; critères et historique détaillé à faire |
+| Objectifs | Ajout, actifs, complétés, critères, journal et historique | Ajout/journal/archives/réalisation/réouverture séparés, notes conservées, limite 3 actifs ; critères et historique détaillé à faire |
 | Bilan / dashboard_metrics | Courbes par catégorie, vue hebdomadaire, objectifs, évaluation semaine courante | Travail et 27 séries hebdomadaires (corps, sommeil, sport, alimentation, temps, écoute, social, objectifs) connectés ; scores, autres granularités et validation native à faire |
 | Scores / dashboard_metrics | Sommeil, alcool, tabac, sport, portable, nutrition, corps, social, objectifs, travail, temps positif, écoute | À porter |
 | Travail PDF / work_report | Tableau hebdomadaire, types, durée et compteur cumulé, graphique | À porter |
@@ -45,6 +45,15 @@ compléter pendant chaque portage. « À porter » ne signifie jamais implément
 
 - Navigation tactile native plutôt que barre latérale Streamlit.
 - Identité claire/fond blanc, texte sombre, action principale rouge `#ff4b4b`.
+- Correction accessibilité 27/10 : accent/graphes V1 `#ff4b4b` conservés ; fond des
+  actions principales `#c83232` pour texte blanc lisible (contraste >=4,5:1 testé).
+- Calendrier français natif à affichage volontaire, semaine commençant le lundi,
+  ouverture de date explicite après sélection. La grille n'alourdit pas l'accueil
+  par défaut. Saisie manuelle toujours disponible pour parcourir un historique long.
+- Portable, sieste et temps pour moi saisis en heures/minutes ; stockage minutes
+  inchangé, absence jamais convertie silencieusement en zéro. Horaires français
+  normalisés en HH:MM. Dernières mesures corporelles datées réutilisées seulement
+  sur confirmation, pas de report automatique d'un jour à l'autre.
 - Pas de connexion Google obligatoire pour les données locales.
 - Pas de Neon ni de serveur Python ; pas de synchronisation implicite V1/V2.
 - Secrets facultatifs saisis sur appareil, jamais distribués avec l'APK.

@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Alert, BackHandler, Linking, Pressable, ScrollView, StyleSheet, Text } from 'react-native';
 import { canUseBiometrics, keyProtection } from '../storage/nativeProtection';
 import type { ProtectionMode } from '../storage/keyProtection';
+import { palette } from './palette';
 
 export function ProtectionScreen({ onDone }: { onDone(): void }) {
   const [mode, setMode] = useState<ProtectionMode>();
@@ -44,6 +45,6 @@ export function ProtectionScreen({ onDone }: { onDone(): void }) {
 }
 const styles = StyleSheet.create({
   page: { flexGrow: 1, padding: 24, paddingTop: 48, gap: 20, backgroundColor: '#fff' }, title: { fontSize: 26, fontWeight: '700', color: '#31333f' },
-  primary: { minHeight: 48, padding: 14, borderRadius: 10, backgroundColor: '#ff4b4b', alignItems: 'center' }, white: { color: '#fff', fontWeight: '600' },
+  primary: { minHeight: 48, padding: 14, borderRadius: 10, backgroundColor: palette.primary, alignItems: 'center' }, white: { color: '#fff', fontWeight: '600' },
   secondary: { minHeight: 48, padding: 14, borderRadius: 10, borderWidth: 1, borderColor: '#d5d6dc' }, error: { color: '#b42318' },
 });
