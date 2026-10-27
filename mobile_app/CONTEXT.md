@@ -11,6 +11,28 @@ remplacement forcé de la V1 et aucune synchronisation automatique des deux base
 
 ## État vérifié dans le dépôt
 
+### Audit approfondi — réglages durables et comparaison indépendante — 27/10/2026
+
+Journaux commités 902c093. Les treize réglages journalisent désormais leurs buffers
+avant écriture, dans une clé privée indépendante par réglage. Nombre/date/horaire/
+libellé incomplets retrouvés après remontage, zéro et effacement facultatif séparés.
+Valeur valide non confirmée => comparaison explicite avec la révision courante,
+second conflit refusé, garder la base vérifie aussi sa révision. Abandonner un
+réglage ne touche ni aux autres brouillons ni aux autres valeurs.
+
+Assistant initial et restauration refusent les brouillons ; le menu principal
+conserve le formulaire lors d'un détour. Chargement lent inclus dans les barrières,
+statuts distincts pour défaut/sauvegarde/conservation/reprise. Nettoyage réessayable
+sans réécriture de la valeur ni changement de sa révision. Secrets refusés par le
+contrat des préférences ; buffers privés exclus des backups et préservés par restore.
+
+204 tests Node et TypeScript réussis. Six nouveaux tests SQLite/React couvrent les
+quatre types de champs, réouverture, deux conflits, abandon ciblé, zéro/date vide,
+panne après SQL, isolation des backups et barrière lancée avant la fin du chargement.
+Restent ajouts de personnes/objectifs à rendre durables, intégrations et ergonomie/
+parité/validation Android. Aucun build/téléchargement/donnée réelle/push, V1 intacte.
+Travaux Todoist préexistants conservés hors lot. L'objectif global reste actif.
+
 ### Audit approfondi — notes et durées de journaux durables — 27/10/2026
 
 Sport commité c4df30a. Le même socle journalise les notes sociales/objectifs, le
