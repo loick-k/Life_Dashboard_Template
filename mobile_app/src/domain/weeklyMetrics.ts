@@ -1,5 +1,6 @@
 import { shiftDate } from './dates.ts';
 import { validateDate } from '../storage/dailyEntries.ts';
+import { estimateFields, hasEstimate } from './nutrition.ts';
 
 type Aggregation = 'sum' | 'mean' | 'latest';
 const metric = (key: string, label: string, group: string, unit: string, aggregate: Aggregation = 'sum') => ({ key, label, group, unit, aggregate });
@@ -36,6 +37,7 @@ export type MetricDefinition = typeof weeklyMetrics[number];
 export type MetricRow = { entry_date: string; [key: string]: string | number | null };
 export type MetricSeries = MetricDefinition & {
   value: number | null; count: number;
+  excludedEstimates: number;
   points: { date: string; value: number | null; future: boolean }[];
 };
 
@@ -52,9 +54,13 @@ export function weeklySeries(rows: readonly MetricRow[], date: string): MetricSe
     validateDate(row.entry_date);
     if (row.entry_date < monday || row.entry_date > date) continue;
     if (indexed.has(row.entry_date)) throw new Error('Journée dupliquée.');
-    const kcal = numeric(row.kcal), sportKcal = numeric(row.sport_kcal_burned);
+    const usable = row.nutrition_estimate_stale !== 1;
+    const kcal = usable ? numeric(row.kcal) : null, sportKcal = usable ? numeric(row.sport_kcal_burned) : null;
     const me = ['writing', 'meditation', 'relaxation', 'outings'].map(name => numeric(row[`me_time_${name}_minutes`])).filter(value => value !== null);
-    indexed.set(row.entry_date, { ...row, net_kcal: kcal !== null && sportKcal !== null ? kcal - sportKcal : null,
+    indexed.set(row.entry_date, { ...row,
+      ...(!usable ? Object.fromEntries(estimateFields.map(key => [key, null])) : {}),
+      has_nutrition_estimate: row.has_nutrition_estimate ?? (hasEstimate(row) ? 1 : 0),
+      net_kcal: kcal !== null && sportKcal !== null ? kcal - sportKcal : null,
       me_time_total: me.length ? me.reduce((sum, value) => sum + value, 0) : null });
   }
   return weeklyMetrics.map(definition => {
@@ -66,7 +72,8 @@ export function weeklySeries(rows: readonly MetricRow[], date: string): MetricSe
     let value: number | null = null;
     if (values.length) value = definition.aggregate === 'latest' ? values.at(-1)!
       : values.reduce((sum, item) => sum + item, 0) / (definition.aggregate === 'mean' ? values.length : 1);
-    return { ...definition, points, value, count: values.length };
+    const excludedEstimates = definition.group === 'Alimentation' ? [...indexed.values()].filter(row => row.nutrition_estimate_stale === 1 && row.has_nutrition_estimate === 1).length : 0;
+    return { ...definition, points, value, count: values.length, excludedEstimates };
   });
 }
 

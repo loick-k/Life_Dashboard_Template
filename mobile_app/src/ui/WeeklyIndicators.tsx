@@ -28,6 +28,7 @@ export function WeeklyIndicators({ database, date }: { database: QueryConnection
       <Text style={styles.metric}>{formatMetric(item.value)}{item.value !== null ? ` ${item.unit}` : ''}</Text>
       <Text style={styles.help}>{item.aggregate === 'latest' ? 'Dernière valeur de la semaine' : item.aggregate === 'mean' ? 'Moyenne des jours renseignés' : 'Total des valeurs renseignées'} · {item.count} jour(s)</Text>
       <MetricChart series={item} />
+      {item.excludedEstimates > 0 && <Text accessibilityRole="alert" style={styles.help}>{item.excludedEstimates} estimation(s) obsolète(s) exclue(s). Recalcule les journées modifiées pour les inclure.</Text>}
       {item.key === 'net_kcal' && <Text style={styles.help}>Apports moins sport, uniquement lorsque les deux estimations existent. Ce n’est pas le bilan énergétique complet.</Text>}
       {item.key === 'sport_minutes' && <Text style={styles.help}>Les séances à durée manquante sont exclues de ce total et comptées séparément.</Text>}
     </View>)}

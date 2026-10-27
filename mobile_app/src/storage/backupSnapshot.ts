@@ -6,6 +6,7 @@ import { Preferences } from './preferences.ts';
 import { preferenceDefinitions } from '../domain/preferences.ts';
 import { CHECKIN_SECTIONS } from '../domain/checkinConfig.ts';
 import { MAX_SNAPSHOT_BYTES } from './backupFormat.ts';
+import { legacyDerivationMetadata } from '../domain/nutrition.ts';
 
 export const backupTables = ['local_profile', 'friends', 'goals', 'daily_entries', 'sport_sessions', 'social_logs', 'goal_logs', 'settings', 'v1_import_runs', 'v1_import_archive'] as const;
 type Table = typeof backupTables[number];
@@ -75,7 +76,16 @@ function parseSnapshot(text: string, migrations: readonly Migration[]): BackupSn
         value !== null && typeof value !== 'string' && (typeof value !== 'number' || !Number.isFinite(value)))) throw new Error('Ligne illisible.');
       if (table === 'settings') validateSetting(row);
       if (table === 'daily_entries') {
+        if (snapshot.migrations.length < 5) {
+          const defaults = legacyDerivationMetadata(row);
+          if (Object.keys(defaults).some(key => Object.hasOwn(row, key))) throw new Error('Métadonnées futures dans une ancienne sauvegarde.');
+          Object.assign(row, defaults);
+        }
         validateDate(String(row.entry_date));
+        if (!['calculated', 'manual', 'imported'].includes(String(row.sleep_duration_mode)) ||
+            ![0, 1].includes(Number(row.nutrition_estimate_stale)) || typeof row.nutrition_estimate_stale !== 'number' ||
+            !Number.isSafeInteger(row.nutrition_inputs_revision) || Number(row.nutrition_inputs_revision) < 1 ||
+            !['none', 'legacy', 'v1', 'v2'].includes(String(row.nutrition_estimate_origin))) throw new Error('Métadonnées dérivées incompatibles.');
         validatePatch(Object.fromEntries(Object.entries(row).filter(([name]) => Object.hasOwn(dailyRules, name))));
         const progress = readProgress(row as DailyEntry);
         if (row.checkin_finished === 1 && progress.count !== 13) throw new Error('Progression incohérente.');
@@ -114,6 +124,11 @@ export async function restoreSnapshot(database: QueryConnection, text: string, m
       for (const row of snapshot.tables[table]) await database.runAsync(
         `INSERT INTO ${table} (${names.join(',')}) VALUES (${names.map(() => '?').join(',')})`, ...names.map(name => row[name]!));
     }
+    // Child sport inserts legitimately invalidate estimates during normal use.
+    // Restore the EXACT captured metadata once every captured source row is present.
+    for (const row of snapshot.tables.daily_entries) await database.runAsync(
+      'UPDATE daily_entries SET nutrition_estimate_stale = ?, nutrition_inputs_revision = ?, nutrition_estimate_origin = ? WHERE entry_id = ?',
+      row.nutrition_estimate_stale!, row.nutrition_inputs_revision!, row.nutrition_estimate_origin!, row.entry_id!);
     await new Preferences(database).readAll(); // Validate portable values, including future-version refusal.
     if (await database.getFirstAsync('PRAGMA foreign_key_check')) throw new Error('Relations invalides.');
     const integrity = await database.getFirstAsync<{ integrity_check: string }>('PRAGMA integrity_check');

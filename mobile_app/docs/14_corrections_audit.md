@@ -14,8 +14,8 @@ données synthétiques, pas de Neon/push, plafond cumulatif disque 5 Go inchang�
 | Retrait complet d'une séance | Action explicite confirmée, patch atomique des 3 champs à null ; autre séance/poids/bilan préservés | Test d'écran et Android |
 | Travail : journée continue + créneau 3 | Calcul 08–16 + 18–19 = 540 min ; incomplet reste null | Android |
 | Travail : chevauchements | Exclusion des cumuls et avertissement ; anciennes valeurs sources non réécrites ; tests jour/semaine/nuit | Android |
-| Sommeil dérivé des horaires, sieste et cohérence | À corriger | Domaine, UI, tests |
-| Estimation nutritionnelle obsolète après changement | À corriger | Persistance, provenance et affichage |
+| Sommeil dérivé des horaires, sieste et cohérence | Calcul nuit/minuit, modes calculé/manuel/importé, avertissement de désaccord ; tests SQLite | Test d'écran et Android |
+| Estimation nutritionnelle obsolète après changement | Migration 005, fraîcheur/version propres, valeurs/provenance conservées, exclusion visible et carte unique | Test d'écran et Android, calcul en ligne encore à porter |
 | Chargement journalier récupérable | À corriger | Réessayer, navigation indépendante |
 | Conflit de révision récupérable sans perdre le brouillon | À corriger | Résolution explicite, tests |
 | Menu principal, date commune et retour Android | À corriger | Routes explicites, contexte, tests d'interaction |
@@ -45,3 +45,24 @@ durée, horaires contigus/nuit/chevauchement, jour continu + créneau supplémen
 ancien compteur incohérent conservé en base mais exclu visiblement du bilan.
 Aucun changement de schéma dans ce lot. Tests d'interaction et preuve matérielle
 Android restent ouverts. Aucun build, dépendance ou téléchargement supplémentaire.
+
+## Lot sommeil et fraîcheur des estimations
+
+Migration additive 005 : mode de durée du sommeil, état obsolète, origine et version
+des entrées d'analyse. Horaires édités => durée calculée ; choix manuel préservé et
+différence annoncée ; valeurs historiques/importées non recalculées silencieusement.
+Sieste distincte, passage à minuit et égalité coucher/réveil (24 h, règle V1) testés.
+
+Changement repas/corps/sport => estimation obsolète, jamais destruction du résultat
+original ni de sa provenance. Révision dérivée indépendante de la révision d'édition
+du jour pour éviter les conflits artificiels lors d'une modification sportive.
+Carte unique en Alimentation et Récapitulatif ; valeurs obsolètes exclues des agrégats
+avec avertissement, anciennes valeurs consultables explicitement. Calcul distant à
+porter dans un lot suivant : aucune analyse n'est déclenchée par une sauvegarde.
+
+Sauvegardes 003/004 compatibles par ajout explicite des seules métadonnées connues.
+Restauration rétablit exactement la fraîcheur capturée après insertion des séances ;
+nouvel import V1 finalise la fraîcheur uniquement des nouvelles journées, jamais d'un
+import déjà modifié en V2. Rollback migration/journal et injection de métadonnées
+futures refusée testés. 84 tests Node, TypeScript et 10 tests Python locaux réussis.
+Tests d'écran et validation Android encore ouverts. Pas de nouveau build/outillage.

@@ -17,6 +17,9 @@ import { standardWorkPatch, previousWorkPatch } from '../storage/workShortcuts';
 import type { DailyPatch } from '../storage/dailyEntries';
 import { WorkBalanceCard } from './WorkBalanceCard';
 import { inspectWorkSchedule, type WorkTimes } from '../domain/work';
+import { sleepDurationHours, sleepDisagrees } from '../domain/sleep';
+import { EnergyCard } from './EnergyCard';
+import { formatMinutes } from '../domain/workReport';
 
 /** Vertical development slice, not the final daily journey. Synthetic data only. */
 export function DailyForm({ database, initialDate, onSettings, onBilan }: { database: SQLiteDatabase; initialDate?: string; onSettings?(date: string): void; onBilan?(date: string): void }) {
@@ -98,6 +101,11 @@ export function DailyForm({ database, initialDate, onSettings, onBilan }: { data
     if (valid) save(item.key, parsed!);
   };
   const fieldLabel = (item: Field) => item.key === 'close_relations_listening_score' ? `${closeLabel} (1 à 10)` : item.label;
+  const chooseSleepMode = (mode: 'manual' | 'calculated') => {
+    setRaw(previous => { const next = { ...previous }; delete next.sleep_hours; return next; });
+    setInvalid(previous => { const next = new Set(previous); next.delete('sleep_hours'); return next; });
+    save('sleep_duration_mode', mode);
+  };
   const applyShortcut = (source: 'standard' | 'previous') => {
     void navigate(async () => {
       const patch: DailyPatch = source === 'standard' ? await standardWorkPatch(database) : await previousWorkPatch(database, date);
@@ -156,21 +164,30 @@ export function DailyForm({ database, initialDate, onSettings, onBilan }: { data
         <Pressable accessibilityRole="button" disabled={busy} style={styles.secondary} onPress={() => applyShortcut('previous')}><Text>Horaires d’hier</Text></Pressable>
         <Pressable accessibilityRole="button" disabled={busy} style={styles.secondary} onPress={() => applyShortcut('standard')}><Text>Horaires standards</Text></Pressable>
       </View>}
+      {section.id === 'sleep' && <>
+        <Text>Durée {snapshot?.sleep_duration_mode === 'calculated' ? 'calculée depuis les horaires' : snapshot?.sleep_duration_mode === 'imported' ? 'historique importée' : 'saisie manuellement'} · {typeof snapshot?.sleep_hours === 'number' ? formatMinutes(Math.round(snapshot.sleep_hours * 60)) : 'n.c.'}</Text>
+        {sleepDisagrees(snapshot?.sleep_hours, snapshot?.sleep_bedtime, snapshot?.sleep_wake_time) && <Text accessibilityRole="alert" style={styles.error}>La durée manuelle/importée diffère des horaires ({formatMinutes(Math.round(sleepDurationHours(snapshot?.sleep_bedtime, snapshot?.sleep_wake_time)! * 60))}). Choisis explicitement la valeur à utiliser.</Text>}
+        <View style={styles.row}>
+          <Pressable accessibilityRole="button" style={styles.secondary} disabled={busy || sleepDurationHours(snapshot?.sleep_bedtime, snapshot?.sleep_wake_time) === null} onPress={() => chooseSleepMode('calculated')}><Text>Utiliser la durée calculée</Text></Pressable>
+          <Pressable accessibilityRole="button" style={styles.secondary} disabled={busy} onPress={() => chooseSleepMode('manual')}><Text>Saisir une durée manuelle</Text></Pressable>
+        </View>
+        {typeof snapshot?.sleep_hours === 'number' && <Text>Sommeil avec sieste : {formatMinutes(Math.round(snapshot.sleep_hours * 60) + Number(snapshot?.nap_minutes ?? 0))}{snapshot?.nap_minutes === null ? ' · sieste non renseignée' : ''}</Text>}
+      </>}
       {section.fields.map(item => <View key={item.key} style={styles.field}>
         <Text style={styles.label}>{fieldLabel(item)}</Text>
-        <TextInput editable={!busy} accessibilityLabel={fieldLabel(item)} value={raw[item.key] ?? String(snapshot?.[item.key] ?? '')}
+        <TextInput editable={!busy && !(item.key === 'sleep_hours' && snapshot?.sleep_duration_mode === 'calculated')} accessibilityLabel={fieldLabel(item)} value={item.key === 'sleep_hours' && snapshot?.sleep_duration_mode === 'calculated' ? typeof snapshot.sleep_hours === 'number' ? String(Number(snapshot.sleep_hours.toFixed(2))) : '' : raw[item.key] ?? String(snapshot?.[item.key] ?? '')}
           onChangeText={value => edit(item, value)} style={[styles.input, invalid.has(item.key) && styles.invalid]}
           keyboardType={item.kind === 'number' ? 'decimal-pad' : 'default'}
           multiline={item.kind === 'text'}
           placeholder={item.kind === 'time' ? 'HH:MM' : 'Non renseigné'} />
-        <Pressable accessibilityLabel={`Effacer ${fieldLabel(item)}`} onPress={() => Alert.alert('Effacer cette valeur ?', fieldLabel(item), [{ text: 'Annuler' }, { text: 'Effacer', style: 'destructive', onPress: () => {
+        {!(item.key === 'sleep_hours' && snapshot?.sleep_duration_mode === 'calculated') && <Pressable accessibilityLabel={`Effacer ${fieldLabel(item)}`} onPress={() => Alert.alert('Effacer cette valeur ?', fieldLabel(item), [{ text: 'Annuler' }, { text: 'Effacer', style: 'destructive', onPress: () => {
           setRaw(previous => ({ ...previous, [item.key]: '' })); setInvalid(previous => { const next = new Set(previous); next.delete(item.key); return next; }); save(item.key, null);
-        } }])}><Text style={styles.clear}>Effacer</Text></Pressable>
+        } }])}><Text style={styles.clear}>Effacer</Text></Pressable>}
       </View>)}
       {section.id === 'work' && <Text style={styles.total}>Temps travaillé : {inspectWorkSchedule(snapshot as WorkTimes).issue === 'overlap' ? 'n.c.' : snapshot?.work_duration_minutes ?? 'n.c.'} min</Text>}
       {section.id === 'work' && inspectWorkSchedule(snapshot as WorkTimes).issue === 'overlap' && <Text accessibilityRole="alert" style={styles.error}>Des créneaux se chevauchent. Les horaires sont enregistrés, mais la journée est exclue du compteur jusqu’à correction.</Text>}
       {section.id === 'me-time' && <Text style={styles.total}>Temps pour moi total : {section.fields.reduce((sum, item) => sum + Number(snapshot?.[item.key] ?? 0), 0)} min</Text>}
-      {section.id === 'nutrition' && <Text style={styles.total}>Kcal : {snapshot?.kcal ?? 'n.c.'} · Sport : {snapshot?.sport_kcal_burned ?? 'n.c.'} · Net : {typeof snapshot?.kcal === 'number' && typeof snapshot?.sport_kcal_burned === 'number' ? snapshot.kcal - snapshot.sport_kcal_burned : 'n.c.'}\nAnalyse externe non encore disponible.</Text>}
+      {['nutrition', 'summary'].includes(section.id) && <EnergyCard database={database} entryId={draft.snapshot.entry_id} revision={draft.snapshot.revision} saved={draft.status === 'saved'} />}
       {section.id === 'summary' && sections.filter(item => item.fields.length).map(item => <View style={styles.field} key={item.id}>
         <Text style={styles.label}>{item.title}</Text>{item.fields.map(input => <Text key={input.key}>{fieldLabel(input)} : {snapshot?.[input.key] ?? 'Non renseigné'}</Text>)}
         <Pressable style={styles.secondary} onPress={() => void navigate(() => moveStep(sections.indexOf(item)))}><Text>Modifier</Text></Pressable>

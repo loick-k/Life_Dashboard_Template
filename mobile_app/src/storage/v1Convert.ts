@@ -125,6 +125,9 @@ export async function convertV1(raw: string, crypto: V1Crypto): Promise<V1Plan> 
     }
     for (const field of ['nutrition_analysis_hash', 'nutrition_analysis_model', 'nutrition_analysis_confidence', 'nutrition_analysis_assumptions']) row[field] = text(rawDay[field]);
     row.nutrition_analyzed_at = rawDay.nutrition_analyzed_at ? stamp(rawDay.nutrition_analyzed_at) : null;
+    row.sleep_duration_mode = ['sleep_hours','sleep_bedtime','sleep_wake_time'].some(key => row[key] !== null && row[key] !== undefined) ? 'imported' : 'calculated';
+    row.nutrition_estimate_stale = 0; row.nutrition_inputs_revision = 1;
+    row.nutrition_estimate_origin = ['kcal','sport_kcal_burned','proteins_g','carbs_g','fats_g'].some(key => row[key] !== null) ? 'v1' : 'none';
     validatePatch(Object.fromEntries(Object.entries(row).filter(([field]) => Object.hasOwn(dailyRules, field))));
     const progress = rawDay.checkin_completed_steps !== null && rawDay.checkin_completed_steps !== undefined ? rawDay : group.checkin_progress?.[0];
     if (progress) Object.assign(row, convertV1Progress(progress));

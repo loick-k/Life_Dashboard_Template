@@ -17,6 +17,7 @@ export async function importV1(database: QueryConnection, raw: string, crypto: V
   await database.execAsync('BEGIN IMMEDIATE');
   try {
     const unchanged = new Set<string>();
+    const newDays: string[] = [];
     let archived = 0, inserted = 0;
     for (const item of plan.archive) {
       const previous = await database.getFirstAsync<{ payload_json: string }>('SELECT payload_json FROM v1_import_archive WHERE source_id = ? AND source_table = ? AND source_row_key = ?', plan.sourceId, item.table, item.key);
@@ -50,7 +51,11 @@ export async function importV1(database: QueryConnection, raw: string, crypto: V
       const verified = await database.getFirstAsync<Record<string, unknown>>(`SELECT * FROM ${record.table} WHERE ${primary} = ?`, record.values[primary]!);
       if (!verified || names.some(key => verified[key] !== record.values[key])) throw new Error('Valeurs importées non conformes.');
       inserted++;
+      if (record.table === 'daily_entries') newDays.push(String(record.values.entry_id));
     }
+    // All source sports are now present: the imported analysis describes this exact
+    // source snapshot. Never touch metadata of previously imported/edited V2 days.
+    for (const id of newDays) await database.runAsync('UPDATE daily_entries SET nutrition_estimate_stale = 0, nutrition_inputs_revision = 1 WHERE entry_id = ?', id);
     for (const item of plan.archive) if (!unchanged.has(`${item.table}:${item.key}`)) {
       await database.runAsync('INSERT INTO v1_import_archive VALUES (?, ?, ?, ?)', plan.sourceId, item.table, item.key, item.payload);
       if (item.table !== '__day') archived++;

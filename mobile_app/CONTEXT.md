@@ -11,6 +11,24 @@ remplacement forcé de la V1 et aucune synchronisation automatique des deux base
 
 ## État vérifié dans le dépôt
 
+### Corrections audit — sommeil et fraîcheur — 27/10/2026
+
+Lot précédent commité fe6cf46. Migration additive 005_daily_derivations : mode de
+sommeil (calculé/manuel/importé), fraîcheur/origine/version des entrées d'analyse.
+Horaires => durée calculée automatiquement, passage minuit ; mode manuel explicite
+et avertissement de divergence. Valeurs historiques conservées sans recalcul imposé.
+Modification repas/corps ou séance rend l'estimation obsolète sans effacer chiffres,
+date, modèle ni hash. Triggers sport atomiques avec révision dérivée distincte de la
+révision d'édition quotidienne : pas de conflit artificiel au retour d'étape.
+EnergyCard unique, réutilisée en Alimentation/Récapitulatif, provenance et anciennes
+valeurs consultables ; agrégats excluent les estimations obsolètes et l'annoncent.
+Sauvegardes 003/004 restaurables avec ajout connu de métadonnées ; comparaison des
+valeurs restaurées maintenue malgré les triggers. Nouvel import V1 finalise les
+métadonnées des seules journées nouvelles, rejeu conserve les modifications V2.
+84 tests Node, TypeScript et 10 tests Python locaux réussis. Aucune donnée réelle,
+installation ou compilation. Pas encore de tests d'écran/Android ; objectif global
+reste actif, navigation et parité à poursuivre (docs/14_corrections_audit.md).
+
 ### Corrections audit — lot notes/sport/travail — 27/10/2026
 
 Nouvel objectif actif : corriger tous les constats du dernier audit, navigation,

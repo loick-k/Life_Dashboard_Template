@@ -74,7 +74,8 @@ test('backups predating the V1 journal upgrade restore through the known additiv
     const src = adapter(old), dst = adapter(current);
     await migrate(src, migrations.slice(0, 3));
     const day = await new DailyEntries(src, randomUUID).getOrCreate('2026-08-01');
-    await new DailyEntries(src, randomUUID).patch(day.entry_id, day.revision, { weight_kg: 71 });
+    // Historical schema is seeded with historical SQL, not the future repository.
+    await src.runAsync('UPDATE daily_entries SET weight_kg = 71 WHERE entry_id = ?', day.entry_id);
     // Build the exact historical snapshot shape from before migration 004.
     const tables: Record<string, unknown> = {};
     for (const table of ['local_profile','friends','goals','daily_entries','sport_sessions','social_logs','goal_logs','settings']) tables[table] = await src.getAllAsync(`SELECT * FROM ${table}`);
