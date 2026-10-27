@@ -58,13 +58,16 @@ du socle mobile, car elle dépendra de la bibliothèque retenue.
 
 ## Étape 3B - Import contrôlé depuis Neon
 
-- Transformer la sauvegarde de référence vers les UUID du schéma local.
-- Produire un rapport de correspondance sans afficher de données personnelles.
-- Restaurer et vérifier l'import dans une base SQLite temporaire.
-- Répéter l'import sans créer de doublons.
+- Convertisseur local V1→V2 implémenté et testé sur sources synthétiques ; UUID
+  déterministes, valeurs originales archivées et politique de collisions explicite.
+- Rapport de simulation par compteurs/avertissements, sans valeurs personnelles.
+- Simulation transactionnelle, refus atomique et reprise testés sur SQLite Node.
+- Rejeu sans doublon vérifié après réouverture, édition V2 et sauvegarde/restauration.
 - Exécuter ensuite ensemble un export Neon frais et l'import final.
 
-Condition de sortie : chaque ligne source est retrouvée une seule fois dans SQLite V2.
+Condition de sortie : chaque ligne source est retrouvée une seule fois dans SQLite
+V2 (données actives ou archive explicitée). Tests locaux réussis ; vérification
+Android et import des données réelles encore à autoriser/exécuter.
 
 ## Lot préalable - Consolidation du stockage local
 

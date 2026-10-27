@@ -11,6 +11,52 @@ remplacement forcé de la V1 et aucune synchronisation automatique des deux base
 
 ## État vérifié dans le dépôt
 
+### Import V1 vers V2 — 27/10/2026
+
+Convertisseur TypeScript et route V1ImportScreen ajoutés à l'assistant et aux
+Réglages. Un outil Node prépare UN fichier .ldv1.json depuis un dossier d'instantané
+explicitement choisi, vérifie manifeste/compteurs/chemins, retire les réglages
+inconnus et refuse d'écraser un fichier existant. Aucun dossier de données réelles
+n'a été lu ; les tests construisent leurs propres instantanés synthétiques.
+
+Conversion : UUID déterministes par origine/table/clé ; heures => minutes,
+waist_cm => belly_cm seulement si belly absent, séances partielles/distance zéro,
+horaires isolés/3 créneaux, relations et notes, actifs/archives, estimations
+nutritionnelles, préférences et progression historique versions 1→5 vers IDs V2.
+Dates métier inchangées ; horodatages techniques avec fuseau normalisés UTC ;
+dates techniques ambiguës remplacées par date de l'export avec avertissement et
+source intégrale archivée. Durée de travail enregistrée V1 prioritaire sur un
+recalcul différent, avec avertissement ; aucune correction silencieuse.
+
+Migration additive 004_v1_import : journal et archive source (8→10 tables portables
+de sauvegarde, 12 tables SQLite au total). Les tâches locales anciennes, journaux
+API et migrations V1 sont archivés sans exécution SQL ni fausse intégration Todoist.
+Archives et reçus inclus dans les sauvegardes V2 ; un rejeu après restauration est
+toujours idempotent. Sauvegardes V2 antérieures à 004 restaurables via l'ajout connu
+de tables vides ; autres migrations futures/checksums inconnus toujours refusés.
+
+Politique : simulation transactionnelle (rollback), puis confirmation explicite
+avec empreinte du fichier. Même export rejoué => aucune réécriture des données
+métier, même après correction V2. Nouvelles dates ajoutables ; une date déjà native
+V2 ou un groupe de journée V1 modifié depuis le premier import bloque TOUT le lot.
+Pas de fusion implicite, de suppression par absence dans un export suivant ou de
+réactivation d'un élément effacé en V2. Les archives originales permettent un futur
+arbitrage explicite. Valeurs/colonnes source inconnues, relations invalides et
+plus de 3 objectifs actifs => refus atomique, jamais troncature.
+
+61 tests Node et TypeScript valides ; 10 tests Python locaux valides. 5 scénarios
+d'import + 1 de compatibilité sauvegarde : simulation, fichier consolidé réel via
+CLI, Unicode/null/zéro/horaires partiels, unités, progression versions 1..5,
+archives, réouverture, corrections V2 puis rejeu, export suivant, interruption SQL,
+collision, relation manquante, checksum altéré, secret exclu et chemin traversant.
+Une régression du contrôle des noms de colonnes (sha256 contient des chiffres) a
+été corrigée puis toute la suite est repassée. Aucune dépendance/téléchargement,
+aucun nouveau build APK, accès Neon ou import personnel. Validation Android reste
+à faire. Commandes et limites : docs/11_import_v1_v2.md.
+Dernier relevé : mobile_app 11 844 853 980 octets, +229 991 octets depuis la
+référence du budget disque ; C: libre 10 881 851 392 octets. Hors petits fichiers
+Git/npm ; aucun cache lourd ni outil supplémentaire ajouté par ce lot.
+
 ### Assistant initial relié au parcours d'essai — 27/10/2026
 
 OnboardingScreen est appelé automatiquement au premier lancement en __DEV__ :

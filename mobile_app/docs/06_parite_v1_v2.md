@@ -35,10 +35,10 @@ compléter pendant chaque portage. « À porter » ne signifie jamais implément
 | Migrations atomiques | Interruption et reprise dans le runtime réel | Python : 9 tests ; TypeScript/SQLite : 4 tests ; Android à faire |
 | SQLCipher + Keystore | Fichier illisible sans clé, réouverture et mauvaise clé refusée | Adaptateur natif écrit ; 5 tests de coordination, validation Android à faire |
 | Autosauvegarde | Saisie, retour, concurrence, arrêt forcé et redémarrage | Repository quotidien CAS et tests fichier SQLite ; UI et arrêt Android à faire |
-| Assistant initial | Hors ligne, interruption/reprise, ne réapparaît pas après fin | Progression testée (4 tests), écrans reliés en __DEV__, préférences/sauvegarde/restauration connectées ; import, biométrie et validation Android à faire |
+| Assistant initial | Hors ligne, interruption/reprise, ne réapparaît pas après fin | Progression testée (4 tests), écrans reliés en __DEV__, préférences/import V1/sauvegarde/restauration connectés ; biométrie et validation Android à faire |
 | Protection locale | Verrouillage, biométrie, reprise sûre et récupération | À faire |
 | Sauvegarde chiffrée | Nouveau téléphone, mauvais mot de passe, altération, interruption | Service AES-GCM/code de récupération, restauration contrôlée et UI Réglages écrits ; 4 tests Node/SQLite réussis ; validation Expo/Android à faire |
-| Import V1 | Fixtures synthétiques, relations, collisions et rejeu | À faire |
+| Import V1 | Fixtures synthétiques, relations, collisions et rejeu | Convertisseur, CLI, simulation transactionnelle et écran d'import connectés ; 5 tests d'import SQLite réussis ; Android et données réelles à faire |
 | APK autonome signé | Installation et mise à jour sans Metro/Expo Go ni perte | À faire |
 
 ## Différences prévues, à valider visuellement

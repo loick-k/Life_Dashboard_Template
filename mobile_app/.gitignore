@@ -1,6 +1,7 @@
 # Les sauvegardes contiennent des données personnelles et ne doivent jamais être versionnées.
 backups/
 exports/
+*.ldv1.json
 .env
 .env.*
 !.env.example

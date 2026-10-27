@@ -68,6 +68,23 @@ async function verifyTemporary(snapshot: string) {
 }
 const comparable = (snapshot: BackupSnapshot) => snapshot.tables;
 
+test('backups predating the V1 journal upgrade restore through the known additive migration', async () => {
+  const old = new DatabaseSync(':memory:'), current = new DatabaseSync(':memory:');
+  try {
+    const src = adapter(old), dst = adapter(current);
+    await migrate(src, migrations.slice(0, 3));
+    const day = await new DailyEntries(src, randomUUID).getOrCreate('2026-08-01');
+    await new DailyEntries(src, randomUUID).patch(day.entry_id, day.revision, { weight_kg: 71 });
+    // Build the exact historical snapshot shape from before migration 004.
+    const tables: Record<string, unknown> = {};
+    for (const table of ['local_profile','friends','goals','daily_entries','sport_sessions','social_logs','goal_logs','settings']) tables[table] = await src.getAllAsync(`SELECT * FROM ${table}`);
+    const snapshot = { format: 'life-dashboard-snapshot', version: 1, createdAt: new Date().toISOString(), migrations: migrations.slice(0,3).map((item: { id: string; checksum: string }) => ({ id: item.id, checksum: item.checksum })), tables };
+    await migrate(dst, migrations); await restoreSnapshot(dst, JSON.stringify(snapshot), migrations);
+    assert.equal((await new DailyEntries(dst, randomUUID).getOrCreate(day.entry_date)).weight_kg, 71);
+    assert.equal(current.prepare('SELECT count(*) AS n FROM v1_import_archive').get()!.n, 0);
+  } finally { old.close(); current.close(); }
+});
+
 test('encrypted portable copy restores every value/relationship after reopen, without source secrets or device state', async () => {
   const source = new DatabaseSync(':memory:');
   const folder = mkdtempSync(join(tmpdir(), 'life-backup-synthetic-'));

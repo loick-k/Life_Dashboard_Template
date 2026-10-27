@@ -23,7 +23,7 @@ test('real SQLite creates all tables and replay preserves data', async () => {
     await migrate(connection, migrations);
     assert.equal(sqlite.prepare('SELECT count(*) AS n FROM schema_migrations').get()?.n, migrations.length);
     assert.equal(sqlite.prepare('SELECT value FROM settings').get()?.value, 'kept');
-    assert.equal(sqlite.prepare("SELECT count(*) AS n FROM sqlite_master WHERE type='table'").get()?.n, 10);
+    assert.equal(sqlite.prepare("SELECT count(*) AS n FROM sqlite_master WHERE type='table'").get()?.n, 12);
   } finally { sqlite.close(); }
 });
 

@@ -18,7 +18,7 @@ class MobileLocalDatabaseTests(unittest.TestCase):
         self.path.unlink(missing_ok=True)
 
     def test_migration_is_complete_and_idempotent(self):
-        self.assertEqual(apply_local_migrations(self.connection), ["001_local_v2", "002_partial_sport", "003_catalog_revisions"])
+        self.assertEqual(apply_local_migrations(self.connection), ["001_local_v2", "002_partial_sport", "003_catalog_revisions", "004_v1_import"])
         self.assertEqual(apply_local_migrations(self.connection), [])
         migration = self.connection.execute(
             "SELECT checksum_sha256 FROM schema_migrations WHERE migration_id = '001_local_v2'"

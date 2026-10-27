@@ -7,7 +7,7 @@ import { preferenceDefinitions } from '../domain/preferences.ts';
 import { CHECKIN_SECTIONS } from '../domain/checkinConfig.ts';
 import { MAX_SNAPSHOT_BYTES } from './backupFormat.ts';
 
-export const backupTables = ['local_profile', 'friends', 'goals', 'daily_entries', 'sport_sessions', 'social_logs', 'goal_logs', 'settings'] as const;
+export const backupTables = ['local_profile', 'friends', 'goals', 'daily_entries', 'sport_sessions', 'social_logs', 'goal_logs', 'settings', 'v1_import_runs', 'v1_import_archive'] as const;
 type Table = typeof backupTables[number];
 type Row = Record<string, BindValue>;
 export interface BackupSnapshot {
@@ -57,8 +57,13 @@ function parseSnapshot(text: string, migrations: readonly Migration[]): BackupSn
   const snapshot = JSON.parse(text) as BackupSnapshot;
   if (!snapshot || snapshot.format !== 'life-dashboard-snapshot' || snapshot.version !== 1 ||
       typeof snapshot.createdAt !== 'string' || !Number.isFinite(Date.parse(snapshot.createdAt)) ||
-      JSON.stringify(snapshot.migrations) !== JSON.stringify(migrations.map(item => ({ id: item.id, checksum: item.checksum }))) ||
-      !snapshot.tables || Object.keys(snapshot.tables).sort().join(',') !== [...backupTables].sort().join(',')) throw new Error('Sauvegarde incompatible.');
+      !Array.isArray(snapshot.migrations) || snapshot.migrations.length < 3 || snapshot.migrations.length > migrations.length ||
+      JSON.stringify(snapshot.migrations) !== JSON.stringify(migrations.slice(0, snapshot.migrations.length).map(item => ({ id: item.id, checksum: item.checksum }))) ||
+      !snapshot.tables) throw new Error('Sauvegarde incompatible.');
+  // Known upgrade: backups made before the import journal have no archive tables.
+  const expected = snapshot.migrations.length < 4 ? backupTables.slice(0, -2) : backupTables;
+  if (Object.keys(snapshot.tables).sort().join(',') !== [...expected].sort().join(',')) throw new Error('Tables de sauvegarde incompatibles.');
+  if (snapshot.migrations.length < 4) { snapshot.tables.v1_import_runs = []; snapshot.tables.v1_import_archive = []; }
   let count = 0;
   for (const table of backupTables) {
     const rows = snapshot.tables[table];
@@ -91,7 +96,7 @@ export async function restoreSnapshot(database: QueryConnection, text: string, m
   for (const table of backupTables) {
     const info = await database.getAllAsync<{ name: string }>(`PRAGMA table_info(${table})`);
     const names = info.map(item => item.name);
-    if (!names.length || names.some(name => !/^[a-z_]+$/.test(name))) throw new Error('Schéma local invalide.');
+    if (!names.length || names.some(name => !/^[a-z_][a-z0-9_]*$/.test(name))) throw new Error('Schéma local invalide.');
     for (const row of snapshot.tables[table]) if (Object.keys(row).sort().join(',') !== [...names].sort().join(',')) throw new Error('Colonnes incompatibles.');
     columns.set(table, names);
   }

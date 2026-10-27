@@ -13,5 +13,10 @@
     "id": "003_catalog_revisions",
     "sql": "ALTER TABLE friends ADD COLUMN revision INTEGER NOT NULL DEFAULT 1 CHECK (revision >= 1);\nALTER TABLE goals ADD COLUMN revision INTEGER NOT NULL DEFAULT 1 CHECK (revision >= 1);\nALTER TABLE social_logs ADD COLUMN revision INTEGER NOT NULL DEFAULT 1 CHECK (revision >= 1);\nALTER TABLE goal_logs ADD COLUMN revision INTEGER NOT NULL DEFAULT 1 CHECK (revision >= 1);\n",
     "checksum": "0285db869d7a8c923bc39ef652a8a3b41c1c5fa9d03029e4eb4b9e38fd241ebd"
+  },
+  {
+    "id": "004_v1_import",
+    "sql": "CREATE TABLE v1_import_runs (\n source_id TEXT PRIMARY KEY, payload_sha256 TEXT NOT NULL, imported_at TEXT NOT NULL\n);\nCREATE TABLE v1_import_archive (\n source_id TEXT NOT NULL, source_table TEXT NOT NULL, source_row_key TEXT NOT NULL,\n payload_json TEXT NOT NULL,\n PRIMARY KEY (source_id, source_table, source_row_key),\n FOREIGN KEY (source_id) REFERENCES v1_import_runs(source_id) ON DELETE CASCADE\n);\n",
+    "checksum": "fba91400da97d99d2d1e07b5d8d599bedc982817f99c3b1cc52a85743d5c71c2"
   }
 ]

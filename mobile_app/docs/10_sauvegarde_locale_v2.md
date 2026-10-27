@@ -52,8 +52,9 @@ de lignes. Aucune modification Neon et aucune fusion implicite avec la V1.
 
 ## Limites et validation restante
 
-Format 1 accepte le schéma exact courant : une migration de sauvegarde explicite
-sera nécessaire lors d'une évolution du schéma. Limites mémoire : copie logique
+Format 1 accepte le schéma courant et le schéma précédent (jusqu'à 003) via l'ajout
+connu des tables d'archives V1 vides. Les archives/reçus d'import sont désormais
+inclus. Toute évolution future requiert encore une migration explicite. Limites mémoire : copie logique
 8 Mio, fichier 24 Mio, 100 000 lignes. Aucun dépassement traité par troncature.
 Le format utilise un code fort, pas un mot de passe choisi par l'utilisateur.
 

@@ -25,14 +25,16 @@ contrôle de disponibilité de son déploiement distant n'a été effectué dans
   des zéros, statistiques sans multiplication des relations.
 - Assistant initial en mode d'essai : progression persistante, 7 écrans, préférences,
   conservation des données présentes et sauvegarde/restauration V2 reliées.
-  Import V1 et biométrie supplémentaire restent indisponibles et explicités.
+  Import V1 connecté ; biométrie supplémentaire encore indisponible et explicitée.
 - Sauvegarde locale AES-GCM et code de récupération, restauration transactionnelle,
   contrôle dans une base temporaire et écran accessible depuis Réglages.
   APIs Expo/SQLCipher/choix de dossier restant à valider sur Android.
+- Convertisseur V1 avec simulation, reçus/archives, collisions refusées et rejeu
+  préservant les modifications V2. Outil de préparation d'instantané et route d'import.
 
 ## Vérifié à cette clôture
 
-- 55 tests Node réussis, dont SQLite réel sur données synthétiques et réouverture,
+- 61 tests Node réussis, dont SQLite réel sur données synthétiques et réouverture,
   AES-GCM réel via Node, fichier altéré/mauvaise clé et restauration interrompue.
 - TypeScript sans erreur ; `git diff --check` sans anomalie.
 - 10 tests Python locaux réussis : migrations/schéma et parité travail V1/V2.
@@ -47,13 +49,14 @@ contrôle de disponibilité de son déploiement distant n'a été effectué dans
    et mise à jour. Mesurer ergonomie/performance ; ne pas installer un émulateur
    volumineux sans vérifier le budget disque.
 2. Finaliser et valider la navigation de production et la première utilisation :
-   le parcours d'essai existe désormais ; import, protection biométrique et
-   intégrations sont encore à brancher, puis les gates Android à lever.
+   le parcours d'essai et l'import existent ; protection biométrique et intégrations
+   sont encore à brancher, puis les gates Android à lever.
 3. Valider sur Android la sauvegarde chiffrée et la récupération indépendante du
    téléphone : création/lecture de fichier, base temporaire chiffrée, arrêt forcé
    et restauration entre deux installations. Le code et les tests locaux existent.
-4. Import V1 synthétique : conversion unités/relations, conflits, idempotence et
-   rapport. Import personnel seulement après accord explicite.
+4. Valider l'import V1 sur Android puis préparer avec l'utilisateur l'import réel.
+   Conversion unités/relations, conflits, idempotence, rapport et archives testés
+   localement sur sources synthétiques. Import personnel après accord explicite.
 5. Compléter la parité : calculs sommeil, mesures précédentes, granularités des
    courbes, scores/évaluation hebdomadaire, récurrences et détail des journaux,
    critères d'objectifs, rapport PDF, finitions des contrôles tactiles.

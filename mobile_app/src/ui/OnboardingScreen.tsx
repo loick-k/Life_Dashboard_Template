@@ -6,6 +6,7 @@ import { Preferences } from '../storage/preferences';
 import { preferenceDefinitions } from '../domain/preferences';
 import { PreferencesForm } from './PreferencesForm';
 import { BackupScreen } from './BackupScreen';
+import { V1ImportScreen } from './V1ImportScreen';
 
 const titles = ['Bienvenue', 'Tes données', 'Tes préférences', 'Protection du téléphone', 'Sauvegarde', 'Services facultatifs', 'Vérifier et commencer'];
 const choices = { empty: 'Démarrage à vide', existing: 'Données de cet appareil conservées', 'import-v1': 'Import V1', 'restore-v2': 'Sauvegarde V2 restaurée' };
@@ -15,7 +16,7 @@ export function OnboardingScreen({ database, onDone }: { database: QueryConnecti
   const repository = useMemo(() => new OnboardingProgress(database), [database]);
   const [state, setState] = useState<OnboardingState>();
   const [hasData, setHasData] = useState(false);
-  const [route, setRoute] = useState<'steps' | 'restore' | 'backup'>('steps');
+  const [route, setRoute] = useState<'steps' | 'restore' | 'backup' | 'import'>('steps');
   const [summary, setSummary] = useState<{ settings: string[]; backup: string | null }>();
   const [attempt, setAttempt] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -76,6 +77,11 @@ export function OnboardingScreen({ database, onDone }: { database: QueryConnecti
     setState(await repository.move(chosen.revision, 'preferences')); setHasData(true); setRoute('steps');
   }} />;
   if (route === 'backup') return <BackupScreen database={database} onDone={() => setRoute('steps')} />;
+  if (route === 'import') return <V1ImportScreen database={database} onDone={() => setRoute('steps')} onImported={async () => {
+    const current = await repository.read();
+    const chosen = await repository.chooseData(current.revision, 'import-v1');
+    setState(await repository.move(chosen.revision, 'preferences')); setHasData(true); setRoute('steps');
+  }} />;
   if (state?.step === 'preferences' && !state.completed) return <View style={{ flex: 1 }}>
     {!!error && <Text accessibilityRole="alert" style={[styles.error, { padding: 16 }]}>{error}</Text>}
     <PreferencesForm database={database} doneLabel="Continuer →" onDone={() => move(1)} onBack={() => move(-1)} />
@@ -103,7 +109,7 @@ export function OnboardingScreen({ database, onDone }: { database: QueryConnecti
         <Pressable accessibilityRole="button" disabled={busy || hasData} style={[styles.secondary, hasData && styles.disabled]} onPress={() => choose('empty')}><Text>Démarrer à vide{hasData ? ' · données déjà présentes' : ''}</Text></Pressable>
         {hasData && <Pressable accessibilityRole="button" disabled={busy} style={styles.secondary} onPress={() => choose('existing')}><Text>Conserver les données de cet appareil</Text></Pressable>}
         <Pressable accessibilityRole="button" disabled={busy} style={styles.secondary} onPress={() => setRoute('restore')}><Text>Restaurer une sauvegarde V2</Text></Pressable>
-        <Text style={styles.text}>L’import d’une sauvegarde V1 sera ajouté à ce parcours après validation du convertisseur.</Text>
+        <Pressable accessibilityRole="button" disabled={busy} style={styles.secondary} onPress={() => setRoute('import')}><Text>Importer un export V1</Text></Pressable>
         <Text>Choix enregistré : {state.dataChoice ? choices[state.dataChoice] : 'À choisir'}</Text>
       </>}
       {state.step === 'protection' && <>
@@ -132,7 +138,7 @@ export function OnboardingScreen({ database, onDone }: { database: QueryConnecti
       <View style={styles.actions}>
         {index > 0 && <Pressable accessibilityRole="button" disabled={busy} style={styles.secondary} onPress={() => move(-1)}><Text>← Retour</Text></Pressable>}
         {['backup', 'integrations'].includes(state.step) && <Pressable accessibilityRole="button" disabled={busy} style={styles.secondary} onPress={() => move(1)}><Text>Passer pour le moment</Text></Pressable>}
-        <Pressable accessibilityRole="button" disabled={busy || (state.step === 'data' && (!state.dataChoice || state.dataChoice === 'import-v1')) || (state.step === 'review' && !summary)}
+        <Pressable accessibilityRole="button" disabled={busy || (state.step === 'data' && !state.dataChoice) || (state.step === 'review' && !summary)}
           style={styles.primary} onPress={() => state.step === 'review' ? void act(async () => { setState(await repository.finish(state.revision)); onDone(); }) : move(1)}><Text style={styles.white}>{state.step === 'review' ? 'Ouvrir mon tableau de bord' : 'Continuer →'}</Text></Pressable>
       </View>
       {!!error && <Pressable style={styles.secondary} disabled={busy} onPress={() => { setError(''); setAttempt(n => n + 1); }}><Text>Recharger la configuration enregistrée</Text></Pressable>}
