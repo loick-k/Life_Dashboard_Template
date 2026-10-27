@@ -6,7 +6,7 @@ import { WriteQueue } from '../storage/writeQueue';
 import type { SqlConnection } from '../storage/migrations';
 
 type Draft = WriteQueue<PreferenceState, { value: PreferenceValue }>;
-export function PreferencesForm({ database, onDone, onBackup }: { database: SqlConnection; onDone(): void; onBackup?(): void }) {
+export function PreferencesForm({ database, onDone, onBackup, onBack, doneLabel = 'Retour' }: { database: SqlConnection; onDone(): void | Promise<void>; onBackup?(): void | Promise<void>; onBack?(): void | Promise<void>; doneLabel?: string }) {
   const repository = useMemo(() => new Preferences(database), [database]);
   const drafts = useRef<Partial<Record<PreferenceKey, Draft>>>({});
   const invalid = useRef(new Set<PreferenceKey>());
@@ -34,12 +34,12 @@ export function PreferencesForm({ database, onDone, onBackup }: { database: SqlC
     leaving.current = true; setBusy(true);
     try {
       await Promise.all(Object.values(drafts.current).map(draft => draft.flush()));
-      action();
+      await action();
     } catch { setError('Sauvegarde non confirmée. Vos saisies restent affichées ; réessayez avant de quitter.'); }
     finally { leaving.current = false; setBusy(false); }
   }
   useEffect(() => {
-    const listener = BackHandler.addEventListener('hardwareBackPress', () => { void done(); return true; });
+    const listener = BackHandler.addEventListener('hardwareBackPress', () => { void done(onBack ?? onDone); return true; });
     return () => listener.remove();
   });
 
@@ -111,7 +111,8 @@ export function PreferencesForm({ database, onDone, onBackup }: { database: SqlC
         {'optional' in definition && <Pressable accessibilityRole="button" disabled={busy} style={styles.secondary} onPress={() => clear(key)}><Text>Effacer ce réglage</Text></Pressable>}
       </View>;
     })}
-    <Pressable accessibilityRole="button" disabled={busy} style={styles.button} onPress={() => void done()}><Text style={styles.buttonText}>Retour</Text></Pressable>
+    {onBack && <Pressable accessibilityRole="button" disabled={busy || !ready} style={styles.secondary} onPress={() => void done(onBack)}><Text>← Retour</Text></Pressable>}
+    <Pressable accessibilityRole="button" disabled={busy || (!!onBack && !ready)} style={styles.button} onPress={() => void done()}><Text style={styles.buttonText}>{doneLabel}</Text></Pressable>
   </ScrollView>;
 }
 const styles = StyleSheet.create({

@@ -6,6 +6,8 @@ import { DailyForm } from './ui/DailyForm';
 import { PreferencesForm } from './ui/PreferencesForm';
 import { WorkBilan } from './ui/WorkBilan';
 import { BackupScreen } from './ui/BackupScreen';
+import { OnboardingScreen } from './ui/OnboardingScreen';
+import { OnboardingProgress } from './storage/onboarding';
 
 /** Bootstrap only: do not collect personal data until native storage is verified. */
 export default function App() {
@@ -17,15 +19,23 @@ export default function App() {
   const [dailyDate, setDailyDate] = useState<string>();
   const [bilan, setBilan] = useState(false);
   const [backup, setBackup] = useState(false);
+  const [onboarding, setOnboarding] = useState(false);
   useEffect(() => {
     let active = true;
     setStatus('opening');
-    openLocalDatabase().then(
-      db => { if (active) { setDatabase(db); setStatus('ready'); } },
-      () => { if (active) setStatus('failed'); },
-    );
+    void (async () => {
+      try {
+        const db = await openLocalDatabase();
+        const progress = await new OnboardingProgress(db).read();
+        if (active) {
+          setDatabase(db); setStatus('ready');
+          if (__DEV__) { setOnboarding(!progress.completed); setTesting(progress.completed); }
+        }
+      } catch { if (active) setStatus('failed'); }
+    })();
     return () => { active = false; };
   }, [attempt]);
+  if (onboarding && database) return <OnboardingScreen database={database} onDone={() => { setOnboarding(false); setTesting(true); }} />;
   if (backup && database) return <BackupScreen database={database} onDone={() => setBackup(false)} />;
   if (preferences && database) return <PreferencesForm database={database} onBackup={() => setBackup(true)} onDone={() => setPreferences(false)} />;
   if (bilan && database) return <WorkBilan database={database} onDone={() => setBilan(false)} />;

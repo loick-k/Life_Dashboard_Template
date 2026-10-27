@@ -23,14 +23,16 @@ contrôle de disponibilité de son déploiement distant n'a été effectué dans
 - Compteur travail commun formulaire/Bilan, référence 7 h 42, suivi hebdomadaire.
 - 27 autres séries hebdomadaires, courbes/barres natives, données absentes distinctes
   des zéros, statistiques sans multiplication des relations.
-- Progression de l'assistant initial persistante côté stockage uniquement.
+- Assistant initial en mode d'essai : progression persistante, 7 écrans, préférences,
+  conservation des données présentes et sauvegarde/restauration V2 reliées.
+  Import V1 et biométrie supplémentaire restent indisponibles et explicités.
 - Sauvegarde locale AES-GCM et code de récupération, restauration transactionnelle,
   contrôle dans une base temporaire et écran accessible depuis Réglages.
   APIs Expo/SQLCipher/choix de dossier restant à valider sur Android.
 
 ## Vérifié à cette clôture
 
-- 54 tests Node réussis, dont SQLite réel sur données synthétiques et réouverture,
+- 55 tests Node réussis, dont SQLite réel sur données synthétiques et réouverture,
   AES-GCM réel via Node, fichier altéré/mauvaise clé et restauration interrompue.
 - TypeScript sans erreur ; `git diff --check` sans anomalie.
 - 10 tests Python locaux réussis : migrations/schéma et parité travail V1/V2.
@@ -44,8 +46,9 @@ contrôle de disponibilité de son déploiement distant n'a été effectué dans
 1. Valider sur Android SQLCipher/Keystore, saisie, retour, arrêt forcé, redémarrage
    et mise à jour. Mesurer ergonomie/performance ; ne pas installer un émulateur
    volumineux sans vérifier le budget disque.
-2. Construire la navigation finale et les écrans de première utilisation : reprise,
-   choix des données, préférences, protection/biométrie, sauvegardes et intégrations.
+2. Finaliser et valider la navigation de production et la première utilisation :
+   le parcours d'essai existe désormais ; import, protection biométrique et
+   intégrations sont encore à brancher, puis les gates Android à lever.
 3. Valider sur Android la sauvegarde chiffrée et la récupération indépendante du
    téléphone : création/lecture de fichier, base temporaire chiffrée, arrêt forcé
    et restauration entre deux installations. Le code et les tests locaux existent.

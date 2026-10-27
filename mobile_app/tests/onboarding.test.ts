@@ -72,3 +72,20 @@ test('invalid navigation and corrupt or future state never reset progress', asyn
     }
   } finally { db.close(); }
 });
+
+test('existing-device choice survives reload without changing stored entries or preferences', async () => {
+  const db = new DatabaseSync(':memory:');
+  try {
+    const sql = adapter(db); await migrate(sql, migrations);
+    db.prepare('INSERT INTO settings VALUES (?, ?, ?)').run('preference.v1:phone_max_hours', '{"version":1,"revision":1,"value":0}', '2026-10-27');
+    db.prepare('INSERT INTO daily_entries (entry_id, entry_date, weight_kg, created_at, updated_at) VALUES (?, ?, ?, ?, ?)').run('synthetic-entry', '2026-10-26', 73.4, '2026-10-27', '2026-10-27');
+    const repo = new OnboardingProgress(sql);
+    let state = await repo.read();
+    state = await repo.move(state.revision, 'data');
+    state = await repo.chooseData(state.revision, 'existing');
+    assert.deepEqual(await new OnboardingProgress(sql).read(), state);
+    await repo.move(state.revision, 'preferences');
+    assert.equal(db.prepare('SELECT weight_kg FROM daily_entries').get()!.weight_kg, 73.4);
+    assert.equal(db.prepare('SELECT value FROM settings WHERE key = ?').get('preference.v1:phone_max_hours')!.value, '{"version":1,"revision":1,"value":0}');
+  } finally { db.close(); }
+});

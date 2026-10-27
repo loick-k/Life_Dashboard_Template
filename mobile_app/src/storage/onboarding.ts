@@ -7,7 +7,7 @@ export interface OnboardingState {
   revision: number;
   step: OnboardingStep;
   completed: boolean;
-  dataChoice: 'empty' | 'import-v1' | 'restore-v2' | null;
+  dataChoice: 'empty' | 'existing' | 'import-v1' | 'restore-v2' | null;
 }
 const key = 'onboarding.v1';
 const initial: OnboardingState = { version: 1, revision: 1, step: 'welcome', completed: false, dataChoice: null };
@@ -17,7 +17,7 @@ function decode(value: string | null): OnboardingState {
   const state = JSON.parse(value) as OnboardingState;
   if (!state || state.version !== 1 || !Number.isSafeInteger(state.revision) || state.revision < 1 ||
       !onboardingSteps.includes(state.step) || typeof state.completed !== 'boolean' ||
-      ![null, 'empty', 'import-v1', 'restore-v2'].includes(state.dataChoice) ||
+      ![null, 'empty', 'existing', 'import-v1', 'restore-v2'].includes(state.dataChoice) ||
       (state.completed && (state.step !== 'review' || state.dataChoice === null))) {
     throw new Error('Configuration initiale incompatible. Aucune réinitialisation effectuée.');
   }
@@ -51,7 +51,7 @@ export class OnboardingProgress {
 
   async chooseData(revision: number, choice: Exclude<OnboardingState['dataChoice'], null>): Promise<OnboardingState> {
     return this.update(revision, current => {
-      if (current.step !== 'data' || !['empty', 'import-v1', 'restore-v2'].includes(choice)) throw new Error('Choix non disponible.');
+      if (current.step !== 'data' || !['empty', 'existing', 'import-v1', 'restore-v2'].includes(choice)) throw new Error('Choix non disponible.');
       return { ...current, dataChoice: choice };
     });
   }

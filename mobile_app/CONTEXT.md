@@ -11,6 +11,36 @@ remplacement forcé de la V1 et aucune synchronisation automatique des deux base
 
 ## État vérifié dans le dépôt
 
+### Assistant initial relié au parcours d'essai — 27/10/2026
+
+OnboardingScreen est appelé automatiquement au premier lancement en __DEV__ :
+7 étapes françaises, progression persistante, Retour/Continuer, préférences avec
+flush avant navigation, restauration V2 réelle via BackupScreen, création de
+sauvegarde facultative et récapitulatif relu depuis SQLite. Un état completed
+ouvre ensuite directement le point quotidien, sans rejouer l'assistant.
+Choix supplémentaire existing pour conserver les données déjà présentes ; vide
+refusé si des journées/personnes/objectifs existent, aucune remise à zéro implicite.
+Restore-v2 n'est enregistré qu'après succès de la restauration. L'import V1 reste
+indisponible ; un ancien choix import-v1 ne permet pas de prétendre avoir importé.
+
+Retour Android délégué aux sous-écrans pour préserver leur flush/verrou d'opération.
+Échec d'avancement après restauration distingué d'une restauration échouée : les
+données déjà restaurées ne sont pas présentées comme annulées. Les réglages
+acceptent maintenant des callbacks de navigation asynchrones et les attendent.
+Terminer enregistre completed avant l'ouverture du tableau de bord d'essai.
+
+Le parcours minimal peut être testé hors réseau et sans jeton externe. Protection
+à ce stade = SQLCipher + clé SecureStore + verrouillage Android existant. L'écran
+explique explicitement que la biométrie supplémentaire de l'application et les
+intégrations restent indisponibles. Ce lot ne les valide ni ne les implémente.
+Le mode release reste sur l'écran de développement en attente des gates natifs ;
+ne pas présenter cet assistant comme validation complète de la première utilisation.
+55 tests Node et TypeScript réussis ; 1 nouveau test préserve entrées/préférences
+avec le choix existing et relecture. Écrans/Back/SAF non exécutés sur Android.
+Budget : précédent relevé après sauvegarde +145 871 octets depuis la référence ;
+ce lot ajoute seulement du code/documentation de quelques Ko. Aucun téléchargement,
+nouvelle dépendance, compilation native ou accès aux données réelles.
+
 ### Sauvegarde V2 chiffrée et restauration — 27/10/2026
 
 Reprise depuis 8aab719, dépôt propre. Nouveau service captureSnapshot : copie

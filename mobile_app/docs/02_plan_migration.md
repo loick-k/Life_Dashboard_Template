@@ -88,8 +88,10 @@ Ce lot précède l'import 3B. La préparation locale n'exige aucune connexion Ne
 - Indiquer l'état réel de sauvegarde locale et les erreurs.
 - Démarrer sans Internet ni connexion Google obligatoire.
 - Assistant français reprenable, réglages, protection locale et récupération.
-  Progression persistante et conflits testés dans le repository TypeScript ;
-  branchement des écrans et des services de configuration restant à réaliser.
+  Progression persistante et conflits testés ; 7 écrans reliés en mode d'essai,
+  préférences et sauvegarde/restauration branchées, reprise et completed relus au
+  démarrage. Protection biométrique supplémentaire, import V1 et validation native
+  du parcours complet restent à réaliser avant activation de production.
   Préférences : repository CAS par clé et écran autosauvegardé de développement
   disponibles, 5 tests SQLite ; libellé écoute et raccourcis horaires connectés
   (3 tests supplémentaires). Branchement à l'assistant et aux bilans restant.
