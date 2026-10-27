@@ -5,20 +5,30 @@ import type { SQLiteDatabase } from 'expo-sqlite';
 import { Catalogs, FRIEND_CATEGORIES, type CatalogItem, type CatalogKind, type LogItem } from '../storage/catalogs';
 import { JournalEditor, type JournalEditorHandle } from './JournalEditor';
 import { settleWrites } from '../storage/settleWrites';
+import { CatalogAddition } from '../storage/catalogAddition';
 
 export type CatalogFormHandle = { flush(): Promise<void>; settle(): Promise<void>; beforeClose(): Promise<void>; hasUnconfirmed(): boolean };
 export const CatalogForm = forwardRef<CatalogFormHandle, { database: SQLiteDatabase; entryId?: string; kind: CatalogKind; active?: boolean }>(function CatalogForm({ database, entryId, kind, active = true }, ref) {
   const repo = useMemo(() => new Catalogs(database, Crypto.randomUUID, kind), [database, kind]);
   const [items, setItems] = useState<CatalogItem[]>([]);
   const [logs, setLogs] = useState<LogItem[]>([]);
-  const [label, setLabel] = useState('');
-  const [category, setCategory] = useState('Ami');
+  const [additionAttempt, setAdditionAttempt] = useState(0), [additionError, setAdditionError] = useState('');
+  const [, repaintAddition] = useState(0);
+  const addition = useMemo(() => new CatalogAddition(database, kind, entryId ? `day-${entryId}` : 'standalone', Crypto.randomUUID, failed => {
+    if (failed) setAdditionError('Conservation du brouillon d’ajout non confirmée. Garde cet écran ouvert et réessaie.');
+    repaintAddition(value => value + 1);
+  }), [database, kind, entryId]);
+  const additionLoading = useRef<Promise<void>>(Promise.resolve());
+  const label = addition.snapshot?.label ?? '', category = addition.snapshot?.category ?? 'Ami';
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
   const ready = useRef(false), failed = useRef(false);
   const pending = useRef<Promise<void> | null>(null);
+  useEffect(() => {
+    additionLoading.current = addition.read().then(() => setAdditionError(''), () => setAdditionError('Brouillon d’ajout indisponible ou incompatible. Aucune donnée réinitialisée.'));
+  }, [addition, additionAttempt]);
   const editors = useRef(new Map<string, JournalEditorHandle>());
   const flushJournals = async () => {
     try { await settleWrites([...editors.current.values()].map(editor => editor.flush())); }
@@ -39,19 +49,21 @@ export const CatalogForm = forwardRef<CatalogFormHandle, { database: SQLiteDatab
   };
   useEffect(() => { if (active) run(async () => {}); }, [repo, entryId, active]);
   useImperativeHandle(ref, () => ({
-    settle: async () => { if (pending.current) await pending.current; await settleWrites([...editors.current.values()].map(editor => editor.settle())); if (failed.current) throw new Error('Journal non confirmé'); },
-    hasUnconfirmed: () => !!pending.current || failed.current || !!label.trim() || [...editors.current.values()].some(editor => editor.hasUnconfirmed()),
+    settle: async () => { await additionLoading.current; if (pending.current) await pending.current; await addition.settle(); await settleWrites([...editors.current.values()].map(editor => editor.settle())); if (failed.current) throw new Error('Journal non confirmé'); },
+    hasUnconfirmed: () => !!pending.current || failed.current || addition.hasUnconfirmed() || [...editors.current.values()].some(editor => editor.hasUnconfirmed()),
     beforeClose: async () => {
       // A failed read is not a draft. Wait for any action, but do not trap the
       // standalone directory when its storage remains temporarily unreadable.
       if (pending.current) try { await pending.current; } catch { /* Existing data stays in SQLite. */ }
+      await additionLoading.current;
+      if (addition.loaded) { await addition.settle(); if (addition.hasUnconfirmed()) throw new Error('Ajout non terminé'); }
       await flushJournals();
-      if (label.trim()) throw new Error('Ajout non terminé');
     },
     flush: async () => {
-    if (pending.current) await pending.current;
+    await additionLoading.current; if (pending.current) await pending.current;
+    await addition.settle();
     await flushJournals();
-    if (!ready.current || failed.current || label.trim()) throw new Error('Catalogue non confirmé ou ajout non terminé');
+    if (!ready.current || failed.current || addition.hasUnconfirmed()) throw new Error('Catalogue non confirmé ou ajout non terminé');
   } }));
   const toggle = (item: CatalogItem) => {
     if (!entryId) return;
@@ -91,15 +103,21 @@ export const CatalogForm = forwardRef<CatalogFormHandle, { database: SQLiteDatab
     })}
     <Pressable style={styles.button} onPress={() => setShowArchived(value => !value)}><Text>{showArchived ? 'Masquer les archives' : 'Afficher les archives'}</Text></Pressable>
     <Text style={styles.heading}>{kind === 'friends' ? 'Ajouter une personne' : 'Ajouter un objectif'}</Text>
-    <TextInput accessibilityLabel={kind === 'friends' ? 'Nom de la personne' : 'Titre de l’objectif'} style={styles.input} value={label} onChangeText={setLabel} placeholder={kind === 'friends' ? 'Nom' : 'Titre'} maxLength={200} editable={!busy} />
-    {kind === 'friends' && <View style={styles.row}>{FRIEND_CATEGORIES.map(value => <Pressable accessibilityRole="button" accessibilityState={{ selected: category === value, disabled: busy }} disabled={busy} key={value} style={[styles.button, category === value && styles.selected]} onPress={() => setCategory(value)}><Text>{value}</Text></Pressable>)}</View>}
-    <Pressable accessibilityRole="button" style={[styles.button, styles.selected]} disabled={busy || !label.trim()} onPress={() => run(async () => {
-      await repo.create(label, category); setLabel('');
+    {additionError && <Text accessibilityRole="alert" style={styles.error}>{additionError}</Text>}
+    {!addition.loaded && <Pressable accessibilityRole="button" style={styles.button} onPress={() => setAdditionAttempt(value => value + 1)}><Text>Relire le brouillon d’ajout</Text></Pressable>}
+    {addition.restored && <Text style={styles.hint}>Brouillon d’ajout retrouvé, sans création ni sélection automatique.</Text>}
+    {addition.snapshot?.phase === 'prepared' && <Text accessibilityRole="alert" style={styles.hint}>Ajout en attente de confirmation : le bouton Ajouter reprend le même identifiant, sans doublon. Vérifie le répertoire avant un abandon.</Text>}
+    <TextInput accessibilityLabel={kind === 'friends' ? 'Nom de la personne' : 'Titre de l’objectif'} style={styles.input} value={label} onChangeText={text => { if (!busy && active) { try { void addition.edit(text, category); } catch { setAdditionError('Ajout non modifiable tant que sa confirmation est en attente.'); } } }} placeholder={kind === 'friends' ? 'Nom' : 'Titre'} maxLength={200} editable={!busy && !addition.isMutating() && active && addition.loaded && addition.snapshot?.phase !== 'prepared'} />
+    {kind === 'friends' && <View style={styles.row}>{FRIEND_CATEGORIES.map(value => <Pressable accessibilityRole="button" accessibilityState={{ selected: category === value, disabled: busy || addition.isMutating() || addition.snapshot?.phase === 'prepared' }} disabled={busy || addition.isMutating() || !active || !addition.loaded || addition.snapshot?.phase === 'prepared'} key={value} style={[styles.button, category === value && styles.selected]} onPress={() => { if (!pending.current && active) { try { void addition.edit(label, value); } catch { setAdditionError('Ajout en attente de confirmation.'); } } }}><Text>{value}</Text></Pressable>)}</View>}
+    {addition.storageFailed() && <Pressable accessibilityRole="button" disabled={busy || !active} style={styles.button} onPress={() => { void addition.retry().then(() => setAdditionError(''), () => setAdditionError('Conservation toujours non confirmée. Le texte reste affiché.')); }}><Text>Réessayer la conservation de l’ajout</Text></Pressable>}
+    {addition.storageFailed() && <Pressable accessibilityRole="button" disabled={busy || addition.isWorking() || !active} style={styles.button} onPress={() => Alert.alert('Relire le brouillon enregistré ?', 'Le texte local non confirmé sera abandonné au profit du brouillon enregistré sur cet appareil. Aucun élément déjà créé ni journal ne sera supprimé.', [{ text: 'Garder mon texte', style: 'cancel' }, { text: 'Relire', onPress: () => { if (!pending.current && active) void addition.read().then(() => setAdditionError(''), () => setAdditionError('Brouillon toujours indisponible. Le texte local est conservé.')); } }])}><Text>Relire le brouillon enregistré</Text></Pressable>}
+    <Pressable accessibilityRole="button" style={[styles.button, styles.selected]} disabled={busy || addition.isMutating() || !active || !addition.loaded || !label.trim()} onPress={() => run(async () => {
+      await addition.create(repo); setAdditionError('');
       setMessage(entryId ? 'Élément ajouté au répertoire. Coche-le séparément si une interaction ou une contribution a eu lieu pour cette journée.' : 'Élément ajouté au répertoire, sans modifier les journées.');
     })}><Text>{kind === 'friends' ? 'Ajouter la personne' : 'Ajouter l’objectif'}</Text></Pressable>
-    {!!label.trim() && <Pressable accessibilityRole="button" disabled={busy} style={styles.button} onPress={() => Alert.alert('Annuler cet ajout ?', 'Le texte non enregistré de cet ajout sera abandonné. Le répertoire et les journaux existants sont conservés.', [{ text: 'Garder', style: 'cancel' }, { text: 'Abandonner cet ajout', style: 'destructive', onPress: () => { if (!pending.current) setLabel(''); } }])}><Text>Annuler cet ajout</Text></Pressable>}
+    {!!addition.snapshot && <Pressable accessibilityRole="button" disabled={busy || addition.isMutating() || !active} style={styles.button} onPress={() => Alert.alert('Annuler cet ajout ?', 'Le brouillon et son suivi local seront abandonnés, sans supprimer un élément déjà enregistré ni ses journaux. Si une création était en attente, vérifie le répertoire avant de recommencer.', [{ text: 'Garder', style: 'cancel' }, { text: 'Abandonner cet ajout', style: 'destructive', onPress: () => { if (!pending.current && active) { void addition.abandon().then(() => setAdditionError(''), () => setAdditionError('Abandon non confirmé. Aucun texte ni élément supprimé automatiquement.')); } } }])}><Text>Annuler cet ajout</Text></Pressable>}
     {kind === 'goals' && <Text style={styles.hint}>Jusqu’à trois objectifs actifs.</Text>}
-    {busy && <Text accessibilityLiveRegion="polite">Enregistrement en cours…</Text>}
+    {(busy || addition.isWorking()) && <Text accessibilityLiveRegion="polite">Enregistrement en cours…</Text>}
   </View>;
 });
 const styles = StyleSheet.create({

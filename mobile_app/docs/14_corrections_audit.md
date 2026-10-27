@@ -10,7 +10,7 @@ données synthétiques, pas de Neon/push, plafond cumulatif disque 5 Go inchang�
 | Exigence | État / preuve locale | Encore nécessaire |
 |---|---|---|
 | Comparaison quotidienne sans perte d'une saisie postérieure | Verrou synchrone des champs et callbacks tardifs, barrières attendent la résolution, réouverture avec dernier brouillon et second conflit refusé ; trois tests React/SQLite | Android |
-| Brouillons durables après redémarrage | Champs quotidiens, sports, journaux et treize réglages journalisés avant SQL ; reprise, comparaison explicite, CAS/token, suppressions atomiques et nettoyage sans rejouer SQL ; dix + sept + cinq + six tests dédiés SQLite/React | Étendre ajouts ; arrêt forcé Android |
+| Brouillons durables après redémarrage | Champs quotidiens, sports, journaux, treize réglages et ajouts de répertoire journalisés avant SQL ; reprise explicite, CAS/token, UUID de création stable et nettoyage réessayable ; dix + sept + cinq + six + onze tests dédiés SQLite/React | Arrêt forcé Android ; intégrations restantes |
 | Sortie d'un répertoire illisible sans brouillon | Retour/Back attendent les opérations puis autorisent la sortie malgré lecture échouée, sans abandon d'un ajout ; deux tests React/SQLite | Android |
 | Aujourd'hui/Hier après minuit Paris | Date recalculée à l'appui après flush, référence vivante/retour actif et évaluation actualisée sans changer la date historique ; trois tests React/SQLite, DST mars/octobre | Android |
 | Note d'objectif conservée en décochant/recochant | UPDATE worked au lieu de DELETE ; test identité/note/date/révision | Interaction Android |
@@ -50,6 +50,20 @@ données synthétiques, pas de Neon/push, plafond cumulatif disque 5 Go inchang�
 | Analyse nutritionnelle explicite optionnelle | À porter | Secrets, calcul asynchrone, résultat unique |
 | Clavier, encoches, retour en haut, grandes polices/accessibilité | À vérifier/corriger | Écrans et mesures téléphone |
 | Couverture d'interactions | Tests navigation/sport/social/ergonomie/évaluation/historique ; composants et SQLite réels, ports natifs simulés | Étendre aux parcours restants et essais Android |
+
+## Dernière clôture : ajouts de répertoire — 27/10/2026
+
+215 tests Node, TypeScript et 16 tests Python réussis. Texte/catégorie et identité
+de création privés par contexte ; lecture n'applique rien au répertoire. Commande
+préparée durable avant INSERT ; perte de confirmation ou panne de nettoyage =>
+reprise volontaire du même UUID, sans doublon ni modification d'une ligne existante.
+Conflit de contenu refusé, homonymes distincts, objectif existant confirmé même à
+capacité maximale. Abandon explicite ne supprime aucune personne/contribution.
+Onze tests synthétiques SQLite/React, dont fermeture/réouverture de fichier,
+concurrence, formats incompatibles, restauration et barrière de lecture lente.
+Pas de nouveau schéma/dépendance/build, V1 intacte. Pause demandée en fin
+d'itération après commit local ; intégrations, ergonomie et preuves Android restent
+ouvertes. Aucun push.
 
 ## Lot intégrité notes/sport/travail
 

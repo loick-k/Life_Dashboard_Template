@@ -8,6 +8,8 @@ désormais accessible aussi dans le bundle de production. Les tests SQLite/TypeS
 pas à eux seuls le chiffrement, le tactile ou la persistance sur Android.
 La V1 n'a pas été modifiée par ces lots mobiles et reste indépendante ; aucun
 contrôle de disponibilité de son déploiement distant n'a été effectué dans ce lot.
+Pause demandée à la fin de l'itération du 27/10 : lot d'ajouts durables terminé,
+commit local uniquement, pas de lot suivant ni de push sans nouvelle demande.
 
 ## Implémenté dans le code
 
@@ -19,6 +21,8 @@ contrôle de disponibilité de son déploiement distant n'a été effectué dans
 - Horaires partiels/3 créneaux, sport incomplet, minutes/distances, corps,
   sommeil/sieste, alcool, repas, portable, temps pour soi, écoute.
 - Catalogues et journaux sociaux/objectifs : ajout, sélection, archivage.
+- Brouillons quotidiens/sport/journaux/réglages et ajouts de répertoire durables ;
+  reprise explicite et identité stable évitant les doublons après confirmation perdue.
 - 13 préférences persistantes ; standards horaires, veille et libellé d'écoute.
 - Compteur travail commun formulaire/Bilan, référence 7 h 42, suivi hebdomadaire.
 - 27 autres séries hebdomadaires, courbes/barres natives, données absentes distinctes
@@ -39,15 +43,15 @@ contrôle de disponibilité de son déploiement distant n'a été effectué dans
 
 ## Vérifié à cette clôture
 
-- 204 tests Node réussis, dont SQLite réel sur données synthétiques et réouverture,
+- 215 tests Node réussis, dont SQLite réel sur données synthétiques et réouverture,
   AES-GCM réel via Node, fichier altéré/mauvaise clé et restauration interrompue.
 - TypeScript sans erreur ; `git diff --check` sans anomalie.
 - 16 tests Python locaux réussis : migrations/schéma et parité travail, scores,
   historiques et récurrences V1/V2.
 - Aucun nouveau téléchargement/dépendance. Configuration Gradle release hors ligne
   et bundle Hermes de production vérifiés, pas de compilation applicative release.
-- Dernier relevé : mobile_app 8 467 677 925 octets. Budget conservateur comptabilisé
-  723 053 936 octets sur 5 Go (réserve pour baisse d'anciens caches incluse), marge
+- Dernier relevé : mobile_app 8 467 782 697 octets. Budget conservateur comptabilisé
+  723 158 708 octets sur 5 Go (réserve pour baisse d'anciens caches incluse), marge
   d'arrêt 1 Go. Aucun gain de cache ne renouvelle ce budget ; registre local monotone.
   Incident Expo, restauration de l'APK et garde-fou de prébuild détaillés en doc 13.
 
@@ -69,8 +73,8 @@ contrôle de disponibilité de son déploiement distant n'a été effectué dans
    des services externes et finitions tactiles. Sommeil, mesures précédentes,
    périodes, scores/évaluation, récurrences, journaux et rapport PDF sont désormais
    connectés et testés localement (docs/06 et 14), mais pas validés sur Android.
-   Journal durable quotidien, sport, journaux et réglages connecté ; étendre
-   aux ajouts de répertoire avant de promettre tout brouillon
+   Journal durable quotidien, sport, journaux, réglages et ajouts connecté ; valider
+   ces parcours sur appareil avant de promettre tout brouillon
    retrouvé après arrêt forcé. Les trois défauts audit (comparaison, sortie en
    erreur, date Paris) ont des corrections/tests dédiés, preuve native restant due.
 6. Intégrations facultatives Todoist et analyse nutritionnelle, saisie/protection/

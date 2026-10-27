@@ -11,6 +11,37 @@ remplacement forcé de la V1 et aucune synchronisation automatique des deux base
 
 ## État vérifié dans le dépôt
 
+### Clôture d'itération — ajouts durables et pause demandée — 27/10/2026
+
+Réglages commités 488e00d. Les ajouts de personnes/objectifs conservent désormais
+leur texte brut, catégorie et UUID dans un journal privé par contexte (répertoire
+autonome ou journée). Aucun élément, interaction ni contribution créé en tapant.
+Avant création, la commande est figée et journalisée ; une reprise explicite
+vérifie le même UUID et son contenu, sans doublon ni réactivation silencieuse.
+Panne après SQL ou pendant le nettoyage : texte conservé, reprise sans nouvel
+INSERT. Homonymes indépendants et limite de trois objectifs actifs conservés.
+
+Lecture incompatible refusée sans reset ; relecture explicite après conflit,
+abandon local confirmé sans suppression du répertoire/journal. Champs bloqués
+pendant chargement ou confirmation, barrières attendent les lectures et écritures.
+Buffers exclus des sauvegardes portables, préservés lors d'une restauration.
+
+215 tests Node, TypeScript et 16 tests Python réussis. Onze nouveaux tests incluent
+SQLite fichier fermé/réouvert, confirmation SQL perdue, capacité/concurrence,
+pannes de journal/nettoyage, remontage React, Back simulé, format futur, restauration
+et chargement lent. Aucun build/téléchargement/push ni modification V1. Les fichiers
+Todoist préexistants restent hors lot. Preuves Android toujours requises.
+
+Dernier relevé : mobile_app 8 467 782 697 octets ; croissance cumulée comptabilisée
+723 158 708 / 5 000 000 000 octets, marge réservée 1 Go ; budget encore disponible
+3 276 841 292 octets. Aucun déplacement ou suppression de dépendances/outils.
+
+L'utilisateur demande l'arrêt à la fin de cette itération : mettre l'objectif en
+pause après le commit local et ne lancer aucun autre lot. À la reprise : terminer
+intégrations facultatives Todoist/nutrition et parité/ergonomie, puis lever les gates
+Android et disque avant compilation de l'APK autonome. L'objectif global n'est pas
+atteint ; les validations locales ne constituent pas une preuve sur téléphone.
+
 ### Audit approfondi — réglages durables et comparaison indépendante — 27/10/2026
 
 Journaux commités 902c093. Les treize réglages journalisent désormais leurs buffers

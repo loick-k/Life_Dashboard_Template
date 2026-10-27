@@ -27,13 +27,23 @@ export class Catalogs {
     return this.db.getAllAsync(`SELECT ${def.id} AS id, ${def.label} AS label, active, revision, ${this.kind === 'friends' ? 'category' : 'NULL'} AS category, ${this.kind === 'goals' ? 'completed_at' : 'NULL'} AS completed_at FROM ${this.kind} ${activeOnly ? 'WHERE active = 1' : ''} ORDER BY ${def.label} COLLATE NOCASE, ${def.id}`);
   }
   async create(label: string, category = 'Ami'): Promise<string> {
+    return this.createOnce(this.uuid(), label, category);
+  }
+  /** Caller persists id before invoking this operation. A retry verifies the
+   * same row; it never deduplicates homonyms or changes an existing item. */
+  async createOnce(id: string, label: string, category = 'Ami'): Promise<string> {
     const value = label.trim();
-    if (!value || value.length > 200 || !FRIEND_CATEGORIES.includes(category)) throw new Error('Nom ou catégorie invalide');
-    const id = this.uuid(), now = new Date().toISOString(), def = definitions[this.kind];
-    const result = this.kind === 'friends'
-      ? await this.db.runAsync('INSERT INTO friends (friend_id, name, category, created_at, updated_at) VALUES (?, ?, ?, ?, ?)', id, value, category, now, now)
-      : await this.db.runAsync(`INSERT INTO goals (${def.id}, title, created_at, updated_at) SELECT ?, ?, ?, ? WHERE (SELECT count(*) FROM goals WHERE active = 1) < 3`, id, value, now, now);
-    if (result.changes !== 1) throw new Error('Trois objectifs actifs sont déjà présents.');
+    if (typeof id !== 'string' || !/^[a-z\d-]{1,128}$/i.test(id) || !value || value.length > 200 || !FRIEND_CATEGORIES.includes(category)) throw new Error('Identifiant, nom ou catégorie invalide');
+    const now = new Date().toISOString(), def = definitions[this.kind];
+    const read = () => this.db.getFirstAsync<{ label: string; category: string | null }>(`SELECT ${def.label} AS label, ${this.kind === 'friends' ? 'category' : 'NULL'} AS category FROM ${this.kind} WHERE ${def.id} = ?`, id);
+    let stored = await read();
+    if (!stored) {
+      if (this.kind === 'friends') await this.db.runAsync('INSERT INTO friends (friend_id, name, category, created_at, updated_at) VALUES (?, ?, ?, ?, ?) ON CONFLICT(friend_id) DO NOTHING', id, value, category, now, now);
+      else await this.db.runAsync(`INSERT INTO goals (${def.id}, title, created_at, updated_at) SELECT ?, ?, ?, ? WHERE (SELECT count(*) FROM goals WHERE active = 1) < 3 ON CONFLICT(goal_id) DO NOTHING`, id, value, now, now);
+      stored = await read();
+    }
+    if (!stored) throw new Error('Trois objectifs actifs sont déjà présents ou ajout non confirmé.');
+    if (stored.label !== value || this.kind === 'friends' && stored.category !== category) throw new Error('Cet identifiant existe avec un autre contenu. Aucun élément remplacé.');
     return id;
   }
   async setActive(item: CatalogItem, active: boolean): Promise<void> {

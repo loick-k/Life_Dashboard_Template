@@ -34,7 +34,7 @@ compléter pendant chaque portage. « À porter » ne signifie jamais implément
 |---|---|---|
 | Migrations atomiques | Interruption et reprise dans le runtime réel | Python : 9 tests ; TypeScript/SQLite : 4 tests ; Android à faire |
 | SQLCipher + Keystore | Fichier illisible sans clé, réouverture et mauvaise clé refusée | Adaptateur natif écrit ; 5 tests de coordination, validation Android à faire |
-| Autosauvegarde | Saisie, retour, concurrence, arrêt forcé et redémarrage | CAS et journal durable quotidien, sport, journaux et réglages, reprise explicite/React/SQLite fichier ; journaliser les ajouts et valider arrêt forcé Android |
+| Autosauvegarde | Saisie, retour, concurrence, arrêt forcé et redémarrage | CAS et journal durable quotidien, sport, journaux, réglages et ajouts de répertoire ; UUID stable sans doublon, reprise explicite/React/SQLite fichier ; arrêt forcé Android à valider |
 | Assistant initial | Hors ligne, interruption/reprise, ne réapparaît pas après fin | Progression testée (4 tests), écrans reliés aussi en production, préférences/import V1/sauvegarde/restauration/biométrie connectés ; validation Android à faire |
 | Protection locale | Verrouillage, biométrie, reprise sûre et récupération | Clé authentifiée Keystore et écran connecté, politique reprenable, couverture conservant les brouillons, FLAG_SECURE généré ; 8 tests de coordination ; validation matérielle Android à faire |
 | Sauvegarde chiffrée | Nouveau téléphone, mauvais mot de passe, altération, interruption | Service AES-GCM/code de récupération, restauration contrôlée et UI Réglages écrits ; 4 tests Node/SQLite réussis ; validation Expo/Android à faire |
