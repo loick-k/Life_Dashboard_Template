@@ -5,7 +5,7 @@ import { weeklySeries, type MetricRow } from '../domain/weeklyMetrics.ts';
 import { Preferences } from './preferences.ts';
 
 /** No cross-join of sport/social/goals: each one-to-many relation aggregates independently. */
-export async function readMetricRows(database: QueryConnection, start: string, end: string) {
+export async function readMetricRows(database: QueryConnection, start: string, end: string, includeMeals = false) {
   validateDate(start); validateDate(end);
   if (start > end) throw new Error('Période invalide');
   const rows = await database.getAllAsync<MetricRow>(`SELECT d.entry_date,
@@ -13,7 +13,7 @@ export async function readMetricRows(database: QueryConnection, start: string, e
     d.work_start_time, d.work_morning_end_time, d.work_afternoon_start_time, d.work_end_time,
     d.work_third_start_time, d.work_third_end_time,
     d.weight_kg, d.body_fat_pct, d.belly_cm, d.sleep_hours, d.nap_minutes, d.alcohol_glasses,
-    d.meal_breakfast, d.meal_lunch, d.meal_dinner, d.meal_other,
+    ${includeMeals ? 'd.meal_breakfast, d.meal_lunch, d.meal_dinner, d.meal_other,' : ''}
     d.phone_minutes, d.nutrition_estimate_stale,
     CASE WHEN d.kcal IS NOT NULL OR d.sport_kcal_burned IS NOT NULL OR d.proteins_g IS NOT NULL OR d.carbs_g IS NOT NULL OR d.fats_g IS NOT NULL THEN 1 ELSE 0 END AS has_nutrition_estimate,
     CASE WHEN d.nutrition_estimate_stale = 0 THEN d.kcal END AS kcal,

@@ -1,0 +1,17 @@
+{
+  "periods": [
+    {"period":"week","end":"2026-10-27","days":7,"start":"2026-10-21"},
+    {"period":"month","end":"2024-03-01","days":30,"start":"2024-02-01"},
+    {"period":"year","end":"2024-03-01","days":365,"start":"2023-03-03"}
+  ],
+  "rows": [
+    {"entry_date":"2026-01-01","weight_kg":70,"sleep_hours":6,"alcohol_glasses":0},
+    {"entry_date":"2026-01-02","weight_kg":72,"sleep_hours":8,"alcohol_glasses":2},
+    {"entry_date":"2026-03-01","weight_kg":74,"sleep_hours":12,"alcohol_glasses":1}
+  ],
+  "monthly": {
+    "weight_kg":[71,null,74],
+    "sleep_hours":[7,null,12],
+    "alcohol_glasses":[2,null,1]
+  }
+}

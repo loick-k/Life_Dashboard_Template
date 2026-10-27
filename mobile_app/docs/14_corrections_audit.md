@@ -31,7 +31,7 @@ données synthétiques, pas de Neon/push, plafond cumulatif disque 5 Go inchang�
 | Contraste des actions principales | Palette #c83232, contraste blanc >=4,5:1 testé ; accent V1 maintenu | Vérification visuelle sur téléphone |
 | Objectifs/réglages influencent les indicateurs | Les sept réglages sont consommés ; zéros explicités, couverture travail indépendante du compteur fixe ; tests | Android |
 | Scores et évaluation hebdomadaire V1 | 23 lignes, 22 pondérées ; semaine Paris actuelle ; fixtures V1 et UI réessayable connectées | Android ; différences V2 explicites ci-dessous |
-| Périodes mensuelles, annuelles et depuis le début | À porter | Agrégation et navigation |
+| Périodes mensuelles, annuelles et depuis le début | Quatre périodes V1, 29 séries, fenêtres graphiques complètes, agrégats sur jours observés, fixtures V1 et tests React | Rendu et performances Android |
 | Rapport PDF travail | À porter | Génération locale, contenu et rendu vérifiés |
 | Social : récurrence et historique détaillé | À porter | Domaine, stockage, écran |
 | Personnes/objectifs gérés hors journal | À porter | Ajouter sans créer un faux journal |
@@ -39,7 +39,7 @@ données synthétiques, pas de Neon/push, plafond cumulatif disque 5 Go inchang�
 | Todoist optionnel | À porter | Secrets appareil, interface et erreurs réseau |
 | Analyse nutritionnelle explicite optionnelle | À porter | Secrets, calcul asynchrone, résultat unique |
 | Clavier, encoches, retour en haut, grandes polices/accessibilité | À vérifier/corriger | Écrans et mesures téléphone |
-| Couverture d'interactions | Neuf tests navigation/React ; composants et SQLite réels, ports natifs simulés | Étendre aux autres parcours et essais Android |
+| Couverture d'interactions | Tests navigation/sport/social/ergonomie/évaluation/historique ; composants et SQLite réels, ports natifs simulés | Étendre aux parcours restants et essais Android |
 
 ## Lot intégrité notes/sport/travail
 
@@ -122,3 +122,18 @@ obsolètes et horaires chevauchants exclus. Date tabac future n.c. Limite 4h12 a
 maximum portable de 3h évaluée correctement malgré les flottants binaires.
 Seuils alimentaires V1 2/4/6 jours et objectifs hebdomadaires non proratisés conservés.
 Il s'agit d'un outil personnel de suivi, pas d'un bilan médical.
+
+## Lot historique et périodes V1
+
+122 tests Node, TypeScript et 14 tests Python réussis. 29 séries, toutes les
+périodes V1, données nulles gardées nulles, totaux/moyennes calculés sur toute la
+période et dernière valeur corporelle distinguée des moyennes du graphique.
+24 points maximum montés par graphique, pages vers l'intégralité de l'historique ;
+pas de réduction silencieuse des données. Vérification dix années fictives et
+réponses asynchrones périmées, réessai, sélection de catégorie conservée.
+Le compteur travail n'est jamais remis à zéro par un changement de période.
+Textes libres de repas non lus dans les longues séries. Comptages des catégories
+non renseignées ne deviennent pas artificiellement zéro à l'ouverture d'une journée.
+Fenêtres et agrégats mensuels vérifiés avec Python et la fonction V1 réelle isolée.
+Semaines explicitement lundi–dimanche plutôt que la fréquence V1 finissant lundi.
+Rendu, mémoire et fluidité restent à mesurer sur téléphone, pas seulement sur PC.

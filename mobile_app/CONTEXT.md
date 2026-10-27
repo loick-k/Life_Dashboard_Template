@@ -11,6 +11,37 @@ remplacement forcé de la V1 et aucune synchronisation automatique des deux base
 
 ## État vérifié dans le dépôt
 
+### Corrections audit — périodes et historique complet — 27/10/2026
+
+Évaluation précédente commitée 7a4b93c. Bilan : périodes V1 7 jours, 1 mois
+(30 jours), 1 an (365 jours), Depuis le début ; fin de période explicite selon
+date consultée, périodes précédente/suivante et catégories conservées. L'évaluation
+reste sur la semaine Paris actuelle et le compteur travail sur tout l'historique.
+29 séries, dont durée et écart des journées travaillées. Regroupements journaliers,
+hebdomadaires lundi–dimanche et mensuels. KPIs sur tous les jours observés, pas une
+moyenne de moyennes ; cartes corps = dernière mesure, courbes longues = moyennes.
+Calories nettes appariées par jour avant regroupement ; zéros distincts des absences,
+estimations obsolètes et travail chevauchant exclus. Catégories relationnelles
+intouchées ne deviennent pas des zéros simplement parce qu'une journée a été ouverte.
+
+Graphiques : fenêtre de 24 points maximum par catégorie, navigation vers tous les
+points plus anciens/récents et défilement horizontal ; KPI jamais tronqué à cette
+fenêtre. Mois/semaine vides gardés comme trous sans interpolation. Longues lectures
+n'emportent pas les textes libres des repas (réservés aux sept jours de l'évaluation).
+Réponses de lecture périmées ignorées, erreur réessayable sans reset des sélections.
+
+122 tests Node, TypeScript et 14 tests Python réussis. Sept tests historiques ajoutés,
+dont dix années synthétiques (3650 lignes) et interactions/pagination/erreur tardive.
+Fixtures mensuelles et fenêtres contrôlées avec la vraie fonction pure de groupement
+V1 isolée par AST (sans importer l'UI Streamlit/Plotly). Différence volontaire :
+semaines lundi–dimanche, pas la fréquence V1 W-MON qui termine le lundi.
+Mesure de performance du test sur PC uniquement, aucune prétention Android.
+Budget suivi : 722 125 445 octets supplémentaires comptabilisés / plafond 5 Go,
+3 277 874 555 octets utilisables avant marge réservée ; aucune nouvelle installation,
+compilation ou donnée réelle. PDF, catalogues/historiques détaillés, intégrations
+et validation Android restent nécessaires. Objectif global actif.
+
+
 ### Corrections audit — évaluation hebdomadaire — 27/10/2026
 
 Lot ergonomie précédent commité 08689ee. Évaluation de la semaine Paris en cours

@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { formatMetric, type MetricSeries } from '../domain/weeklyMetrics';
 
 /** Native line segments for body measures; gaps remain gaps. Other series use signed bars. */
-export function MetricChart({ series }: { series: MetricSeries }) {
+export function MetricChart({ series }: { series: Pick<MetricSeries, 'label' | 'unit' | 'group' | 'value'> & { points: { date: string; value: number | null; future: boolean; label?: string }[] } }) {
   const [width, setWidth] = useState(0);
   const values = series.points.map(point => point.value).filter(value => value !== null);
   const line = series.group === 'Corps';
@@ -11,18 +11,21 @@ export function MetricChart({ series }: { series: MetricSeries }) {
   const high = line ? Math.max(...values, series.value ?? 0) + 1 : Math.max(1, ...values);
   const height = 100;
   const y = (value: number) => height - (value - low) / (high - low) * height;
-  const x = (index: number) => (index + 0.5) * width / 7;
+  const count = Math.max(series.points.length, 1), contentWidth = Math.max(width, count * 40);
+  const x = (index: number) => (index + 0.5) * contentWidth / count;
   const baseline = y(0);
-  return <View>
-    <View accessible accessibilityLabel={`${series.label}, valeurs détaillées par jour ci-dessous`} onLayout={event => setWidth(event.nativeEvent.layout.width)} style={{ height, marginVertical: 12 }}>
+  return <View onLayout={event => setWidth(event.nativeEvent.layout.width)}>
+    <ScrollView horizontal accessibilityLabel={`Graphique ${series.label}, défilement horizontal`}>
+    <View style={{ width: contentWidth }}>
+    <View accessible accessibilityLabel={`${series.label}, valeurs détaillées par période ci-dessous`} style={{ height, marginVertical: 12 }}>
       {!line && <View style={{ position: 'absolute', top: baseline, width: '100%', height: 1, backgroundColor: '#626570' }} />}
       {width > 0 && series.points.map((point, index) => {
         if (point.value === null) return null;
-        if (!line) return <View key={point.date} style={{ position: 'absolute', left: x(index) - width / 28, width: width / 14,
+        if (!line) return <View key={point.date} style={{ position: 'absolute', left: x(index) - contentWidth / count / 4, width: contentWidth / count / 2,
           top: Math.min(y(point.value), baseline), height: Math.max(2, Math.abs(y(point.value) - baseline)), backgroundColor: point.value < 0 ? '#2563eb' : '#ff4b4b', borderRadius: 3 }} />;
         const next = series.points[index + 1];
         const dy = next?.value !== null && next?.value !== undefined ? y(next.value) - y(point.value) : null;
-        const dx = width / 7;
+        const dx = contentWidth / count;
         const length = dy === null ? 0 : Math.hypot(dx, dy);
         return <React.Fragment key={point.date}>
           {dy !== null && <View style={{ position: 'absolute', width: length, height: 2, backgroundColor: '#ff4b4b',
@@ -33,8 +36,9 @@ export function MetricChart({ series }: { series: MetricSeries }) {
     </View>
     <View style={{ flexDirection: 'row', gap: 2 }}>{series.points.map((point, index) => <View key={point.date} style={{ flex: 1, alignItems: 'center' }}
       accessible accessibilityLabel={`${point.date} : ${point.future ? 'à venir' : formatMetric(point.value)} ${series.unit}`}>
-      <Text style={{ fontSize: 12 }}>{['L', 'M', 'M', 'J', 'V', 'S', 'D'][index]}</Text>
+      <Text style={{ fontSize: 12 }}>{point.label ?? ['L', 'M', 'M', 'J', 'V', 'S', 'D'][index]}</Text>
       <Text style={{ fontSize: 11 }}>{point.future ? '—' : formatMetric(point.value)}</Text>
     </View>)}</View>
+    </View></ScrollView>
   </View>;
 }

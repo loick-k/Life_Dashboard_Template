@@ -32,7 +32,7 @@ test('weekly metrics distinguish absent, zero, partial sums and paired calorie e
     { entry_date: '2026-09-23', sleep_hours: 0, weight_kg: 73.2, me_time_outings_minutes: 25 },
     { entry_date: '2026-09-24', sleep_hours: 24, weight_kg: 99 }, // Future relative to reference.
   ], '2026-09-23');
-  assert.equal(series.length, 27);
+  assert.equal(series.length, 29);
   assert.equal(metric(series, 'sleep_hours').value, 4);
   assert.equal(metric(series, 'sleep_hours').count, 2);
   assert.equal(metric(series, 'alcohol_glasses').value, 0);

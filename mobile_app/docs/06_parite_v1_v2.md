@@ -20,7 +20,7 @@ compléter pendant chaque portage. « À porter » ne signifie jamais implément
 | Écoute | Scores et libellé configurable des proches | Saisie et libellé réglable connectés (formulaire et récapitulatif) ; validation Android à faire |
 | Social | Personnes, catégories, récurrence, périodes, historique et journal quotidien | Ajout/catégories/sélection/archives connectés ; récurrence et historique détaillé à faire |
 | Objectifs | Ajout, actifs, complétés, critères, journal et historique | Ajout/journal/archives/réalisation/réouverture séparés, notes conservées, limite 3 actifs ; critères et historique détaillé à faire |
-| Bilan / dashboard_metrics | Courbes par catégorie, vue hebdomadaire, objectifs, évaluation semaine courante | Travail et 27 séries hebdomadaires (corps, sommeil, sport, alimentation, temps, écoute, social, objectifs) connectés ; scores, autres granularités et validation native à faire |
+| Bilan / dashboard_metrics | Courbes par catégorie, vue hebdomadaire, objectifs, évaluation semaine courante | 29 séries, périodes 7j/30j/365j/tout, groupes jour/semaine/mois et évaluation actuelle connectés ; tests SQLite/React et fixtures V1 ; validation native à faire |
 | Scores / dashboard_metrics | Sommeil, alcool, tabac, sport, portable, nutrition, corps, social, objectifs, travail, temps positif, écoute | Évaluation semaine courante, 22 dimensions pondérées et couverture travail ; 69 seuils + global vérifiés avec V1 ; différences correctives documentées dans docs/14 ; Android à faire |
 | Travail PDF / work_report | Tableau hebdomadaire, types, durée et compteur cumulé, graphique | À porter |
 | Todo / todoist_view | Interface/accès Todoist, projets et statistiques disponibles ; intégration facultative | À porter |
@@ -63,6 +63,9 @@ compléter pendant chaque portage. « À porter » ne signifie jamais implément
 - Graphiques hebdomadaires : catégories sélectionnables pour limiter le défilement.
   Courbes corporelles à échelle locale (aucune plage personnelle fixe), barres signées
   pour les autres indicateurs ; jours manquants n.c., sans interpolation.
+- Périodes longues : navigation par fenêtres de 24 points, sans tronquer les KPIs,
+  pour limiter le nombre de vues natives. Textes de repas non chargés dans les séries.
+  Semaines lundi–dimanche explicites (la fréquence W-MON V1 terminait le lundi).
 
 Les tests JavaScript et Python ne remplacent pas les preuves Android. La période
 de double exploitation et la validation téléphone restent des gates utilisateur.
