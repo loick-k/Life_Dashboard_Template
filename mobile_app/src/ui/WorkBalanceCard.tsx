@@ -4,9 +4,10 @@ import type { QueryConnection } from '../storage/catalogs';
 import { readWorkReport } from '../storage/workReport';
 import { formatMinutes, type WorkReport } from '../domain/workReport';
 import { WorkDurationChart } from './WorkDurationChart';
+import { WorkPdfExport } from './WorkPdfExport';
 
-export function WorkBalanceCard({ database, date, revision, saved = true, weekly = false, refreshToken = 0 }: {
-  database: QueryConnection; date: string; revision?: number; saved?: boolean; weekly?: boolean; refreshToken?: number;
+export function WorkBalanceCard({ database, date, revision, saved = true, weekly = false, refreshToken = 0, onExportBusy }: {
+  database: QueryConnection; date: string; revision?: number; saved?: boolean; weekly?: boolean; refreshToken?: number; onExportBusy?(value: boolean): void;
 }) {
   const [result, setResult] = useState<{ date: string; revision?: number; report: WorkReport }>();
   const [failed, setFailed] = useState(false);
@@ -37,7 +38,7 @@ export function WorkBalanceCard({ database, date, revision, saved = true, weekly
     </>}
     <Text style={styles.help}>Référence : 7 h 42 par jour travaillé. Les jours sans durée calculable sont exclus. Day off : cible de 0 h.</Text>
     <Text style={styles.help}>{report.countedDays} journée(s) comptée(s) jusqu’au {date.split('-').reverse().join('/')}.</Text>
-    {report.incompleteDays > 0 && <Text style={styles.help}>{report.incompleteDays} journée(s) avec type de travail mais sans durée calculable, non comptée(s).</Text>}
+    {report.incompleteDays > 0 && <Text style={styles.help}>{report.incompleteDays} journée(s) de travail incomplètes ou incohérentes, non comptée(s).</Text>}
     {report.invalidSchedules.length > 0 && <Text accessibilityRole="alert">Créneaux chevauchants exclus du compteur : {report.invalidSchedules.map(value => value.split('-').reverse().join('/')).join(', ')}. Les horaires originaux sont conservés ; ouvre ces journées pour les corriger.</Text>}
     {weekly && <>
       <Text style={styles.label}>Semaine du {report.monday.split('-').reverse().join('/')} au {report.sunday.split('-').reverse().join('/')}</Text>
@@ -45,6 +46,7 @@ export function WorkBalanceCard({ database, date, revision, saved = true, weekly
       <Text>Objectif hebdomadaire : {formatMinutes(report.weekTargetMinutes)} · Écart : {formatMinutes(report.weekDifference, true)}</Text>
       <Text style={styles.help}>L’objectif hebdomadaire est distinct du compteur cumulé. Seules les données jusqu’à la date sélectionnée sont prises en compte.</Text>
       <WorkDurationChart report={report} />
+      <WorkPdfExport report={report} disabled={pending} onBusy={onExportBusy} />
       {report.rows.length === 0 && <Text>Aucune journée renseignée cette semaine.</Text>}
       {report.rows.map(row => <View key={row.entry_date} style={styles.day}>
         <Text style={styles.label}>{row.entry_date.split('-').reverse().join('/')} · {row.work_mode ?? 'Type non renseigné'}</Text>

@@ -11,6 +11,30 @@ remplacement forcé de la V1 et aucune synchronisation automatique des deux base
 
 ## État vérifié dans le dépôt
 
+### Parité — rapport PDF local du travail — 27/10/2026
+
+Récupérations commitée 0d15c03. Lot PDF précédemment en cours maintenant vérifié :
+export sous le graphique travail, deux pages A4 paysage, compteur cumulé complet,
+types de journée, tableau des sept jours/3 créneaux, durée et écart hebdomadaires,
+graphe des 14 dernières journées calculables. Modèle partagé avec formulaire/Bilan,
+futurs/chevauchements exclus, valeurs absentes distinctes de zéro. Aucun repas,
+poids ou autre rubrique n'est lu pour ce rapport. Générateur vectoriel TypeScript
+sans dépendance supplémentaire, aucun réseau ni fichier temporaire personnel.
+
+Consentement au PDF non chiffré, dossier choisi dans le sélecteur Android, nom
+unique UUID, relecture identique octet par octet avant succès. Navigation/date et
+double appui bloqués pendant l'opération ; erreur réessayable, fichier incomplet
+éventuel signalé sans suppression automatique. Le PDF ne remplace pas un backup.
+
+138 tests Node, TypeScript, vérification pypdf/pdfplumber et contrôle visuel des
+six pages fictives réussis. Cas normal/vide/partiel, soldes négatifs, chevauchement,
+troisième créneau et accents ; aucune donnée réelle. Scripts de reproduction :
+node --experimental-strip-types scripts/preview-work-pdf.mjs puis Python -B
+scripts/verify-work-pdf.py, depuis mobile_app. Sorties ignorées dans artifacts/.
+Les fichiers déjà générés ont été contrôlés, sans nouvel outillage/téléchargement.
+Sélecteur/écriture SAF et ouverture du PDF sur téléphone restent à valider.
+Cette preuve locale ne valide pas l'APK autonome ni l'ensemble de la parité.
+
 ### Reprise audit — conflits sportifs et position de navigation — 27/10/2026
 
 Correction du travail commitée 17b09d6. Sport : comparaison champ par champ des

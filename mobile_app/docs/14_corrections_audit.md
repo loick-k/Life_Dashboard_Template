@@ -35,7 +35,7 @@ données synthétiques, pas de Neon/push, plafond cumulatif disque 5 Go inchang�
 | Objectifs/réglages influencent les indicateurs | Les sept réglages sont consommés ; zéros explicités, couverture travail indépendante du compteur fixe ; tests | Android |
 | Scores et évaluation hebdomadaire V1 | 23 lignes, 22 pondérées ; semaine Paris actuelle ; fixtures V1 et UI réessayable connectées | Android ; différences V2 explicites ci-dessous |
 | Périodes mensuelles, annuelles et depuis le début | Quatre périodes V1, 29 séries, fenêtres graphiques complètes, agrégats sur jours observés, fixtures V1 et tests React | Rendu et performances Android |
-| Rapport PDF travail | À porter | Génération locale, contenu et rendu vérifiés |
+| Rapport PDF travail | Export local sous le graphe, modèle partagé, relecture identique, deux pages/3 créneaux ; tests et six pages fictives contrôlées | Sélecteur, écriture et lecture du PDF sur Android |
 | Social : récurrence et historique détaillé | À porter | Domaine, stockage, écran |
 | Personnes/objectifs gérés hors journal | À porter | Ajouter sans créer un faux journal |
 | Objectif archivé distinct de terminé | Actions Archiver/Terminer/Rouvrir séparées ; dates préservées lors d'archive ; tests CAS/capacité/React | Android ; dates historiques ambiguës non réécrites |

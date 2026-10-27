@@ -9,6 +9,9 @@ export interface WorkReport {
   dayMinutes: number | null; dayBalance: number | null;
   countedDays: number; incompleteDays: number;
   invalidSchedules: string[];
+  weekOpeningMinutes: number;
+  typeCounts: Record<string, number>;
+  recentRows: WorkRecord[];
   weekMinutes: number | null; weekTargetMinutes: number; weekDifference: number | null;
   rows: (WorkRecord & { balance: number | null; cumulative: number })[];
 }
@@ -29,6 +32,7 @@ export function buildWorkReport(records: readonly WorkRecord[], date: string, we
   const monday = shiftDate(date, -((weekday + 6) % 7));
   const report: WorkReport = { date, monday, sunday: shiftDate(monday, 6), beforeMinutes: 0, cumulativeMinutes: 0,
     afterMinutes: null, dayMinutes: null, dayBalance: null, countedDays: 0, incompleteDays: 0, invalidSchedules: [],
+    weekOpeningMinutes: 0, typeCounts: Object.create(null) as Record<string, number>, recentRows: [],
     weekMinutes: null, weekTargetMinutes: Math.round(weeklyTargetHours * 60), weekDifference: null, rows: [] };
   const seen = new Set<string>();
   for (const row of [...records].sort((a, b) => a.entry_date.localeCompare(b.entry_date))) {
@@ -41,8 +45,18 @@ export function buildWorkReport(records: readonly WorkRecord[], date: string, we
     const minutes = overlapping ? null : row.work_duration_minutes;
     if (minutes !== null && (!Number.isSafeInteger(minutes) || minutes < 0)) throw new Error('Durée enregistrée invalide.');
     const balance = workBalance(minutes, row.work_mode === 'Day off', DAILY_WORK_TARGET_MINUTES);
+    const hasClocks = [row.work_start_time, row.work_morning_end_time, row.work_afternoon_start_time, row.work_end_time, row.work_third_start_time, row.work_third_end_time].some(Boolean);
+    if (row.work_mode || minutes !== null || hasClocks) {
+      const mode = row.work_mode || 'Non renseigné';
+      report.typeCounts[mode] = (report.typeCounts[mode] ?? 0) + 1;
+    }
     if (balance !== null) { report.cumulativeMinutes += balance; report.countedDays++; }
-    else if (row.work_mode && row.work_mode !== 'Day off') report.incompleteDays++;
+    else if (hasClocks || row.work_mode && row.work_mode !== 'Day off') report.incompleteDays++;
+    if (row.entry_date < monday) report.weekOpeningMinutes = report.cumulativeMinutes;
+    if (minutes !== null) {
+      report.recentRows.push({ ...row, work_duration_minutes: minutes });
+      if (report.recentRows.length > 14) report.recentRows.shift();
+    }
     if (row.entry_date < date) report.beforeMinutes = report.cumulativeMinutes;
     if (row.entry_date === date) {
       report.dayMinutes = minutes; report.dayBalance = balance;

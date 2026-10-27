@@ -26,6 +26,9 @@ function Dashboard() {
   const [epoch, setEpoch] = useState(0);
   const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
+  const [operationBusy, setOperationBusy] = useState(false);
+  const operation = useRef(false);
+  const operationState = useCallback((value: boolean) => { operation.current = value; setOperationBusy(value); }, []);
   const moving = useRef(false);
   const daily = useRef<EditorHandle>(null), settings = useRef<EditorHandle>(null);
   useEffect(() => {
@@ -42,7 +45,7 @@ function Dashboard() {
   const rememberDaily = useCallback((date: string) => setNavigation(state => state.dailyDate === date ? state : { ...state, dailyDate: date }), []);
   const rememberBilan = useCallback((date: string) => setNavigation(state => state.bilanDate === date ? state : { ...state, bilanDate: date }), []);
   const go = async (destination: MainDestination, contextDate?: string) => {
-    if (moving.current) return;
+    if (moving.current || operation.current) return;
     moving.current = true; setBusy(true); Keyboard.dismiss();
     try {
       const editor = navigation.main === 'daily' ? daily.current : navigation.main === 'settings' ? settings.current : null;
@@ -82,7 +85,7 @@ function Dashboard() {
         <DailyForm key={'daily:' + epoch} ref={daily} database={database} active={active('daily')} initialDate={navigation.dailyDate} onDate={rememberDaily} onBilan={date => void go('bilan', date)} onSettings={() => void go('settings')} />
       </View>
       {navigation.visited.includes('bilan') && <View style={panel('bilan')} importantForAccessibility={active('bilan') ? 'auto' : 'no-hide-descendants'} accessibilityElementsHidden={!active('bilan')}>
-        <WorkBilan key={'bilan:' + epoch} database={database} active={active('bilan')} initialDate={navigation.bilanDate} onDate={rememberBilan} onDone={() => void go('daily')} />
+        <WorkBilan key={'bilan:' + epoch} database={database} active={active('bilan')} initialDate={navigation.bilanDate} onDate={rememberBilan} onBusy={operationState} onDone={() => void go('daily')} />
       </View>}
       {navigation.visited.includes('settings') && <View style={panel('settings')} importantForAccessibility={active('settings') ? 'auto' : 'no-hide-descendants'} accessibilityElementsHidden={!active('settings')}>
         <PreferencesForm key={'settings:' + epoch} ref={settings} database={database} preserveOnNavigate active={active('settings')} onBackup={() => openOverlay('backup')} onImport={() => openOverlay('import')} onProtection={() => openOverlay('protection')} onDone={() => go('daily')} />
@@ -92,7 +95,7 @@ function Dashboard() {
       {navigation.overlay === 'import' && <V1ImportScreen database={database} beforeImport={beforeReplace} onImported={refreshed} onDone={closeOverlay} />}
       {navigation.overlay === 'protection' && <ProtectionScreen onDone={closeOverlay} />}
     </View>
-    {!navigation.overlay && <View accessibilityRole="tablist" style={styles.menu}>{mainDestinations.map(destination => <Pressable key={destination} accessibilityRole="tab" accessibilityState={{ selected: navigation.main === destination, disabled: busy }} disabled={busy} style={[styles.tab, navigation.main === destination && styles.selected]} onPress={() => void go(destination)}>
+    {!navigation.overlay && <View accessibilityRole="tablist" style={styles.menu}>{mainDestinations.map(destination => <Pressable key={destination} accessibilityRole="tab" accessibilityState={{ selected: navigation.main === destination, disabled: busy || operationBusy }} disabled={busy || operationBusy} style={[styles.tab, navigation.main === destination && styles.selected]} onPress={() => void go(destination)}>
       <Text style={styles.tabText}>{{ daily: 'Saisie', bilan: 'Bilan', todo: 'Todo', settings: 'Réglages' }[destination]}</Text>
     </Pressable>)}</View>}
   </View>;

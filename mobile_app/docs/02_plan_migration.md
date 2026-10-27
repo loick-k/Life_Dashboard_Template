@@ -122,12 +122,13 @@ reprise, absence d'effacement et comparaison fonctionnelle/visuelle avec la V1.
 ## Étape 7 - Bilan et intégrations
 
 - KPI, graphiques et rapport PDF.
-  Compteur travail partagé formulaire/Bilan, semaines, objectif réglable, barres
-  quotidiennes et détail connectés en développement. Tests SQLite et fixtures de
-  solde communes Python/TypeScript ; PDF et validation Android restant à faire.
-  27 autres séries hebdomadaires et graphiques natifs connectés par catégorie,
-  moyennes/dernières valeurs/totaux testés avec null distinct de zéro. Scores V1,
-  granularités supplémentaires, récurrence sociale et PDF restent à porter.
+  Compteur travail partagé formulaire/Bilan/PDF, semaines, objectif réglable,
+  barres quotidiennes et détail connectés. 29 séries/périodes 7j/30j/365j/tout,
+  agrégats jour/semaine/mois et évaluation semaine en cours connectés, null distinct
+  de zéro. Tests SQLite/React et fixtures métier communes V1/V2. PDF deux pages
+  contrôlé sur six pages fictives ; consentement non chiffré et relecture du fichier.
+  Récurrence sociale, historique détaillé et validation native restent nécessaires,
+  y compris sélecteur Android et lecture du PDF sur téléphone.
 - Todoist.
 - Analyse OpenAI asynchrone.
 - API éventuelle uniquement pour les intégrations nécessitant des secrets serveur.

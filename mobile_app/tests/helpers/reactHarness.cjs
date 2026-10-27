@@ -28,7 +28,10 @@ function harness(database, ports = {}) {
   };
   const nativeFiles = {
     File: class File { static pickFileAsync = async () => ports.pickFile ? ports.pickFile() : { canceled: true }; },
-    Directory: class Directory {},
+    Directory: class Directory { static pickDirectoryAsync = async () => {
+      if (ports.pickDirectory) return ports.pickDirectory();
+      throw Object.assign(new Error('Synthetic picker cancellation'), { code: 'ERR_PICKER_CANCELLED' });
+    } },
   };
   function load(filename) {
     if (modules.has(filename)) return modules.get(filename).exports;

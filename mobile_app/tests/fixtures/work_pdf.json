@@ -1,0 +1,17 @@
+{
+  "date":"2026-10-30",
+  "records":[
+    {"entry_date":"2026-10-19","work_mode":"Bureau","work_duration_minutes":522},
+    {"entry_date":"2026-10-20","work_mode":"Télétravail","work_duration_minutes":402},
+    {"entry_date":"2026-10-21","work_mode":"Déplacement","work_duration_minutes":480},
+    {"entry_date":"2026-10-22","work_mode":"Bureau","work_duration_minutes":462},
+    {"entry_date":"2026-10-23","work_mode":"Day off","work_duration_minutes":0},
+    {"entry_date":"2026-10-26","work_mode":"Bureau","work_start_time":"08:48","work_morning_end_time":"12:30","work_afternoon_start_time":"13:30","work_end_time":"17:42","work_third_start_time":"18:00","work_third_end_time":"18:30","work_duration_minutes":504},
+    {"entry_date":"2026-10-27","work_mode":"Télétravail","work_start_time":"08:00","work_morning_end_time":"12:00","work_afternoon_start_time":"13:00","work_end_time":"17:12","work_duration_minutes":492},
+    {"entry_date":"2026-10-28","work_mode":"Déplacement","work_start_time":"08:00","work_end_time":"16:00","work_duration_minutes":480},
+    {"entry_date":"2026-10-29","work_mode":"Day off","work_duration_minutes":0},
+    {"entry_date":"2026-10-30","work_mode":"Bureau","work_start_time":"08:55","work_duration_minutes":null},
+    {"entry_date":"2026-10-31","work_mode":"Bureau","work_duration_minutes":999}
+  ],
+  "expected":{"cumulativeMinutes":108,"weekOpeningMinutes":18,"weekMinutes":1476,"countedDays":9,"incompleteDays":1}
+}

@@ -22,7 +22,7 @@ compléter pendant chaque portage. « À porter » ne signifie jamais implément
 | Objectifs | Ajout, actifs, complétés, critères, journal et historique | Ajout/journal/archives/réalisation/réouverture séparés, notes conservées, limite 3 actifs ; critères et historique détaillé à faire |
 | Bilan / dashboard_metrics | Courbes par catégorie, vue hebdomadaire, objectifs, évaluation semaine courante | 29 séries, périodes 7j/30j/365j/tout, groupes jour/semaine/mois et évaluation actuelle connectés ; tests SQLite/React et fixtures V1 ; validation native à faire |
 | Scores / dashboard_metrics | Sommeil, alcool, tabac, sport, portable, nutrition, corps, social, objectifs, travail, temps positif, écoute | Évaluation semaine courante, 22 dimensions pondérées et couverture travail ; 69 seuils + global vérifiés avec V1 ; différences correctives documentées dans docs/14 ; Android à faire |
-| Travail PDF / work_report | Tableau hebdomadaire, types, durée et compteur cumulé, graphique | À porter |
+| Travail PDF / work_report | Tableau hebdomadaire, types, durée et compteur cumulé, graphique | Générateur local deux pages, export consenti et relu, tests/contrôle visuel synthétiques ; SAF et lecture Android à vérifier |
 | Todo / todoist_view | Interface/accès Todoist, projets et statistiques disponibles ; intégration facultative | À porter |
 | Réglages / app_config | Seuils, objectifs, horaires standards, jours de travail, date arrêt tabac | 13 préférences persistantes, validation/CAS, écran d'essai autosauvegardé ; standards et libellé consommés ; bilans, assistant et validation Android à faire |
 | Performance / app | Adapter suivi du coût API et diagnostic à l'usage mobile, sans données sensibles | À porter |
