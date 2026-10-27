@@ -11,6 +11,21 @@ remplacement forcé de la V1 et aucune synchronisation automatique des deux base
 
 ## État vérifié dans le dépôt
 
+### Protection biométrique — 27/10/2026
+
+Clé SQLCipher migrable vers un service SecureStore/Keystore distinct exigeant la
+biométrie forte. Copie/relecture avant politique transitoire, suppression de l'ancien
+secret, reprise après interruption ; désactivation authentifiée. Politique inconnue,
+clé invalidée/absente et annulation refusées sans fallback ni remise à zéro. Aucun
+changement de schéma ou accès aux données réelles, aucune dépendance supplémentaire.
+Écran branché aux Réglages après flush et à l'assistant. Couverture opaque au retour
+d'arrière-plan, éditeurs maintenus pour préserver leurs brouillons/écritures ; résultat
+d'authentification périmé refusé. Connexion native chiffrée reste en mémoire pendant
+la session : pas de prétention de résistance à un OS compromis. Sauvegarde préalable
+et risque d'invalidation des empreintes explicités. Voir docs/12_protection_biometrique.md.
+69 tests Node (8 nouveaux) et TypeScript réussis. Validation biométrique réelle,
+captures/récents et reprise Android encore à faire ; aucun APK reconstruit par ce lot.
+
 ### Import V1 vers V2 — 27/10/2026
 
 Convertisseur TypeScript et route V1ImportScreen ajoutés à l'assistant et aux

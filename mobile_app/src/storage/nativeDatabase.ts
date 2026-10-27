@@ -1,19 +1,20 @@
 import * as SQLite from 'expo-sqlite';
-import * as SecureStore from 'expo-secure-store';
 import * as Crypto from 'expo-crypto';
 import { File } from 'expo-file-system';
 import { createSecureOpener } from './secureOpening';
 import { migrate } from './migrations';
 import migrations from './generated/migrations.json';
+import { keyProtection } from './nativeProtection';
 
 const databaseName = 'life-dashboard-v2.db';
-const keyName = 'life-dashboard.database-key.v1';
+let authorizedKey: string | null | undefined;
+let opening: Promise<SQLite.SQLiteDatabase> | undefined;
 
 /** No plaintext fallback, including in Expo Go. Native SQLCipher build required. */
-export const openLocalDatabase = createSecureOpener<SQLite.SQLiteDatabase>({
+const openCachedDatabase = createSecureOpener<SQLite.SQLiteDatabase>({
   exists: async () => new File(SQLite.defaultDatabaseDirectory, databaseName).exists,
-  readKey: () => SecureStore.getItemAsync(keyName),
-  writeKey: key => SecureStore.setItemAsync(keyName, key),
+  readKey: async () => { if (authorizedKey === undefined) throw new Error('Authorization required'); return authorizedKey; },
+  writeKey: key => keyProtection.initialize(key),
   randomKey: async () => Array.from(await Crypto.getRandomBytesAsync(32), byte => byte.toString(16).padStart(2, '0')).join(''),
   open: () => SQLite.openDatabaseAsync(databaseName),
   unlockAndCheck: async (database, key) => {
@@ -30,3 +31,14 @@ export const openLocalDatabase = createSecureOpener<SQLite.SQLiteDatabase>({
   },
   close: database => database.closeAsync(),
 });
+
+/** Authenticate even if a native connection is already cached (e.g. React remount). */
+export function openLocalDatabase(): Promise<SQLite.SQLiteDatabase> {
+  if (!opening) opening = (async () => {
+    try {
+      authorizedKey = await keyProtection.readKey();
+      return await openCachedDatabase();
+    } finally { authorizedKey = undefined; }
+  })().finally(() => { opening = undefined; });
+  return opening;
+}

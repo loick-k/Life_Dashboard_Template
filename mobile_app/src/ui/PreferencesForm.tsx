@@ -6,7 +6,7 @@ import { WriteQueue } from '../storage/writeQueue';
 import type { SqlConnection } from '../storage/migrations';
 
 type Draft = WriteQueue<PreferenceState, { value: PreferenceValue }>;
-export function PreferencesForm({ database, onDone, onBackup, onImport, onBack, doneLabel = 'Retour' }: { database: SqlConnection; onDone(): void | Promise<void>; onBackup?(): void | Promise<void>; onImport?(): void | Promise<void>; onBack?(): void | Promise<void>; doneLabel?: string }) {
+export function PreferencesForm({ database, onDone, onBackup, onImport, onProtection, onBack, doneLabel = 'Retour' }: { database: SqlConnection; onDone(): void | Promise<void>; onBackup?(): void | Promise<void>; onImport?(): void | Promise<void>; onProtection?(): void | Promise<void>; onBack?(): void | Promise<void>; doneLabel?: string }) {
   const repository = useMemo(() => new Preferences(database), [database]);
   const drafts = useRef<Partial<Record<PreferenceKey, Draft>>>({});
   const invalid = useRef(new Set<PreferenceKey>());
@@ -89,6 +89,7 @@ export function PreferencesForm({ database, onDone, onBackup, onImport, onBack, 
     <Text style={styles.help}>Enregistrement local automatique. Unités : kg, cm, km et heures. Les secrets des intégrations ne sont pas stockés ici.</Text>
     {onBackup && <Pressable accessibilityRole="button" disabled={busy || !ready} style={styles.secondary} onPress={() => void done(onBackup)}><Text>Sauvegarde et récupération</Text></Pressable>}
     {onImport && <Pressable accessibilityRole="button" disabled={busy || !ready} style={styles.secondary} onPress={() => void done(onImport)}><Text>Importer un export V1</Text></Pressable>}
+    {onProtection && <Pressable accessibilityRole="button" disabled={busy || !ready} style={styles.secondary} onPress={() => void done(onProtection)}><Text>Protection biométrique</Text></Pressable>}
     {!!error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
     {!ready && !error && <Text>Chargement…</Text>}
     {ready && preferenceDefinitions.map(definition => {

@@ -9,9 +9,14 @@ import { BackupScreen } from './ui/BackupScreen';
 import { OnboardingScreen } from './ui/OnboardingScreen';
 import { OnboardingProgress } from './storage/onboarding';
 import { V1ImportScreen } from './ui/V1ImportScreen';
+import { ProtectionScreen } from './ui/ProtectionScreen';
+import { SessionGuard } from './ui/SessionGuard';
 
 /** Bootstrap only: do not collect personal data until native storage is verified. */
 export default function App() {
+  return <SessionGuard><Dashboard /></SessionGuard>;
+}
+function Dashboard() {
   const [attempt, setAttempt] = useState(0);
   const [status, setStatus] = useState<'opening' | 'ready' | 'failed'>('opening');
   const [database, setDatabase] = useState<SQLiteDatabase>();
@@ -22,6 +27,7 @@ export default function App() {
   const [backup, setBackup] = useState(false);
   const [onboarding, setOnboarding] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [protection, setProtection] = useState(false);
   useEffect(() => {
     let active = true;
     setStatus('opening');
@@ -38,9 +44,10 @@ export default function App() {
     return () => { active = false; };
   }, [attempt]);
   if (onboarding && database) return <OnboardingScreen database={database} onDone={() => { setOnboarding(false); setTesting(true); }} />;
+  if (protection && database) return <ProtectionScreen onDone={() => setProtection(false)} />;
   if (importing && database) return <V1ImportScreen database={database} onDone={() => setImporting(false)} />;
   if (backup && database) return <BackupScreen database={database} onDone={() => setBackup(false)} />;
-  if (preferences && database) return <PreferencesForm database={database} onImport={() => setImporting(true)} onBackup={() => setBackup(true)} onDone={() => setPreferences(false)} />;
+  if (preferences && database) return <PreferencesForm database={database} onProtection={() => setProtection(true)} onImport={() => setImporting(true)} onBackup={() => setBackup(true)} onDone={() => setPreferences(false)} />;
   if (bilan && database) return <WorkBilan database={database} onDone={() => setBilan(false)} />;
   if (testing && database) return <DailyForm database={database} initialDate={dailyDate} onBilan={date => { setDailyDate(date); setBilan(true); }} onSettings={date => { setDailyDate(date); setPreferences(true); }} />;
   return (

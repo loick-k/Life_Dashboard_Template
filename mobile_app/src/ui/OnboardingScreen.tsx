@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { BackHandler, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { BackHandler, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { QueryConnection } from '../storage/catalogs';
 import { OnboardingProgress, onboardingSteps, type OnboardingState } from '../storage/onboarding';
 import { Preferences } from '../storage/preferences';
@@ -7,6 +7,8 @@ import { preferenceDefinitions } from '../domain/preferences';
 import { PreferencesForm } from './PreferencesForm';
 import { BackupScreen } from './BackupScreen';
 import { V1ImportScreen } from './V1ImportScreen';
+import { ProtectionScreen } from './ProtectionScreen';
+import { keyProtection } from '../storage/nativeProtection';
 
 const titles = ['Bienvenue', 'Tes données', 'Tes préférences', 'Protection du téléphone', 'Sauvegarde', 'Services facultatifs', 'Vérifier et commencer'];
 const choices = { empty: 'Démarrage à vide', existing: 'Données de cet appareil conservées', 'import-v1': 'Import V1', 'restore-v2': 'Sauvegarde V2 restaurée' };
@@ -16,8 +18,8 @@ export function OnboardingScreen({ database, onDone }: { database: QueryConnecti
   const repository = useMemo(() => new OnboardingProgress(database), [database]);
   const [state, setState] = useState<OnboardingState>();
   const [hasData, setHasData] = useState(false);
-  const [route, setRoute] = useState<'steps' | 'restore' | 'backup' | 'import'>('steps');
-  const [summary, setSummary] = useState<{ settings: string[]; backup: string | null }>();
+  const [route, setRoute] = useState<'steps' | 'restore' | 'backup' | 'import' | 'protection'>('steps');
+  const [summary, setSummary] = useState<{ settings: string[]; backup: string | null; protected: boolean }>();
   const [attempt, setAttempt] = useState(0);
   const [busy, setBusy] = useState(false);
   const working = useRef(false);
@@ -35,8 +37,8 @@ export function OnboardingScreen({ database, onDone }: { database: QueryConnecti
     let active = true;
     setSummary(undefined);
     Promise.all([new Preferences(database).readAll(), database.getFirstAsync<{ created_at: string }>(
-      "SELECT created_at FROM backup_history WHERE status = 'verified' ORDER BY created_at DESC LIMIT 1")]).then(([settings, backup]) => {
-      if (active) setSummary({ settings: preferenceDefinitions.map(item => `${item.label} : ${settings[item.key].value ?? 'Non renseigné'}`), backup: backup?.created_at ?? null });
+      "SELECT created_at FROM backup_history WHERE status = 'verified' ORDER BY created_at DESC LIMIT 1"), keyProtection.mode()]).then(([settings, backup, mode]) => {
+      if (active) setSummary({ settings: preferenceDefinitions.map(item => `${item.label} : ${settings[item.key].value ?? 'Non renseigné'}`), backup: backup?.created_at ?? null, protected: mode !== 'device' });
     }, () => { if (active) setError('Impossible de relire les choix. Réessaie avant de terminer.'); });
     return () => { active = false; };
   }, [database, state?.step, attempt]);
@@ -77,6 +79,7 @@ export function OnboardingScreen({ database, onDone }: { database: QueryConnecti
     setState(await repository.move(chosen.revision, 'preferences')); setHasData(true); setRoute('steps');
   }} />;
   if (route === 'backup') return <BackupScreen database={database} onDone={() => setRoute('steps')} />;
+  if (route === 'protection') return <ProtectionScreen onDone={() => setRoute('steps')} />;
   if (route === 'import') return <V1ImportScreen database={database} onDone={() => setRoute('steps')} onImported={async () => {
     const current = await repository.read();
     const chosen = await repository.chooseData(current.revision, 'import-v1');
@@ -114,8 +117,8 @@ export function OnboardingScreen({ database, onDone }: { database: QueryConnecti
       </>}
       {state.step === 'protection' && <>
         <Text style={styles.text}>La base locale est chiffrée et sa clé est conservée dans le stockage sécurisé Android. Active un code ou une biométrie pour déverrouiller ton téléphone.</Text>
-        <Pressable accessibilityRole="button" style={styles.secondary} onPress={() => void Linking.openSettings().catch(() => setError('Ouvre les réglages Android depuis ton téléphone.'))}><Text>Ouvrir les réglages du téléphone</Text></Pressable>
-        <Text style={styles.text}>Un verrouillage biométrique supplémentaire propre à l’application reste à ajouter dans cette version d’essai.</Text>
+        <Pressable accessibilityRole="button" style={styles.secondary} onPress={() => setRoute('protection')}><Text>Configurer la protection biométrique</Text></Pressable>
+        <Text style={styles.text}>Facultative et propre à cet appareil. Crée d’abord une sauvegarde chiffrée si tu as déjà des données.</Text>
       </>}
       {state.step === 'backup' && <>
         <Text style={styles.text}>Crée une première sauvegarde et conserve son code dans ton gestionnaire de mots de passe. Garde une copie du fichier hors de ce téléphone.</Text>
@@ -128,7 +131,7 @@ export function OnboardingScreen({ database, onDone }: { database: QueryConnecti
       </>}
       {state.step === 'review' && <>
         <Text>Données : {state.dataChoice ? choices[state.dataChoice] : 'À choisir'}</Text>
-        <Text>Protection : chiffrement local et verrouillage du téléphone.</Text>
+        <Text>Protection : chiffrement local{summary?.protected ? ' et biométrie de l’application' : ' et verrouillage du téléphone'}.</Text>
         <Text>Services externes : désactivés.</Text>
         {summary ? <>
           <Text>Sauvegarde vérifiée : {summary.backup ? new Date(summary.backup).toLocaleString('fr-FR', { timeZone: 'Europe/Paris' }) : 'Aucune sur cet appareil'}</Text>
