@@ -30,6 +30,84 @@ async function choose(h: any, tree: any, name: string) {
   assert.ok(node, name); assert.ok(!node.props.disabled); await h.act(async () => node.props.onPress());
 }
 
+test('daily comparison freezes every input kind, including late native callbacks, and displayed values match SQLite', async () => {
+  const cases = [
+    { section: 'Poids', input: 'Poids (kg)', field: 'weight_kg', first: '72', late: '73', expected: 72 },
+    { section: 'Temps de travail', input: 'Heure de début', field: 'work_start_time', first: '08:30', late: '09:30', expected: '08:30' },
+    { section: 'Alimentation', input: 'Déjeuner', field: 'meal_lunch', first: 'Repas fictif A', late: 'Repas fictif B', expected: 'Repas fictif A' },
+    { section: 'Temps de portable', input: 'Temps de portable · Heures', field: 'phone_minutes', first: '1', late: '2', expected: 60 },
+  ];
+  for (const sample of cases) {
+    const { native, sql, daily, day } = await fixture(); const h = harness(sql); let tree: any;
+    try {
+      const { DailyForm } = h.load('ui/DailyForm.tsx'); const ref = h.React.createRef();
+      await h.act(async () => { tree = h.create(h.React.createElement(DailyForm, { ref, database: sql, initialDate: day.entry_date })); });
+      await press(h, tree, sample.section);
+      await daily.patch(day.entry_id, day.revision, { alcohol_glasses: 1 });
+      await h.act(async () => input(tree, sample.input).props.onChangeText(sample.first));
+      const lateCallback = input(tree, sample.input).props.onChangeText;
+      await press(h, tree, 'Comparer le brouillon aux valeurs enregistrées');
+      assert.equal(input(tree, sample.input).props.editable, false, sample.field);
+      await h.act(async () => lateCallback(sample.late));
+      assert.equal(input(tree, sample.input).props.value, sample.first);
+      assert.equal(ref.current.hasUnconfirmed(), true);
+      await assert.rejects(ref.current.beforeReplace());
+      await press(h, tree, 'Garder mon brouillon'); await press(h, tree, 'Appliquer mes choix');
+      assert.equal(input(tree, sample.input).props.value, sample.first);
+      assert.equal((await daily.read(day.entry_id))[sample.field], sample.expected);
+      assert.equal((await daily.read(day.entry_id)).alcohol_glasses, 1);
+      assert.equal(ref.current.hasUnconfirmed(), false);
+      assert.match(label(tree.root), /Valeurs enregistrées localement/);
+    } finally { if (tree) await h.act(async () => tree.unmount()); native.close(); }
+  }
+});
+
+test('closing a daily comparison preserves the editable draft; reopening compares its newest value and rejects another conflict', async () => {
+  const { native, sql, daily, day } = await fixture(); const h = harness(sql); let tree: any;
+  try {
+    const { DailyForm } = h.load('ui/DailyForm.tsx');
+    await h.act(async () => { tree = h.create(h.React.createElement(DailyForm, { database: sql, initialDate: day.entry_date })); });
+    await press(h, tree, 'Poids'); let latest = await daily.patch(day.entry_id, day.revision, { weight_kg: 71 });
+    await h.act(async () => input(tree, 'Poids (kg)').props.onChangeText('72'));
+    await press(h, tree, 'Comparer le brouillon aux valeurs enregistrées');
+    await press(h, tree, 'Fermer sans abandonner le brouillon');
+    assert.equal(input(tree, 'Poids (kg)').props.editable, true);
+    await h.act(async () => input(tree, 'Poids (kg)').props.onChangeText('73'));
+    await press(h, tree, 'Comparer le brouillon aux valeurs enregistrées');
+    await press(h, tree, 'Garder mon brouillon');
+    latest = await daily.patch(latest.entry_id, latest.revision, { body_fat_pct: 19 });
+    await press(h, tree, 'Appliquer mes choix');
+    assert.equal(input(tree, 'Poids (kg)').props.value, '73');
+    assert.match(label(tree.root), /La journée a encore changé/);
+    await press(h, tree, 'Recharger la comparaison'); await press(h, tree, 'Garder mon brouillon'); await press(h, tree, 'Appliquer mes choix');
+    assert.equal((await daily.read(latest.entry_id)).weight_kg, 73);
+    assert.equal((await daily.read(latest.entry_id)).body_fat_pct, 19);
+  } finally { if (tree) await h.act(async () => tree.unmount()); native.close(); }
+});
+
+test('daily comparison locks before the read resolves and the navigation barrier waits for recovery', async () => {
+  const { native, sql, daily, day } = await fixture(); let pause = false, release!: () => void, tree: any;
+  const gate = new Promise<void>(resolve => { release = resolve; });
+  const port = { ...sql, getFirstAsync: async <T>(statement: string, ...params: BindValue[]) => {
+    if (pause && statement === 'SELECT * FROM daily_entries WHERE entry_id = ?') await gate;
+    return sql.getFirstAsync<T>(statement, ...params);
+  } }; const h = harness(port);
+  try {
+    const { DailyForm } = h.load('ui/DailyForm.tsx'); const ref = h.React.createRef();
+    await h.act(async () => { tree = h.create(h.React.createElement(DailyForm, { ref, database: port, initialDate: day.entry_date })); });
+    await press(h, tree, 'Poids'); await daily.patch(day.entry_id, day.revision, { weight_kg: 71 });
+    await h.act(async () => input(tree, 'Poids (kg)').props.onChangeText('72'));
+    const lateCallback = input(tree, 'Poids (kg)').props.onChangeText;
+    pause = true; await press(h, tree, 'Comparer le brouillon aux valeurs enregistrées');
+    await h.act(async () => lateCallback('73'));
+    let settled = false; const settling = ref.current.settle().catch(() => { settled = true; });
+    await new Promise(resolve => setImmediate(resolve)); assert.equal(settled, false);
+    await h.act(async () => { release(); await settling; });
+    assert.equal(input(tree, 'Poids (kg)').props.value, '72');
+    assert.equal(input(tree, 'Poids (kg)').props.editable, false);
+  } finally { release(); if (tree) await h.act(async () => tree.unmount()); native.close(); }
+});
+
 test('sport resolution applies explicit choices only and refuses stale decisions even when keeping only database values', async () => {
   const { native, sql, day } = await fixture();
   try {

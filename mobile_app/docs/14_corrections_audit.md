@@ -9,6 +9,10 @@ données synthétiques, pas de Neon/push, plafond cumulatif disque 5 Go inchang�
 
 | Exigence | État / preuve locale | Encore nécessaire |
 |---|---|---|
+| Comparaison quotidienne sans perte d'une saisie postérieure | Verrou synchrone des champs et callbacks tardifs, barrières attendent la résolution, réouverture avec dernier brouillon et second conflit refusé ; trois tests React/SQLite | Android |
+| Brouillons durables après redémarrage | Perte de 08: reproduite au remontage React ; buffers actuellement en mémoire | Persistance chiffrée des buffers/écritures non confirmées, reprise et Android |
+| Sortie d'un répertoire illisible sans brouillon | Piège Retour/Back reproduit | Distinguer lecture en échec et modification à conserver |
+| Aujourd'hui/Hier après minuit Paris | Premier appui conservant la veille reproduit | Calcul à l'appui et horloge actualisée sans abandon de date historique |
 | Note d'objectif conservée en décochant/recochant | UPDATE worked au lieu de DELETE ; test identité/note/date/révision | Interaction Android |
 | Correction sportive débloque Continuer | Validation paire heures/minutes, suppression des deux anciens indicateurs d'erreur | Test d'écran et Android |
 | Retrait complet d'une séance | Action explicite confirmée, patch atomique des 3 champs à null ; autre séance/poids/bilan préservés | Test d'écran et Android |

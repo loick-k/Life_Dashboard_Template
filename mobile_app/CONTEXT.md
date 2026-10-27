@@ -11,6 +11,23 @@ remplacement forcé de la V1 et aucune synchronisation automatique des deux base
 
 ## État vérifié dans le dépôt
 
+### Audit approfondi — comparaison quotidienne figée sans perte — 27/10/2026
+
+Reprise de l'audit du dernier tour : perte 73 affiché/72 stocké reproduite avant
+correction. La comparaison verrouille désormais tous les éditeurs quotidiens,
+leurs événements natifs tardifs, modes, effacements et réessai de l'ancienne file.
+Verrou synchrone avant la lecture, suivi de l'opération par les barrières de
+navigation/restauration ; choix appliqués au brouillon comparé uniquement. Fermer
+la comparaison permet de reprendre la saisie puis de comparer sa dernière valeur.
+Second conflit refusé sans réécriture ni perte ; aucune autre mesure remplacée.
+
+171 tests Node et TypeScript réussis, dont trois nouveaux tests React/SQLite sur
+nombres, horaires, textes, durées, ancien callback, lecture lente, fermeture puis
+nouvelle comparaison et second conflit. Aucun build/téléchargement/accès réel,
+changement V1 ou push. Les fichiers Todoist non commités préexistants sont conservés
+hors de ce lot. Restent les brouillons durables, sortie des répertoires en erreur,
+horloge vivante Paris, intégrations et parité complète/validation native Android.
+
 ### Todoist — client et commandes durables, pas encore branchés à l'UI — 27/10/2026
 
 Archive précédente commitée 2f79a2b. Client V1 REST/Sync sans SDK ajouté : HTTPS
