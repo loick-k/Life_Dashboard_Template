@@ -25,8 +25,8 @@ export async function readWeeklyMetrics(database: QueryConnection, date: string)
       (s.sport_type IS NOT NULL OR s.duration_minutes IS NOT NULL OR s.distance_km IS NOT NULL)) AS sport_count,
     (SELECT COUNT(*) FROM sport_sessions s WHERE s.entry_id = d.entry_id AND s.duration_minutes IS NULL AND
       (s.sport_type IS NOT NULL OR s.distance_km IS NOT NULL)) AS sport_partial_count,
-    (SELECT COUNT(*) FROM social_logs l WHERE l.entry_id = d.entry_id) AS social_count,
-    (SELECT SUM(l.duration_minutes) FROM social_logs l WHERE l.entry_id = d.entry_id) AS social_minutes,
+    (SELECT COUNT(*) FROM social_logs l WHERE l.entry_id = d.entry_id AND l.included = 1) AS social_count,
+    (SELECT SUM(l.duration_minutes) FROM social_logs l WHERE l.entry_id = d.entry_id AND l.included = 1) AS social_minutes,
     (SELECT COUNT(*) FROM goal_logs l WHERE l.entry_id = d.entry_id AND l.worked = 1) AS goals_worked
     FROM daily_entries d WHERE d.entry_date >= ? AND d.entry_date <= ? ORDER BY d.entry_date`, monday, date);
   const series = weeklySeries(rows, date);

@@ -168,7 +168,7 @@ export async function convertV1(raw: string, crypto: V1Crypto): Promise<V1Plan> 
       const friend = sourceId(log.friend_id);
       if (log.context === null || log.context === undefined) warn('social_context_defaulted');
       add('social_logs', unit, { social_log_id: await uuid('social_logs', sourceId(log.id)), entry_id: id, friend_id: await uuid('friends', friend),
-        context: text(log.context, 'Vu en personne'), duration_minutes: minutes(log.duration_hours), note: text(log.note), revision: 1,
+        context: text(log.context, 'Vu en personne'), duration_minutes: minutes(log.duration_hours), note: text(log.note), included: 1, revision: 1,
         created_at: stamp(log.updated_at), updated_at: stamp(log.updated_at) });
     }
     for (const log of group.goal_logs ?? []) {

@@ -13,6 +13,7 @@ import { importV1 } from '../src/storage/v1Import.ts';
 import { convertV1Progress } from '../src/storage/v1Progress.ts';
 import { captureSnapshot, restoreSnapshot } from '../src/storage/backupSnapshot.ts';
 import { DailyEntries } from '../src/storage/dailyEntries.ts';
+import { Catalogs } from '../src/storage/catalogs.ts';
 
 const migrations = JSON.parse(readFileSync('src/storage/generated/migrations.json', 'utf8'));
 const crypto = { sha256: async (text: string) => createHash('sha256').update(text).digest('hex') };
@@ -90,10 +91,15 @@ test('repeat after reopening preserves V2 edits; a later snapshot may add new da
     await importV1(sql, raw, crypto, { dryRun: false });
     let repo = new DailyEntries(sql, randomUUID), day = await repo.getOrCreate('2026-08-03');
     day = await repo.patch(day.entry_id, day.revision, { weight_kg: 75 });
+    const people = new Catalogs(sql, randomUUID, 'friends');
+    const social = (await people.logs(day.entry_id))[0]!;
+    await people.deselect(social);
     db.close(); db = new DatabaseSync(path); sql = adapter(db);
     const replay = await importV1(sql, raw, crypto, { dryRun: false });
     assert.equal(replay.insertedRecords, 0); assert.equal(replay.archivedSourceRows, 0);
     repo = new DailyEntries(sql, randomUUID); assert.deepEqual(await repo.getOrCreate('2026-08-03'), day);
+    assert.equal(db.prepare('SELECT included FROM social_logs WHERE social_log_id = ?').get(social.id)!.included, 0);
+    assert.equal(db.prepare('SELECT note FROM social_logs WHERE social_log_id = ?').get(social.id)!.note, 'Note fictive');
     const newer = fixture(); newer.daily_entries!.push({ entry_date: '2026-08-05', weight_kg: 74, updated_at: stamp });
     await importV1(sql, await bundle(newer), crypto, { dryRun: false });
     assert.equal(db.prepare('SELECT count(*) AS n FROM daily_entries').get()!.n, 3);
@@ -104,6 +110,7 @@ test('repeat after reopening preserves V2 edits; a later snapshot may add new da
     try {
       await migrate(adapter(restored), migrations); await restoreSnapshot(adapter(restored), JSON.stringify(saved), migrations);
       assert.equal((await importV1(adapter(restored), raw, crypto, { dryRun: false })).insertedRecords, 0);
+      assert.equal(restored.prepare('SELECT included FROM social_logs WHERE social_log_id = ?').get(social.id)!.included, 0);
       assert.equal(restored.prepare('SELECT count(*) AS n FROM v1_import_archive').get()!.n, db.prepare('SELECT count(*) AS n FROM v1_import_archive').get()!.n);
     } finally { restored.close(); }
   } finally { db.close(); rmSync(folder, { recursive: true }); }

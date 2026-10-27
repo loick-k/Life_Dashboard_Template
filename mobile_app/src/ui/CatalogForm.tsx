@@ -50,10 +50,11 @@ export const CatalogForm = forwardRef<CatalogFormHandle, { database: SQLiteDatab
       const selected = logs.some(log => log.subject_id === item.id && (kind === 'friends' || log.worked === 1));
       return <View key={item.id} style={styles.card}>
         <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: selected, disabled: busy }} disabled={busy} style={styles.button} onPress={() => toggle(item)}>
-          <Text>{selected ? '☑' : '☐'} {item.label}{item.active ? '' : ' · archivé'}</Text>
+          <Text>{selected ? '☑' : '☐'} {item.label}{item.completed_at ? ' · terminé' : item.active ? '' : ' · archivé'}</Text>
         </Pressable>
         {item.category && <Text style={styles.hint}>{item.category}</Text>}
-        <Pressable disabled={busy} style={styles.button} onPress={() => Alert.alert(item.active ? 'Archiver cet élément ?' : 'Réactiver cet élément ?', 'Le journal historique sera conservé.', [{ text: 'Annuler' }, { text: 'Confirmer', onPress: () => run(() => repo.setActive(item, !item.active)) }])}><Text>{item.active ? 'Archiver' : 'Réactiver'}</Text></Pressable>
+        {!item.completed_at && <Pressable disabled={busy} style={styles.button} onPress={() => Alert.alert(item.active ? 'Archiver cet élément ?' : 'Réactiver cet élément ?', 'Le journal historique et les dates de réalisation seront conservés.', [{ text: 'Annuler' }, { text: 'Confirmer', onPress: () => run(() => repo.setActive(item, !item.active)) }])}><Text>{item.active ? 'Archiver' : 'Réactiver'}</Text></Pressable>}
+        {kind === 'goals' && <Pressable accessibilityRole="button" disabled={busy} style={styles.button} onPress={() => Alert.alert(item.completed_at ? 'Rouvrir cet objectif ?' : 'Terminer cet objectif ?', item.completed_at ? 'La date de réalisation sera retirée et cet objectif redeviendra actif. Son journal reste conservé.' : 'Cet objectif sera marqué comme terminé, avec sa date de réalisation. Il ne comptera plus parmi les trois objectifs actifs.', [{ text: 'Annuler', style: 'cancel' }, { text: 'Confirmer', onPress: () => run(() => repo.setCompleted(item, !item.completed_at)) }])}><Text>{item.completed_at ? 'Rouvrir cet objectif' : 'Marquer comme terminé'}</Text></Pressable>}
       </View>;
     })}
     <Pressable style={styles.button} onPress={() => setShowArchived(value => !value)}><Text>{showArchived ? 'Masquer les archives' : 'Afficher les archives'}</Text></Pressable>

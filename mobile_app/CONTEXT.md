@@ -11,6 +11,28 @@ remplacement forcé de la V1 et aucune synchronisation automatique des deux base
 
 ## État vérifié dans le dépôt
 
+### Corrections audit — conservation sociale et objectifs — 27/10/2026
+
+Lot navigation précédent commité b043eda. Migration additive 006_social_selection :
+décocher une rencontre change included à 0, sans DELETE. Recocher réutilise UUID,
+note, contexte, durée (zéro compris) et date de création ; CAS maintenu. Récapitulatif
+et bilans filtrent included=1, sauvegarde conserve aussi les rencontres décochées.
+Anciennes sauvegardes 003–005 acceptées avec included=1 connu ; métadonnées futures
+injectées refusées. Import V1 renseigne included ; rejeu après réouverture et
+restauration ne réactive pas une rencontre décochée en V2.
+
+Archiver un objectif ne modifie plus completed_at. Terminer/Rouvrir sont deux
+actions explicites distinctes ; contraintes de trois actifs et révisions maintenues.
+Dates historiques existantes conservées : on ne peut pas distinguer sûrement une
+ancienne erreur d'archivage d'une réalisation réelle. Les notes déjà détruites par
+l'ancien comportement ne sont pas reconstituables sans une sauvegarde antérieure.
+
+99 tests Node, TypeScript et 10 tests Python locaux réussis. Six nouveaux tests
+incluent cases à cocher réelles, backup/restore exact, migration interrompue/reprise,
+compatibilité 005 et séparation archive/réalisation. Aucun accès aux données réelles,
+Neon, nouvelle dépendance ou build ; preuve Android et parité globale encore ouvertes.
+
+
 ### Corrections audit — navigation et interactions — 27/10/2026
 
 Menu Saisie/Bilan/Todo/Réglages indépendant du chargement quotidien ; éditeurs

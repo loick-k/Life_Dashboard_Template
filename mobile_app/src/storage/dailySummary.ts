@@ -9,7 +9,7 @@ export interface RelatedSummary { sports: SportSession[]; social: SocialSummary[
 export async function readRelatedSummary(db: QueryConnection, entryId: string): Promise<RelatedSummary> {
   const [sports, social, goals] = await Promise.all([
     db.getAllAsync<SportSession>('SELECT * FROM sport_sessions WHERE entry_id = ? AND (sport_type IS NOT NULL OR duration_minutes IS NOT NULL OR distance_km IS NOT NULL) ORDER BY position', entryId),
-    db.getAllAsync<SocialSummary>('SELECT l.social_log_id AS id, f.name, f.category, l.context, l.duration_minutes, l.note FROM social_logs l JOIN friends f ON f.friend_id = l.friend_id WHERE l.entry_id = ? ORDER BY f.name COLLATE NOCASE, l.social_log_id', entryId),
+    db.getAllAsync<SocialSummary>('SELECT l.social_log_id AS id, f.name, f.category, l.context, l.duration_minutes, l.note FROM social_logs l JOIN friends f ON f.friend_id = l.friend_id WHERE l.entry_id = ? AND l.included = 1 ORDER BY f.name COLLATE NOCASE, l.social_log_id', entryId),
     db.getAllAsync<GoalSummary>('SELECT l.goal_log_id AS id, g.title, l.worked, l.note FROM goal_logs l JOIN goals g ON g.goal_id = l.goal_id WHERE l.entry_id = ? ORDER BY g.title COLLATE NOCASE, l.goal_log_id', entryId),
   ]);
   return { sports, social, goals };

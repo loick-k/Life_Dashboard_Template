@@ -75,6 +75,13 @@ function parseSnapshot(text: string, migrations: readonly Migration[]): BackupSn
       if (!row || typeof row !== 'object' || Array.isArray(row) || Object.values(row).some(value =>
         value !== null && typeof value !== 'string' && (typeof value !== 'number' || !Number.isFinite(value)))) throw new Error('Ligne illisible.');
       if (table === 'settings') validateSetting(row);
+      if (table === 'social_logs') {
+        if (snapshot.migrations.length < 6) {
+          if (Object.hasOwn(row, 'included')) throw new Error('Métadonnées sociales futures dans une ancienne sauvegarde.');
+          row.included = 1;
+        }
+        if (row.included !== 0 && row.included !== 1) throw new Error('État de rencontre invalide.');
+      }
       if (table === 'daily_entries') {
         if (snapshot.migrations.length < 5) {
           const defaults = legacyDerivationMetadata(row);

@@ -5,8 +5,8 @@ export interface QueryConnection extends SqlConnection {
   getAllAsync<T>(sql: string, ...params: BindValue[]): Promise<T[]>;
 }
 export type CatalogKind = 'friends' | 'goals';
-export type CatalogItem = { id: string; label: string; active: number; revision: number; category: string | null };
-export type LogItem = { id: string; entry_id: string; subject_id: string; revision: number; worked?: number };
+export type CatalogItem = { id: string; label: string; active: number; revision: number; category: string | null; completed_at: string | null };
+export type LogItem = { id: string; entry_id: string; subject_id: string; revision: number; worked?: number; included?: number };
 export const FRIEND_CATEGORIES = ['Ami', 'Famille', 'Collègue', 'Association', 'Autre'];
 const definitions = {
   friends: { id: 'friend_id', label: 'name', logs: 'social_logs', logId: 'social_log_id' },
@@ -24,7 +24,7 @@ export class Catalogs {
   }
   async list(activeOnly = true): Promise<CatalogItem[]> {
     const def = definitions[this.kind];
-    return this.db.getAllAsync(`SELECT ${def.id} AS id, ${def.label} AS label, active, revision, ${this.kind === 'friends' ? 'category' : 'NULL'} AS category FROM ${this.kind} ${activeOnly ? 'WHERE active = 1' : ''} ORDER BY ${def.label} COLLATE NOCASE, ${def.id}`);
+    return this.db.getAllAsync(`SELECT ${def.id} AS id, ${def.label} AS label, active, revision, ${this.kind === 'friends' ? 'category' : 'NULL'} AS category, ${this.kind === 'goals' ? 'completed_at' : 'NULL'} AS completed_at FROM ${this.kind} ${activeOnly ? 'WHERE active = 1' : ''} ORDER BY ${def.label} COLLATE NOCASE, ${def.id}`);
   }
   async create(label: string, category = 'Ami'): Promise<string> {
     const value = label.trim();
@@ -38,27 +38,40 @@ export class Catalogs {
   }
   async setActive(item: CatalogItem, active: boolean): Promise<void> {
     const def = definitions[this.kind];
-    const goalClause = this.kind === 'goals' ? ', completed_at = ?' : '';
+    if (this.kind === 'goals' && active && item.completed_at) throw new Error('Rouvre explicitement un objectif terminé.');
     const now = new Date().toISOString();
     const params: BindValue[] = [active ? 1 : 0, now];
-    if (this.kind === 'goals') params.push(active ? null : now);
     params.push(item.id, item.revision);
     const capacity = this.kind === 'goals' && active ? ' AND (SELECT count(*) FROM goals WHERE active = 1 AND goal_id <> ?) < 3' : '';
     if (capacity) params.push(item.id);
-    const result = await this.db.runAsync(`UPDATE ${this.kind} SET active = ?, updated_at = ?, revision = revision + 1${goalClause} WHERE ${def.id} = ? AND revision = ?${capacity}`, ...params);
+    const result = await this.db.runAsync(`UPDATE ${this.kind} SET active = ?, updated_at = ?, revision = revision + 1 WHERE ${def.id} = ? AND revision = ?${capacity}`, ...params);
+    if (result.changes !== 1) throw new RevisionConflict();
+  }
+  async setCompleted(item: CatalogItem, completed: boolean): Promise<void> {
+    if (this.kind !== 'goals') throw new Error('Seuls les objectifs peuvent être terminés.');
+    const now = new Date().toISOString();
+    const capacity = completed ? '' : ' AND (SELECT count(*) FROM goals WHERE active = 1 AND goal_id <> ?) < 3';
+    const values: BindValue[] = [completed ? 0 : 1, completed ? item.completed_at ?? now : null, now, item.id, item.revision];
+    if (!completed) values.push(item.id);
+    const result = await this.db.runAsync(`UPDATE goals SET active = ?, completed_at = ?, updated_at = ?, revision = revision + 1 WHERE goal_id = ? AND revision = ?${capacity}`, ...values);
     if (result.changes !== 1) throw new RevisionConflict();
   }
   async logs(entryId: string): Promise<LogItem[]> {
     const def = definitions[this.kind];
-    return this.db.getAllAsync(`SELECT ${def.logId} AS id, entry_id, ${def.id} AS subject_id, revision${this.kind === 'goals' ? ', worked' : ''} FROM ${def.logs} WHERE entry_id = ?`, entryId);
+    return this.db.getAllAsync(`SELECT ${def.logId} AS id, entry_id, ${def.id} AS subject_id, revision${this.kind === 'goals' ? ', worked' : ', included'} FROM ${def.logs} WHERE entry_id = ?${this.kind === 'friends' ? ' AND included = 1' : ''}`, entryId);
   }
   async select(entryId: string, subjectId: string): Promise<LogItem> {
     const def = definitions[this.kind], now = new Date().toISOString();
     await this.db.runAsync(`INSERT INTO ${def.logs} (${def.logId}, entry_id, ${def.id}, created_at, updated_at${this.kind === 'goals' ? ', worked' : ''}) VALUES (?, ?, ?, ?, ?${this.kind === 'goals' ? ', 1' : ''}) ON CONFLICT(entry_id, ${def.id}) DO NOTHING`, this.uuid(), entryId, subjectId, now, now);
-    const row = await this.db.getFirstAsync<LogItem>(`SELECT ${def.logId} AS id, entry_id, ${def.id} AS subject_id, revision${this.kind === 'goals' ? ', worked' : ''} FROM ${def.logs} WHERE entry_id = ? AND ${def.id} = ?`, entryId, subjectId);
+    const row = await this.db.getFirstAsync<LogItem>(`SELECT ${def.logId} AS id, entry_id, ${def.id} AS subject_id, revision${this.kind === 'goals' ? ', worked' : ', included'} FROM ${def.logs} WHERE entry_id = ? AND ${def.id} = ?`, entryId, subjectId);
     if (!row) throw new Error('Journal indisponible');
     if (this.kind === 'goals' && row.worked === 0) {
       const changed = await this.db.getFirstAsync<LogItem>('UPDATE goal_logs SET worked = 1, revision = revision + 1, updated_at = ? WHERE goal_log_id = ? AND revision = ? RETURNING goal_log_id AS id, entry_id, goal_id AS subject_id, revision, worked', now, row.id, row.revision);
+      if (!changed) throw new RevisionConflict();
+      return changed;
+    }
+    if (this.kind === 'friends' && row.included === 0) {
+      const changed = await this.db.getFirstAsync<LogItem>('UPDATE social_logs SET included = 1, revision = revision + 1, updated_at = ? WHERE social_log_id = ? AND revision = ? RETURNING social_log_id AS id, entry_id, friend_id AS subject_id, revision, included', now, row.id, row.revision);
       if (!changed) throw new RevisionConflict();
       return changed;
     }
@@ -69,7 +82,7 @@ export class Catalogs {
     // Unchecking means "not worked", not "destroy this journal and its imported note".
     const result = this.kind === 'goals'
       ? await this.db.runAsync('UPDATE goal_logs SET worked = 0, revision = revision + 1, updated_at = ? WHERE goal_log_id = ? AND revision = ?', new Date().toISOString(), log.id, log.revision)
-      : await this.db.runAsync(`DELETE FROM ${def.logs} WHERE ${def.logId} = ? AND revision = ?`, log.id, log.revision);
+      : await this.db.runAsync('UPDATE social_logs SET included = 0, revision = revision + 1, updated_at = ? WHERE social_log_id = ? AND revision = ?', new Date().toISOString(), log.id, log.revision);
     if (result.changes !== 1) throw new RevisionConflict();
   }
 }

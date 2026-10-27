@@ -21,7 +21,7 @@ données synthétiques, pas de Neon/push, plafond cumulatif disque 5 Go inchang�
 | Menu principal, date commune et retour Android | Éditeurs conservés, date Bilan et historique réel de retour ; tests React avec Back simulé | Retour physique Android |
 | Bilan actualisé après saisie | Relecture compteur et séries au retour, même date ; test +1 h et poids modifié | Android |
 | Barrière sur chargement sportif lent/en échec | Attend les trois initialisations et toutes les files ; échec réessayable ; tests React | Android |
-| Notes/durées sociales après décochage/recochage | Perte reproduite dans l'audit approfondi : DELETE du journal | À corriger sans perte, migration/sauvegarde/import/tests |
+| Notes/durées sociales après décochage/recochage | Migration 006, included au lieu de DELETE ; UUID/détails conservés, compteurs filtrés, backup/import/rejeu/React testés | Android ; anciennes pertes nécessitent sauvegarde antérieure |
 | Formats heures/minutes et calendrier français | À corriger | Contrôles tactiles et tests |
 | Sport moins encombrant | Cartes repliables, champs invalides révélés lors du flush | Vérification téléphone |
 | Enregistré distinct d'étape validée ; absence distincte de zéro | À corriger | Progression, temps pour moi, messages |
@@ -34,7 +34,7 @@ données synthétiques, pas de Neon/push, plafond cumulatif disque 5 Go inchang�
 | Rapport PDF travail | À porter | Génération locale, contenu et rendu vérifiés |
 | Social : récurrence et historique détaillé | À porter | Domaine, stockage, écran |
 | Personnes/objectifs gérés hors journal | À porter | Ajouter sans créer un faux journal |
-| Objectif archivé distinct de terminé | À corriger | Actions séparées, date de fin préservée |
+| Objectif archivé distinct de terminé | Actions Archiver/Terminer/Rouvrir séparées ; dates préservées lors d'archive ; tests CAS/capacité/React | Android ; dates historiques ambiguës non réécrites |
 | Todoist optionnel | À porter | Secrets appareil, interface et erreurs réseau |
 | Analyse nutritionnelle explicite optionnelle | À porter | Secrets, calcul asynchrone, résultat unique |
 | Clavier, encoches, retour en haut, grandes polices/accessibilité | À vérifier/corriger | Écrans et mesures téléphone |
@@ -81,3 +81,14 @@ menu utilisable malgré erreur, conservation d'horaires complets/incomplets entr
 relus au retour. Les sauvegardes n'annoncent pas inclure des brouillons non confirmés.
 Pas de preuve native : biométrie, rendu/clavier/insets et arrêt forcé restent ouverts.
 La matrice de parité et tous les lots non réalisés ci-dessus restent requis.
+
+## Lot social sans destruction et réalisation explicite
+
+Migration 006 additive et atomique avec journal. Les rencontres décochées restent
+dans la sauvegarde mais hors récapitulatif et agrégats. Test de perte d'une note et
+durée importées remplacé par un aller-retour case à cocher qui conserve tout.
+Anciennes sauvegardes 003–005 converties explicitement ; test d'injection future
+refusée sans changer la destination. Rejeu V1 après réouverture et restauration
+préserve la désélection et la note V2. Objectif archivé ≠ terminé, date de fin
+inchangée sauf action explicite ; réouverture soumise à la limite de trois actifs.
+99 tests Node, TypeScript et 10 tests Python réussis. Validation native encore requise.
