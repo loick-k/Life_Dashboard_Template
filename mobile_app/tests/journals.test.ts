@@ -204,3 +204,24 @@ test('main navigation preserves unfinished social detail and historical date, th
     assert.equal(native.prepare('SELECT entry_date FROM daily_entries WHERE entry_id=?').get((await new Journals(sql, 'friends').read(social.id)).entry_id)!.entry_date, '2026-10-26');
   } finally { if (tree) await h.act(async () => tree.unmount()); native.close(); }
 });
+
+test('navigation reveals a retained invalid detail when its person was archived from another screen', async () => {
+  const { native, sql, day, people, person, social } = await fixture(); const h = harness(sql); let tree: any;
+  try {
+    const { CatalogForm } = h.load('ui/CatalogForm.tsx'); const ref = h.React.createRef();
+    const props = { database: sql, entryId: day.entry_id, kind: 'friends', ref };
+    await h.act(async () => { tree = h.create(h.React.createElement(CatalogForm, { ...props, active: true })); });
+    await press(h, tree, 'Afficher les détails de Personne fictive');
+    await h.act(async () => input(tree, 'Personne fictive · Minutes').props.onChangeText('60'));
+    await h.act(async () => tree.update(h.React.createElement(CatalogForm, { ...props, active: false })));
+    await people.setActive((await people.list()).find(item => item.id === person)!, false);
+    await h.act(async () => tree.update(h.React.createElement(CatalogForm, { ...props, active: true })));
+    assert.throws(() => input(tree, 'Personne fictive · Minutes'));
+    await h.act(async () => { await assert.rejects(ref.current.flush()); });
+    assert.equal(input(tree, 'Personne fictive · Minutes').props.value, '60');
+    assert.match(label(tree.root), /Brouillon incomplet, non enregistré/);
+    await h.act(async () => input(tree, 'Personne fictive · Minutes').props.onChangeText('30'));
+    await ref.current.flush(); assert.equal((await new Journals(sql, 'friends').read(social.id)).duration_minutes, 30);
+    assert.equal(native.prepare('SELECT active FROM friends WHERE friend_id=?').get(person)!.active, 0);
+  } finally { if (tree) await h.act(async () => tree.unmount()); native.close(); }
+});

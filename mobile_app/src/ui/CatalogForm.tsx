@@ -20,7 +20,10 @@ export const CatalogForm = forwardRef<CatalogFormHandle, { database: SQLiteDatab
   const ready = useRef(false), failed = useRef(false);
   const pending = useRef<Promise<void> | null>(null);
   const editors = useRef(new Map<string, JournalEditorHandle>());
-  const flushJournals = () => settleWrites([...editors.current.values()].map(editor => editor.flush()));
+  const flushJournals = async () => {
+    try { await settleWrites([...editors.current.values()].map(editor => editor.flush())); }
+    catch (issue) { setShowArchived(true); throw issue; } // A retained draft must never block navigation invisibly under an archive.
+  };
   const reload = async () => {
     const [nextItems, nextLogs] = await Promise.all([repo.list(false), entryId ? repo.logs(entryId, true) : Promise.resolve([])]);
     setItems(nextItems); setLogs(nextLogs); ready.current = true;

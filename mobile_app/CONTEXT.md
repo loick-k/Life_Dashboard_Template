@@ -11,6 +11,22 @@ remplacement forcé de la V1 et aucune synchronisation automatique des deux base
 
 ## État vérifié dans le dépôt
 
+### Ergonomie — brouillon conservé sous une archive — 27/10/2026
+
+Historique commité a2a3dd7. Si une personne/objectif est archivé depuis un autre
+écran alors qu'un détail quotidien invalide est conservé, Continuer révèle
+automatiquement les archives et le détail à corriger. Le journal reste monté et
+aucune réactivation n'est imposée. Le statut d'un détail invalide annonce désormais
+Brouillon incomplet, non enregistré, plutôt qu'un message enregistré ambigu.
+Un test React/SQLite reproduit l'archivage entre deux activations du formulaire.
+
+161 tests Node, TypeScript et 16 tests Python de référence réussis. Budget disque
+comptabilisé 722 957 074 octets / plafond 5 Go, 3 277 042 926 octets utilisables
+avant marge réservée ; mobile_app 8 467 581 063 octets, C: libre 12 599 668 736.
+Aucun téléchargement, build, donnée réelle, changement V1 ou push. Les prochaines
+exigences restent Todoist, analyse nutritionnelle explicite et ergonomie/preuves
+natives Android, puis validation de l'APK autonome sous budget ; objectif actif.
+
 ### Parité — récurrence et historiques détaillés — 27/10/2026
 
 Journaux commités dcba459. Depuis les répertoires et les catégories Social/Objectifs

@@ -105,7 +105,7 @@ export const JournalEditor = forwardRef<JournalEditorHandle, { database: SqlConn
       <Text>Note</Text><TextInput accessibilityLabel={`${label} · Note`} editable={!locked()} maxLength={10000} multiline value={buffers.current.note ?? row.note ?? ''} onChangeText={value => editText('note', value)} style={input} />
       </>}
       {invalid.current.size > 0 && <Text accessibilityRole="alert" style={{ color: '#b42318' }}>Contexte ou durée incomplets : brouillon conservé, dernières valeurs valides utilisées.</Text>}
-      <Text accessibilityLiveRegion="polite">{draft.current?.status === 'saving' ? 'Enregistrement des détails…' : draft.current?.status === 'failed' ? 'Détails non enregistrés' : 'Détails enregistrés localement'}</Text>
+      <Text accessibilityLiveRegion="polite">{invalid.current.size ? 'Brouillon incomplet, non enregistré.' : draft.current?.status === 'saving' ? 'Enregistrement des détails…' : draft.current?.status === 'failed' ? 'Détails non enregistrés' : 'Détails enregistrés localement'}</Text>
       {draft.current?.status === 'failed' && <>
         <Pressable accessibilityRole="button" disabled={locked()} style={control} onPress={() => run(async () => { await draft.current!.retry(); onSaved?.(draft.current!.snapshot); setError(''); })}><Text>Réessayer les détails de {label}</Text></Pressable>
         <Pressable accessibilityRole="button" disabled={!!operation.current || !!current} style={control} onPress={compare}><Text>Comparer les détails de {label}</Text></Pressable>
