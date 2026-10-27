@@ -11,6 +11,32 @@ remplacement forcé de la V1 et aucune synchronisation automatique des deux base
 
 ## État vérifié dans le dépôt
 
+### Todoist — client et commandes durables, pas encore branchés à l'UI — 27/10/2026
+
+Archive précédente commitée 2f79a2b. Client V1 REST/Sync sans SDK ajouté : HTTPS
+fixe, Bearer uniquement en en-tête, erreurs présentables sans réponse brute, timeout,
+pagination et réponses bornées. Projets/tâches/terminées parsés par liste de champs.
+Mutations Sync avec UUID/temp_id persistés AVANT envoi dans settings sous clé
+privée integration.todoist.pending.v1, exclue des sauvegardes portables. Pas de
+migration. Coupure/réouverture => réessai EXPLICITE du même UUID ; aucun rejeu
+automatique. Refus de commande définitif non réessayé, accusé confirmé finalisable
+localement après erreur de nettoyage. Abandon du suivi n'annule pas l'action distante.
+
+Jeton seulement dans SecureStore, service dédié d'intégrations ; vérification du
+compte par GET /user, seul ID conservé avec le jeton. Une commande ne traverse pas
+les comptes ; rotation de jeton du même compte possible. Déconnexion refuse une
+commande non résolue. Aucun champ de santé lu pour ces appels. URL externe fixe
+sans secret pour ouvrir l'interface Todoist ou ses réglages développeur.
+
+168 tests Node/TypeScript réussis. Sept tests nouveaux : faux serveur uniquement,
+perte d'accusé/reprise fichier SQLite, unicité, concurrence, mauvais compte, refus,
+cleanup local, backup/restore préservant/excluant les clés privées et données de
+santé intactes. Aucun jeton réel, requête authentifiée réelle, installation ou build.
+Documentation officielle vérifiée : https://developer.todoist.com/api/v1/ (UUID
+Sync, paramètres, pagination et erreurs). Skill Streamlit non découvrable : V1
+comparée depuis ses sources. L'interface/assistant/Bilan restent À BRANCHER ;
+aucune intégration utilisable complète annoncée à ce stade, objectif global actif.
+
 ### Ergonomie — brouillon conservé sous une archive — 27/10/2026
 
 Historique commité a2a3dd7. Si une personne/objectif est archivé depuis un autre

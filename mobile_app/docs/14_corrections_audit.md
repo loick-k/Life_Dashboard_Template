@@ -42,7 +42,7 @@ données synthétiques, pas de Neon/push, plafond cumulatif disque 5 Go inchang�
 | Social : récurrence et historique détaillé | Statistiques UUID, jours/intervalles V1, périodes semaine/mois, journaux paginés/filtrés et notes ; six tests React/SQLite et parité Python | Rendu et performances Android |
 | Personnes/objectifs gérés hors journal | Répertoires autonomes, ajout sans journal, notes modifiables et historiques, archives/terminés séparés ; retour/date/brouillons préservés | Android |
 | Objectif archivé distinct de terminé | Actions Archiver/Terminer/Rouvrir séparées ; dates préservées lors d'archive ; tests CAS/capacité/React | Android ; dates historiques ambiguës non réécrites |
-| Todoist optionnel | À porter | Secrets appareil, interface et erreurs réseau |
+| Todoist optionnel | Client REST/Sync, SecureStore et commande durable UUID/reprise testés sur faux serveur, sans accès réel | Brancher écrans/assistant/Bilan, tests d'interaction et Android |
 | Analyse nutritionnelle explicite optionnelle | À porter | Secrets, calcul asynchrone, résultat unique |
 | Clavier, encoches, retour en haut, grandes polices/accessibilité | À vérifier/corriger | Écrans et mesures téléphone |
 | Couverture d'interactions | Tests navigation/sport/social/ergonomie/évaluation/historique ; composants et SQLite réels, ports natifs simulés | Étendre aux parcours restants et essais Android |
