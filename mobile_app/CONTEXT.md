@@ -11,6 +11,36 @@ remplacement forcé de la V1 et aucune synchronisation automatique des deux base
 
 ## État vérifié dans le dépôt
 
+### Audit approfondi — brouillons quotidiens durables et reprise explicite — 27/10/2026
+
+Navigation/horloge commitée 555dab6. Les champs simples quotidiens (nombres,
+horaires, textes, heures/minutes, modes et effacements) sont journalisés AVANT
+écriture métier dans des clés privées de la SQLite chiffrée. Aucun schéma ou
+format de sauvegarde modifié. FIFO/CAS par champ et token de nettoyage : un ancien
+accusé ne supprime jamais la saisie suivante ; autre éditeur/futur format refusés.
+
+Réouverture : buffers incomplets retrouvés exactement, valeur valide non confirmée
+comparée explicitement avant reprise, jamais de rejeu automatique. Valeur déjà
+commise reconnue, zéro/absence/effacement distincts. Accès aux rubriques incomplètes
+depuis l'accueil, même si plusieurs restent à corriger. Barrières attendent tous
+les travaux ; restauration commencée pendant lecture lente refuse ensuite le
+brouillon retrouvé. Échec de journal => pas de fausse confirmation métier, réessai
+sans abandon mémoire. Choix du sommeil calculé attend l'ancien buffer manuel.
+
+186 tests Node, TypeScript et 16 tests Python réussis. Dix nouveaux tests fichier
+SQLite/React : reprise, concurrence, nettoyage tardif, coupure simulée avant SQL,
+pas de rejeu, comparaisons, zéro/null/Unicode, absence de journal dans les exports
+portables et maintien après restauration, corruption préservée, frappes rapides,
+réessai, plusieurs rubriques, barrière pendant chargement et nettoyage échoué après
+choix SQL confirmés (reprise locale sans rejouer l'écriture). Pas de preuve d'arrêt
+forcé Android : toujours requise. Les champs sport, journaux sociaux/objectifs,
+ajouts de répertoire et réglages n'utilisent pas encore ce journal durable : à
+étendre dans les prochains lots, sans annoncer la conservation de TOUT brouillon.
+Budget mesuré : mobile_app 8 467 677 925 octets ; croissance cumulée 723 053 936
+sur 5 Go, 3 276 946 064 utilisables avant marge réservée, C: libre 12 556 763 136.
+Todoist UI préexistante laissée hors lot ; intégrations, parité visuelle/ergonomie
+native et APK autonome restent ouverts. V1 inchangée, aucun accès réel/build/push.
+
 ### Audit approfondi — sortie récupérable et horloge Paris vivante — 27/10/2026
 
 Conflit quotidien commité 5dacd47. Un répertoire autonome en échec de lecture

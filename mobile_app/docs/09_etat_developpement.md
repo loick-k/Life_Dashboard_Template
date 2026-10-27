@@ -39,14 +39,15 @@ contrôle de disponibilité de son déploiement distant n'a été effectué dans
 
 ## Vérifié à cette clôture
 
-- 74 tests Node réussis, dont SQLite réel sur données synthétiques et réouverture,
+- 186 tests Node réussis, dont SQLite réel sur données synthétiques et réouverture,
   AES-GCM réel via Node, fichier altéré/mauvaise clé et restauration interrompue.
 - TypeScript sans erreur ; `git diff --check` sans anomalie.
-- 10 tests Python locaux réussis : migrations/schéma et parité travail V1/V2.
+- 16 tests Python locaux réussis : migrations/schéma et parité travail, scores,
+  historiques et récurrences V1/V2.
 - Aucun nouveau téléchargement/dépendance. Configuration Gradle release hors ligne
   et bundle Hermes de production vérifiés, pas de compilation applicative release.
-- Dernier relevé : mobile_app 8 444 672 051 octets. Budget conservateur comptabilisé
-  700 048 062 octets sur 5 Go (réserve pour baisse d'anciens caches incluse), marge
+- Dernier relevé : mobile_app 8 467 677 925 octets. Budget conservateur comptabilisé
+  723 053 936 octets sur 5 Go (réserve pour baisse d'anciens caches incluse), marge
   d'arrêt 1 Go. Aucun gain de cache ne renouvelle ce budget ; registre local monotone.
   Incident Expo, restauration de l'APK et garde-fou de prébuild détaillés en doc 13.
 
@@ -64,9 +65,14 @@ contrôle de disponibilité de son déploiement distant n'a été effectué dans
 4. Valider l'import V1 sur Android puis préparer avec l'utilisateur l'import réel.
    Conversion unités/relations, conflits, idempotence, rapport et archives testés
    localement sur sources synthétiques. Import personnel après accord explicite.
-5. Compléter la parité : calculs sommeil, mesures précédentes, granularités des
-   courbes, scores/évaluation hebdomadaire, récurrences et détail des journaux,
-   critères d'objectifs, rapport PDF, finitions des contrôles tactiles.
+5. Compléter la parité et l'ergonomie : calendrier visuel du travail, diagnostic
+   des services externes et finitions tactiles. Sommeil, mesures précédentes,
+   périodes, scores/évaluation, récurrences, journaux et rapport PDF sont désormais
+   connectés et testés localement (docs/06 et 14), mais pas validés sur Android.
+   Journal durable des champs quotidiens simples connecté ; étendre aux sports,
+   journaux, ajouts de répertoire et réglages avant de promettre tout brouillon
+   retrouvé après arrêt forcé. Les trois défauts audit (comparaison, sortie en
+   erreur, date Paris) ont des corrections/tests dédiés, preuve native restant due.
 6. Intégrations facultatives Todoist et analyse nutritionnelle, saisie/protection/
    suppression des secrets et erreurs réseau non bloquantes.
 7. Établir le pic disque puis compiler l'APK release autonome avec la signature

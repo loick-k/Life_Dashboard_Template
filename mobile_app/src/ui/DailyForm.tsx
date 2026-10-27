@@ -30,6 +30,7 @@ import { FrenchCalendar } from './FrenchCalendar';
 import { palette } from './palette';
 import type { CatalogKind } from '../storage/catalogs';
 import { useParisToday } from './useParisToday';
+import { DailyBuffers, dailyBufferValue, type RawDailyBuffer } from '../storage/dailyBuffers';
 
 type DailyReview = { latest: DailyEntry; pending: DailyPatch; choices: Record<string, 'draft' | 'database'> };
 
@@ -47,13 +48,24 @@ export const DailyForm = forwardRef<EditorHandle, { database: SQLiteDatabase; in
   const setDraft = (value: DailyDraft | undefined) => { currentDraft.current = value; renderDraft(value); };
   const [raw, setRaw] = useState<Record<string, string>>({});
   const durationBuffers = useRef<Record<string, string>>({});
-  const [invalid, setInvalid] = useState<Set<string>>(new Set());
+  const [invalid, renderInvalid] = useState<Set<string>>(new Set());
+  const currentInvalid = useRef<Set<string>>(new Set());
+  const setInvalid = (update: Set<string> | ((previous: Set<string>) => Set<string>)) => {
+    const value = typeof update === 'function' ? update(currentInvalid.current) : update;
+    currentInvalid.current = value; renderInvalid(value);
+  };
   const [error, setError] = useState('');
   const [loadAttempt, setLoadAttempt] = useState(0);
   const [review, renderReview] = useState<DailyReview>();
   const currentReview = useRef<DailyReview | undefined>(undefined);
   const recovery = useRef<Promise<void> | null>(null);
   const setReview = (value: DailyReview | undefined) => { currentReview.current = value; renderReview(value); };
+  const bufferStore = useRef<DailyBuffers | undefined>(undefined);
+  const bufferJobs = useRef(new Set<Promise<void>>());
+  const bufferRequests = useRef(new Map<DailyField, { raw: RawDailyBuffer; clear: boolean; discardToken?: string }>());
+  const bufferFailures = useRef(new Set<DailyField>());
+  const recoveredPatch = useRef<DailyPatch>({});
+  const [restoredBuffers, setRestoredBuffers] = useState(false);
   const loading = useRef<Promise<void>>(Promise.resolve());
   const history = useRef<number[]>([]);
   const scroll = useRef<ScrollView>(null);
@@ -71,15 +83,30 @@ export const DailyForm = forwardRef<EditorHandle, { database: SQLiteDatabase; in
     durationBuffers.current = {};
     setChosenDate(''); setShowCalendar(false);
     setPositionIssue(false);
+    bufferFailures.current.clear(); bufferRequests.current.clear(); recoveredPatch.current = {}; setRestoredBuffers(false);
     const repo = new DailyEntries(database, Crypto.randomUUID);
+    const journal = new DailyBuffers(database, date, Crypto.randomUUID); bufferStore.current = journal;
     loading.current = (async () => {
-      const results = await Promise.allSettled([repo.getOrCreate(date), new CheckinPositions(database).read(date), new Preferences(database).read('close_relations_label').catch(() => null)] as const);
-      if (results[0].status !== 'fulfilled' || results[1].status !== 'fulfilled' || results[2].status !== 'fulfilled') {
+      const results = await Promise.allSettled([repo.getOrCreate(date), new CheckinPositions(database).read(date), new Preferences(database).read('close_relations_label').catch(() => null), journal.read()] as const);
+      if (results.some(result => result.status !== 'fulfilled')) {
         if (active) setError('Impossible de charger cette journée.');
         return;
       }
+      if (results[0].status !== 'fulfilled' || results[1].status !== 'fulfilled' || results[2].status !== 'fulfilled' || results[3].status !== 'fulfilled') return;
       const row = results[0].value, cursor = results[1].value, label = results[2].value;
       if (active) {
+        const nextRaw: Record<string, string> = {}, incomplete = new Set<string>();
+        for (const [field, record] of results[3].value) {
+          const value = dailyBufferValue(field, record);
+          if ('hours' in record.raw) {
+            for (const part of ['hours', 'minutes'] as const) nextRaw[`${field}.${part}`] = record.raw[part];
+          } else nextRaw[field] = record.raw.value;
+          if (value === undefined) incomplete.add(field);
+          else if (value !== row[field]) recoveredPatch.current[field] = value;
+        }
+        durationBuffers.current = Object.fromEntries(Object.entries(nextRaw).filter(([key]) => key.endsWith('.hours') || key.endsWith('.minutes')));
+        setRaw(nextRaw); setInvalid(incomplete);
+        setRestoredBuffers(incomplete.size > 0 || Object.keys(recoveredPatch.current).length > 0);
         setCloseLabel(label ? String(label.value) : 'Écoute des proches · libellé indisponible');
         if (!label) setError('Le libellé personnalisé est illisible. Les mesures restent accessibles ; vérifie les Réglages.');
         position.current = cursor; setStep(sections.findIndex(item => item.id === cursor.step)); setDraft(new DailyDraft(repo, row));
@@ -99,23 +126,24 @@ export const DailyForm = forwardRef<EditorHandle, { database: SQLiteDatabase; in
   const settle = async () => {
     if (navigating.current) throw new Error('Navigation en cours');
     if (recovery.current) await recovery.current;
+    await settleBuffers();
     await settleWrites([loading.current, currentDraft.current?.flush() ?? Promise.resolve(), sports.current?.settle() ?? Promise.resolve(), catalog.current?.settle() ?? Promise.resolve()]);
   };
   useImperativeHandle(ref, () => ({
     settle,
-    hasUnconfirmed: () => invalid.size > 0 || !!recovery.current || !!currentReview.current || (!!currentDraft.current && currentDraft.current.status !== 'saved') || !!sports.current?.hasUnconfirmed() || !!catalog.current?.hasUnconfirmed(),
+    hasUnconfirmed: () => currentInvalid.current.size > 0 || bufferJobs.current.size > 0 || bufferFailures.current.size > 0 || Object.keys(recoveredPatch.current).length > 0 || !!recovery.current || !!currentReview.current || (!!currentDraft.current && currentDraft.current.status !== 'saved') || !!sports.current?.hasUnconfirmed() || !!catalog.current?.hasUnconfirmed(),
     beforeReplace: async () => {
       await settle();
-      if (invalid.size || currentReview.current) throw new Error('Brouillon quotidien à terminer');
+      if (currentInvalid.current.size || currentReview.current || Object.keys(recoveredPatch.current).length) throw new Error('Brouillon quotidien à terminer');
       await sports.current?.flush(); await catalog.current?.flush();
     },
   }));
-  const navigate = async (action: () => void | Promise<void>) => {
+  const navigate = async (action: () => void | Promise<void>, keepDailyBuffers = false) => {
     if (!draft || navigating.current) return;
-    if (recovery.current || currentReview.current) { setError('Termine ou ferme la comparaison avant de poursuivre. Ton brouillon est conservé.'); return; }
-    if (invalid.size) { setError('Termine la valeur en cours ou utilise Effacer pour une suppression volontaire.'); return; }
+    if (recovery.current || currentReview.current || Object.keys(recoveredPatch.current).length) { setError('Termine la comparaison du brouillon avant de poursuivre. Tes saisies sont conservées.'); return; }
+    if (currentInvalid.current.size && !keepDailyBuffers) { setError('Termine la valeur en cours ou utilise Effacer pour une suppression volontaire.'); return; }
     navigating.current = true; setBusy(true);
-    try { await draft.flush(); if (sports.current) await sports.current.flush(); if (catalog.current) await catalog.current.flush(); setError(''); await action(); } catch (issue) { setError(issue instanceof CheckinPositionConflict ? issue.message : 'Saisie invalide, ajout non terminé ou sauvegarde non confirmée. Termine la saisie avant de continuer.'); }
+    try { await settleBuffers(); await draft.flush(); if (sports.current) await sports.current.flush(); if (catalog.current) await catalog.current.flush(); setError(''); await action(); } catch (issue) { setError(issue instanceof CheckinPositionConflict ? issue.message : 'Saisie invalide, ajout non terminé ou sauvegarde non confirmée. Termine la saisie avant de continuer.'); }
     finally { navigating.current = false; setBusy(false); refresh(); }
   };
   const moveStep = async (target: number, remember = true) => {
@@ -162,12 +190,61 @@ export const DailyForm = forwardRef<EditorHandle, { database: SQLiteDatabase; in
     });
     return () => subscription.remove();
   });
-  const editsLocked = () => navigating.current || !active || !!recovery.current || !!currentReview.current;
-  const save = (key: DailyField, value: string | number | null) => {
+  const editsLocked = () => navigating.current || !active || !!recovery.current || !!currentReview.current || Object.keys(recoveredPatch.current).length > 0;
+  const settleBuffers = async () => {
+    await settleWrites([...bufferJobs.current]);
+    if (bufferFailures.current.size) throw new Error('Conservation du brouillon non confirmée');
+  };
+  const persistBuffer = (key: DailyField, buffer: RawDailyBuffer, clear = false) => {
+    const target = currentDraft.current, store = bufferStore.current;
+    if (!target || !store) return;
+    const request = { raw: buffer, clear }; bufferRequests.current.set(key, request);
+    const job = Promise.resolve().then(async () => {
+      const record = await store.stage(key, buffer, clear);
+      if (bufferRequests.current.get(key) === request) bufferFailures.current.delete(key);
+      const value = dailyBufferValue(key, record);
+      if (value === undefined) return;
+      try { target.edit({ [key]: value }); refresh(); await target.flush(); }
+      catch { setError('Valeur non confirmée. Le brouillon est conservé sur cet appareil ; compare les valeurs avant de réessayer.'); refresh(); return; }
+      await store.confirm(key, record.token);
+    }).catch(() => {
+      if (bufferRequests.current.get(key) !== request) return;
+      bufferFailures.current.add(key);
+      setError('Conservation du brouillon non confirmée : garde cet écran ouvert et réessaie. Les dernières valeurs enregistrées sont conservées.');
+    }).finally(() => { bufferJobs.current.delete(job); refresh(); });
+    bufferJobs.current.add(job); refresh();
+  };
+  const discardBuffer = (key: DailyField, request: { raw: RawDailyBuffer; clear: boolean; discardToken: string }) => {
+    const store = bufferStore.current; if (!store) return;
+    bufferRequests.current.set(key, request);
+    const job = store.confirm(key, request.discardToken).then(() => { if (bufferRequests.current.get(key) === request) bufferFailures.current.delete(key); }).catch(() => {
+      if (bufferRequests.current.get(key) !== request) return;
+      bufferFailures.current.add(key); setError('Fin de conservation du brouillon non confirmée. Réessaie avant de quitter.');
+    }).finally(() => { bufferJobs.current.delete(job); refresh(); });
+    bufferJobs.current.add(job); refresh();
+  };
+  const discardLatestBuffer = (key: DailyField) => {
+    const store = bufferStore.current; if (!store) return;
+    const earlier = [...bufferJobs.current], expected = bufferRequests.current.get(key);
+    const job = Promise.resolve().then(async () => {
+      await settleWrites(earlier);
+      if (bufferRequests.current.get(key) !== expected) return; // A newer manual edit wins.
+      const record = store.records().get(key);
+      if (record) {
+        try { await store.confirm(key, record.token); }
+        catch {
+          bufferRequests.current.set(key, { raw: record.raw, clear: record.clear, discardToken: record.token });
+          bufferFailures.current.add(key); setError('Fin de conservation du brouillon non confirmée. Réessaie avant de quitter.'); return;
+        }
+      }
+      bufferFailures.current.delete(key);
+    }).finally(() => { bufferJobs.current.delete(job); refresh(); });
+    bufferJobs.current.add(job); refresh();
+  };
+  const save = (key: DailyField, value: string | number | null, buffer?: RawDailyBuffer) => {
     if (!draft || editsLocked()) return;
-    try { draft.edit({ [key]: value }); } catch { setError('Saisie invalide : les données enregistrées sont conservées.'); return; }
-    refresh();
-    void draft.flush().then(refresh, () => { setError('Échec de sauvegarde. Le brouillon reste en mémoire sur cette page.'); refresh(); });
+    const rawValue = buffer ?? (key.endsWith('_minutes') ? { hours: value === null ? '' : String(Math.floor(Number(value) / 60)), minutes: value === null ? '' : String(Number(value) % 60) } : { value: value === null ? '' : String(value) });
+    persistBuffer(key, rawValue, value === null);
   };
   const edit = (item: Field, value: string) => {
     if (editsLocked()) return;
@@ -175,7 +252,7 @@ export const DailyForm = forwardRef<EditorHandle, { database: SQLiteDatabase; in
     const parsed = parseInput(value, item.kind);
     const valid = parsed !== undefined && dailyRules[item.key](parsed);
     setInvalid(previous => { const next = new Set(previous); if (valid) next.delete(item.key); else next.add(item.key); return next; });
-    if (valid) save(item.key, parsed!);
+    if (valid) save(item.key, parsed!, { value }); else persistBuffer(item.key, { value });
   };
   const fieldLabel = (item: Field) => item.key === 'close_relations_listening_score' ? `${closeLabel} (1 à 10)` : item.label;
   const editDuration = (item: Field, part: 'hours' | 'minutes', text: string) => {
@@ -187,7 +264,7 @@ export const DailyForm = forwardRef<EditorHandle, { database: SQLiteDatabase; in
     setRaw(previous => ({ ...previous, ...durationBuffers.current }));
     const value = durationFromParts(hours, minutes), valid = value !== undefined && dailyRules[item.key](value);
     setInvalid(previous => { const next = new Set(previous); if (valid) next.delete(item.key); else next.add(item.key); return next; });
-    if (valid) save(item.key, value!);
+    if (valid) save(item.key, value!, { hours, minutes }); else persistBuffer(item.key, { hours, minutes });
   };
   const reuseBodyMeasure = (field: BodyMeasure, measure: PreviousMeasure) => void navigate(async () => {
     const confirmed = await new Promise<boolean>(resolve => Alert.alert('Réutiliser cette mesure ?', `${measure.value} · mesuré le ${measure.date.split('-').reverse().join('/')}\nCette valeur sera enregistrée pour le ${date.split('-').reverse().join('/')}. Les autres mesures seront conservées.`, [
@@ -199,6 +276,7 @@ export const DailyForm = forwardRef<EditorHandle, { database: SQLiteDatabase; in
   });
   const chooseSleepMode = (mode: 'manual' | 'calculated') => {
     if (editsLocked()) return;
+    discardLatestBuffer('sleep_hours');
     setRaw(previous => { const next = { ...previous }; delete next.sleep_hours; return next; });
     setInvalid(previous => { const next = new Set(previous); next.delete('sleep_hours'); return next; });
     save('sleep_duration_mode', mode);
@@ -231,10 +309,11 @@ export const DailyForm = forwardRef<EditorHandle, { database: SQLiteDatabase; in
     return recovery.current;
   };
   const openReview = () => {
-    if (!draft || draft.status !== 'failed') return Promise.resolve();
+    if (!draft || draft.status !== 'failed' && !Object.keys(recoveredPatch.current).length) return Promise.resolve();
     return recover(async () => {
+      await settleBuffers();
       const latest = await new DailyEntries(database, Crypto.randomUUID).read(draft.snapshot.entry_id);
-      const pending = draft.pendingPatch;
+      const pending = { ...recoveredPatch.current, ...draft.pendingPatch };
       setReview({ latest, pending, choices: Object.fromEntries(Object.keys(pending).filter(key => pending[key as DailyField] === latest[key]).map(key => [key, 'database'])) });
       setError('');
     }, 'Relecture impossible. Ton brouillon reste conservé.');
@@ -246,13 +325,27 @@ export const DailyForm = forwardRef<EditorHandle, { database: SQLiteDatabase; in
       const resolved = await resolveDailyDraft(new DailyEntries(database, Crypto.randomUUID), reviewed.latest, reviewed.pending, Object.keys(reviewed.choices).filter(key => reviewed.choices[key] === 'draft'));
       setDraft(resolved);
       const replaced = Object.keys(reviewed.choices).filter(key => reviewed.choices[key] === 'database');
+      recoveredPatch.current = {};
       for (const key of replaced) { delete durationBuffers.current[`${key}.hours`]; delete durationBuffers.current[`${key}.minutes`]; }
       setRaw(previous => { const next = { ...previous }; for (const key of replaced) { delete next[key]; delete next[`${key}.hours`]; delete next[`${key}.minutes`]; } return next; });
       setInvalid(previous => { const next = new Set(previous); replaced.forEach(key => next.delete(key)); return next; });
       setReview(undefined); setError('Choix enregistrés. Les autres champs sont conservés.');
+      // SQL already confirmed: cleanup failure must not retain an obsolete
+      // comparison or display a discarded raw value as if it had been saved.
+      for (const [field, record] of bufferStore.current?.records() ?? []) {
+        const value = dailyBufferValue(field, record);
+        if (replaced.includes(field) || value !== undefined && value === resolved.snapshot[field]) {
+          try { await bufferStore.current!.confirm(field, record.token); }
+          catch {
+            bufferRequests.current.set(field, { raw: record.raw, clear: record.clear, discardToken: record.token });
+            bufferFailures.current.add(field);
+            setError('Choix enregistrés, mais fin de conservation du brouillon non confirmée. Réessaie avant de quitter.');
+          }
+        }
+      }
     }, 'La journée a encore changé ou l’écriture a échoué. Le brouillon initial reste conservé ; recharge la comparaison.');
   };
-  const fieldsDisabled = busy || !!review;
+  const fieldsDisabled = busy || !!review || Object.keys(recoveredPatch.current).length > 0;
   return <ScrollView ref={scroll} contentContainerStyle={styles.page} keyboardShouldPersistTaps="handled">
     <Text style={styles.notice}>Essai technique · données fictives uniquement</Text>
     <View style={styles.row}>{[['Aujourd’hui', 0], ['Hier', -1]].map(([label, offset]) => <Pressable accessibilityRole="button" disabled={busy || !draft} key={label} style={styles.secondary} onPress={() => void navigate(() => changeDate(shiftDate(parisDate(), Number(offset))))}><Text>{label}</Text></Pressable>)}</View>
@@ -279,6 +372,10 @@ export const DailyForm = forwardRef<EditorHandle, { database: SQLiteDatabase; in
     <Text style={styles.heading}>{home ? 'Ta saisie du jour' : section.title}</Text>
     {progress && <Text>Progression · {progress.count}/13 indicateurs traités</Text>}
     {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
+    {restoredBuffers && <Text accessibilityRole="alert" style={styles.notice}>Brouillon retrouvé sur cet appareil. Les valeurs incomplètes ne sont pas des mesures enregistrées ; les valeurs non confirmées doivent être comparées avant reprise. Les sauvegardes portables excluent ces brouillons.</Text>}
+    {bufferFailures.current.size > 0 && <Pressable accessibilityRole="button" disabled={busy || !!review} style={styles.secondary} onPress={() => { for (const key of bufferFailures.current) { const request = bufferRequests.current.get(key); if (request?.discardToken) discardBuffer(key, { ...request, discardToken: request.discardToken }); else if (request) persistBuffer(key, request.raw, request.clear); } }}><Text>Réessayer la conservation des brouillons</Text></Pressable>}
+    {Object.keys(recoveredPatch.current).length > 0 && <Pressable accessibilityRole="button" disabled={busy} style={styles.secondary} onPress={() => void openReview()}><Text>Comparer le brouillon retrouvé aux valeurs enregistrées</Text></Pressable>}
+    {invalid.size > 0 && <View style={styles.field}><Text>Champs à terminer (brouillons conservés) :</Text>{sections.filter(item => item.fields.some(field => invalid.has(field.key))).map(item => <Pressable accessibilityRole="button" disabled={fieldsDisabled} key={item.id} style={styles.secondary} onPress={() => void navigate(() => moveStep(sections.indexOf(item)), true)}><Text>Terminer {item.title}</Text></Pressable>)}</View>}
     {positionIssue && <Pressable accessibilityRole="button" disabled={busy} style={styles.secondary} onPress={() => void reloadPosition()}><Text>Relire la position sans perdre mes saisies</Text></Pressable>}
     {!draft && error && <Pressable accessibilityRole="button" style={styles.secondary} onPress={() => setLoadAttempt(value => value + 1)}><Text>Réessayer le chargement de la journée</Text></Pressable>}
     {draft?.status === 'failed' && <>
@@ -333,7 +430,7 @@ export const DailyForm = forwardRef<EditorHandle, { database: SQLiteDatabase; in
           return <View key={part} style={{ flex: 1, minWidth: 100 }}><Text>{part === 'hours' ? 'Heures' : 'Minutes'}</Text><TextInput accessibilityLabel={partLabel} editable={!fieldsDisabled} value={raw[`${item.key}.${part}`] ?? partValue} onChangeText={text => editDuration(item, part, text)} keyboardType="number-pad" placeholder="Non renseigné" style={[styles.input, invalid.has(item.key) && styles.invalid]} /></View>;
         })}</View> : <TextInput editable={!fieldsDisabled && !(item.key === 'sleep_hours' && snapshot?.sleep_duration_mode === 'calculated')} accessibilityLabel={fieldLabel(item)} value={item.key === 'sleep_hours' && snapshot?.sleep_duration_mode === 'calculated' ? typeof snapshot.sleep_hours === 'number' ? String(Number(snapshot.sleep_hours.toFixed(2))) : '' : raw[item.key] ?? String(snapshot?.[item.key] ?? '')}
           onChangeText={value => edit(item, value)} style={[styles.input, invalid.has(item.key) && styles.invalid]}
-          onBlur={() => { if (!editsLocked() && item.kind === 'time' && !invalid.has(item.key)) setRaw(previous => ({ ...previous, [item.key]: String(draft.snapshot[item.key] ?? '') })); }}
+          onBlur={() => { if (!editsLocked() && item.kind === 'time' && !currentInvalid.current.has(item.key)) setRaw(previous => ({ ...previous, [item.key]: String(draft.snapshot[item.key] ?? '') })); }}
           keyboardType={item.kind === 'number' ? 'decimal-pad' : 'default'}
           multiline={item.kind === 'text'}
           placeholder={item.kind === 'time' ? 'HH:MM ou HHMM' : 'Non renseigné'} />}
@@ -355,7 +452,8 @@ export const DailyForm = forwardRef<EditorHandle, { database: SQLiteDatabase; in
       {section.id === 'summary' && <RelatedSummary database={database} entryId={draft.snapshot.entry_id} onModify={id => void navigate(() => moveStep(sections.findIndex(item => item.id === id)))} />}
       {draft.status === 'saving' && <Text accessibilityLiveRegion="polite">Enregistrement en cours…</Text>}
       {invalid.size > 0 && <Text accessibilityRole="alert" style={styles.error}>Saisie incomplète ou hors limites : elle reste en brouillon. Les totaux utilisent les dernières valeurs valides.</Text>}
-      {section.fields.length > 0 && draft.status === 'saved' && !invalid.size && <Text style={styles.notice}>Valeurs enregistrées localement. Continuer valide l’étape ; Passer la marque comme passée.</Text>}
+      {bufferJobs.current.size > 0 && <Text accessibilityLiveRegion="polite">Conservation du brouillon en cours…</Text>}
+      {section.fields.length > 0 && draft.status === 'saved' && !invalid.size && !bufferJobs.current.size && !bufferFailures.current.size && !Object.keys(recoveredPatch.current).length && <Text style={styles.notice}>Valeurs enregistrées localement. Continuer valide l’étape ; Passer la marque comme passée.</Text>}
       <View style={styles.row}>
         <Pressable disabled={busy} style={styles.secondary} onPress={() => void navigate(back)}><Text>← Retour</Text></Pressable>
         {section.id !== 'summary' ? <>
