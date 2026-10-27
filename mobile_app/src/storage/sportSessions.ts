@@ -8,7 +8,7 @@ export type SportSession = {
   session_id: string; entry_id: string; position: number; revision: number;
   sport_type: string | null; duration_minutes: number | null; distance_km: number | null;
 };
-function fields(patch: SportPatch): [string, BindValue][] {
+export function validateSportPatch(patch: SportPatch): [string, BindValue][] {
   const result: [string, BindValue][] = [];
   for (const [key, value] of Object.entries(patch)) {
     if (!['sport_type', 'duration_minutes', 'distance_km'].includes(key)) throw new Error('Champ sport inconnu');
@@ -46,7 +46,7 @@ export class SportSessions {
 
   async patch(id: string, revision: number, patch: SportPatch): Promise<SportSession> {
     if (!Number.isSafeInteger(revision) || revision < 1) throw new Error('Révision invalide');
-    const values = fields(patch);
+    const values = validateSportPatch(patch);
     const row = values.length ? await this.db.getFirstAsync<SportSession>(
       `UPDATE sport_sessions SET ${values.map(([key]) => `${key} = ?`).join(', ')}, revision = revision + 1, updated_at = ? WHERE session_id = ? AND revision = ? RETURNING *`,
       ...values.map(([, value]) => value), new Date().toISOString(), id, revision,
@@ -63,7 +63,7 @@ export class SportSessions {
 
 export class SportDraft extends WriteQueue<SportSession, SportPatch> {
   constructor(repo: SportSessions, row: SportSession) {
-    super(row, patch => Object.fromEntries(fields(patch)),
+    super(row, patch => Object.fromEntries(validateSportPatch(patch)),
       (current, patch) => repo.patch(current.session_id, current.revision, patch));
   }
 }

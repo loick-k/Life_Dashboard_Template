@@ -13,7 +13,7 @@ compléter pendant chaque portage. « À porter » ne signifie jamais implément
 | Alcool | Quantité, zéro distinct d'absence | Saisie connectée ; validation native à faire |
 | Corps | Poids, masse graisseuse, tour de ventre indépendants | Saisie et dernières mesures datées connectées, réutilisation confirmée et ciblée testée ; validation native à faire |
 | Travail / work_tracking | Trois créneaux, heures isolées, standards, veille, mode ; solde cumulé unique | Trois créneaux/mode/durée, standards/veille confirmés, solde avant/après partagé avec Bilan connectés ; tests SQLite et parité de solde V1 ; validation Android à faire |
-| Sport | Types V1, plusieurs séances, minutes et distances précises | Repository, migration et UI d'essai connectés ; validation Android à faire |
+| Sport | Types V1, plusieurs séances, minutes et distances précises | Repository et UI connectés, buffers durables, reprise explicite et suppression atomique testées ; validation Android à faire |
 | Portable | Durée précise, historique et seuil configurable | Saisie précise, périodes historiques, seuil consommé par le score ; tests locaux ; validation Android à faire |
 | Alimentation | Repas, calcul explicite, kcal nettes, absence n.c., résultat unique | Repas et affichage kcal connectés ; analyse à faire |
 | Temps pour moi | Activités distinctes, sorties/détente, total immédiat | Saisie h/min et total immédiat connectés, absence distincte de zéro testée ; validation native à faire |

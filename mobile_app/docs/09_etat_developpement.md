@@ -39,7 +39,7 @@ contrôle de disponibilité de son déploiement distant n'a été effectué dans
 
 ## Vérifié à cette clôture
 
-- 186 tests Node réussis, dont SQLite réel sur données synthétiques et réouverture,
+- 193 tests Node réussis, dont SQLite réel sur données synthétiques et réouverture,
   AES-GCM réel via Node, fichier altéré/mauvaise clé et restauration interrompue.
 - TypeScript sans erreur ; `git diff --check` sans anomalie.
 - 16 tests Python locaux réussis : migrations/schéma et parité travail, scores,

@@ -11,6 +11,29 @@ remplacement forcé de la V1 et aucune synchronisation automatique des deux base
 
 ## État vérifié dans le dépôt
 
+### Audit approfondi — brouillons sportifs durables — 27/10/2026
+
+Champs quotidiens commités bed157e. Trois séances : durée/distance incomplètes,
+activité, effacements et suppression complète journalisés AVANT SQL métier dans
+une clé privée chiffrée par séance. Suppression = une enveloppe atomique des trois
+champs, puis patch métier atomique ; aucun rejeu automatique. Réouverture => cartes
+incomplètes révélées et valeurs valides non confirmées à comparer. Révisions,
+autres séances/mesures et buffers non remplacés restent conservés.
+
+Socle mutualisé FieldBuffers/BufferedEditor, sans React ni dépendance ajoutée :
+CAS d'enveloppe, tokens de champ, reprise explicite, nettoyage réessayable sans
+réexécuter le writer, anciennes erreurs supplantées sans écraser une saisie plus
+récente. Barrières attendent journal, SQL et nettoyage ; aucun succès annoncé pour
+un buffer invalide. Données privées exclues des backups portables et préservées par
+restauration ; format futur/corrompu refusé sans reset.
+
+193 tests Node et TypeScript réussis ; sept nouveaux tests SQLite fichier/React
+couvrent crash simulé, reprise, concurrence, atomicité suppression, confirmation
+perdue, nettoyage, Unicode/limites, restauration et autres séances/poids inchangés.
+Arrêt forcé Android toujours à prouver. Restent journaux sociaux/objectifs, ajouts
+et réglages à journaliser, intégrations/parité et validation matérielle. Travaux
+Todoist préexistants hors lot, aucun téléchargement/build/donnée réelle/push.
+
 ### Audit approfondi — brouillons quotidiens durables et reprise explicite — 27/10/2026
 
 Navigation/horloge commitée 555dab6. Les champs simples quotidiens (nombres,
