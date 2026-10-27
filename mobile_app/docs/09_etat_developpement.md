@@ -1,4 +1,4 @@
-# État du développement V2 — clôture du lot bilans
+# État du développement V2 — actualisé le 27/10/2026
 
 ## Conclusion
 
@@ -24,10 +24,14 @@ contrôle de disponibilité de son déploiement distant n'a été effectué dans
 - 27 autres séries hebdomadaires, courbes/barres natives, données absentes distinctes
   des zéros, statistiques sans multiplication des relations.
 - Progression de l'assistant initial persistante côté stockage uniquement.
+- Sauvegarde locale AES-GCM et code de récupération, restauration transactionnelle,
+  contrôle dans une base temporaire et écran accessible depuis Réglages.
+  APIs Expo/SQLCipher/choix de dossier restant à valider sur Android.
 
 ## Vérifié à cette clôture
 
-- 50 tests Node réussis, dont SQLite réel sur données synthétiques et réouverture.
+- 54 tests Node réussis, dont SQLite réel sur données synthétiques et réouverture,
+  AES-GCM réel via Node, fichier altéré/mauvaise clé et restauration interrompue.
 - TypeScript sans erreur ; `git diff --check` sans anomalie.
 - 10 tests Python locaux réussis : migrations/schéma et parité travail V1/V2.
 - Aucune nouvelle dépendance, aucun téléchargement ni build natif dans le lot.
@@ -42,8 +46,9 @@ contrôle de disponibilité de son déploiement distant n'a été effectué dans
    volumineux sans vérifier le budget disque.
 2. Construire la navigation finale et les écrans de première utilisation : reprise,
    choix des données, préférences, protection/biométrie, sauvegardes et intégrations.
-3. Implémenter sauvegarde chiffrée authentifiée, récupération indépendante du
-   téléphone, restauration vérifiée et sûre en cas d'erreur/interruption.
+3. Valider sur Android la sauvegarde chiffrée et la récupération indépendante du
+   téléphone : création/lecture de fichier, base temporaire chiffrée, arrêt forcé
+   et restauration entre deux installations. Le code et les tests locaux existent.
 4. Import V1 synthétique : conversion unités/relations, conflits, idempotence et
    rapport. Import personnel seulement après accord explicite.
 5. Compléter la parité : calculs sommeil, mesures précédentes, granularités des

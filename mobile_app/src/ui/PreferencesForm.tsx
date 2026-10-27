@@ -6,7 +6,7 @@ import { WriteQueue } from '../storage/writeQueue';
 import type { SqlConnection } from '../storage/migrations';
 
 type Draft = WriteQueue<PreferenceState, { value: PreferenceValue }>;
-export function PreferencesForm({ database, onDone }: { database: SqlConnection; onDone(): void }) {
+export function PreferencesForm({ database, onDone, onBackup }: { database: SqlConnection; onDone(): void; onBackup?(): void }) {
   const repository = useMemo(() => new Preferences(database), [database]);
   const drafts = useRef<Partial<Record<PreferenceKey, Draft>>>({});
   const invalid = useRef(new Set<PreferenceKey>());
@@ -28,13 +28,13 @@ export function PreferencesForm({ database, onDone }: { database: SqlConnection;
     return () => { active = false; };
   }, [repository]);
 
-  async function done() {
+  async function done(action = onDone) {
     if (leaving.current) return;
     if (invalid.current.size) { setError('Complétez les champs signalés, ou rétablissez leur valeur enregistrée.'); return; }
     leaving.current = true; setBusy(true);
     try {
       await Promise.all(Object.values(drafts.current).map(draft => draft.flush()));
-      onDone();
+      action();
     } catch { setError('Sauvegarde non confirmée. Vos saisies restent affichées ; réessayez avant de quitter.'); }
     finally { leaving.current = false; setBusy(false); }
   }
@@ -87,6 +87,7 @@ export function PreferencesForm({ database, onDone }: { database: SqlConnection;
   return <ScrollView style={styles.page} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
     <Text accessibilityRole="header" style={styles.title}>Réglages</Text>
     <Text style={styles.help}>Enregistrement local automatique. Unités : kg, cm, km et heures. Les secrets des intégrations ne sont pas stockés ici.</Text>
+    {onBackup && <Pressable accessibilityRole="button" disabled={busy || !ready} style={styles.secondary} onPress={() => void done(onBackup)}><Text>Sauvegarde et récupération</Text></Pressable>}
     {!!error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
     {!ready && !error && <Text>Chargement…</Text>}
     {ready && preferenceDefinitions.map(definition => {

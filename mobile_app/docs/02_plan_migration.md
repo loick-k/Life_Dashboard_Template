@@ -105,9 +105,11 @@ reprise, absence d'effacement et comparaison fonctionnelle/visuelle avec la V1.
 
 ## Lot sauvegarde et restauration
 
-- Implémenter export chiffré, authentification du fichier et clé de récupération.
-- Restaurer sur une installation vierge et vérifier valeurs et relations.
-- Tester fichier altéré, mauvais mot de passe et restauration interrompue.
+- Export chiffré/authentifié et code de récupération implémentés, écran branché
+  aux Réglages ; vérification réelle sur Android encore requise.
+- Restauration dans une base vierge et comparaison des valeurs/relations testées
+  sur SQLite Node ; adaptateur temporaire SQLCipher écrit, exécution native à faire.
+- Tests de code incorrect, fichier altéré et interruption SQL avec rollback réussis.
 - Ajouter une destination automatique facultative après validation de l'export.
 
 ## Étape 7 - Bilan et intégrations

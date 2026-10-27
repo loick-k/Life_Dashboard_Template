@@ -5,6 +5,7 @@ import type { SQLiteDatabase } from 'expo-sqlite';
 import { DailyForm } from './ui/DailyForm';
 import { PreferencesForm } from './ui/PreferencesForm';
 import { WorkBilan } from './ui/WorkBilan';
+import { BackupScreen } from './ui/BackupScreen';
 
 /** Bootstrap only: do not collect personal data until native storage is verified. */
 export default function App() {
@@ -15,6 +16,7 @@ export default function App() {
   const [preferences, setPreferences] = useState(false);
   const [dailyDate, setDailyDate] = useState<string>();
   const [bilan, setBilan] = useState(false);
+  const [backup, setBackup] = useState(false);
   useEffect(() => {
     let active = true;
     setStatus('opening');
@@ -24,7 +26,8 @@ export default function App() {
     );
     return () => { active = false; };
   }, [attempt]);
-  if (preferences && database) return <PreferencesForm database={database} onDone={() => setPreferences(false)} />;
+  if (backup && database) return <BackupScreen database={database} onDone={() => setBackup(false)} />;
+  if (preferences && database) return <PreferencesForm database={database} onBackup={() => setBackup(true)} onDone={() => setPreferences(false)} />;
   if (bilan && database) return <WorkBilan database={database} onDone={() => setBilan(false)} />;
   if (testing && database) return <DailyForm database={database} initialDate={dailyDate} onBilan={date => { setDailyDate(date); setBilan(true); }} onSettings={date => { setDailyDate(date); setPreferences(true); }} />;
   return (

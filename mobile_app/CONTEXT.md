@@ -1,6 +1,6 @@
 # Contexte de reprise du développement V2
 
-Mis à jour le 25/09/2026. Lire les AGENTS.md avant de travailler.
+Mis à jour le 27/10/2026. Lire les AGENTS.md avant de travailler.
 
 ## Objectif accepté
 
@@ -10,6 +10,41 @@ indépendamment. La V1 conserve Neon ; la V2 conserve sa propre SQLite. Aucun
 remplacement forcé de la V1 et aucune synchronisation automatique des deux bases.
 
 ## État vérifié dans le dépôt
+
+### Sauvegarde V2 chiffrée et restauration — 27/10/2026
+
+Reprise depuis 8aab719, dépôt propre. Nouveau service captureSnapshot : copie
+logique des 8 tables de données sous transaction unique, journal de migrations
+comparé au code, préférences/curseurs exportés par liste blanche. Secrets,
+configuration de verrouillage et état de l'assistant exclus. Aucun accès Neon.
+Chiffrement AES-256-GCM avec Expo Crypto déjà installé : nonce aléatoire 12 octets,
+tag 16 octets et en-tête de format authentifié. Code de récupération aléatoire
+256 bits indépendant de la clé de la base, jamais persisté par ce service.
+Restauration via code (pas de mot de passe court/dérivation cryptographique maison).
+
+Avant succès : déchiffrement, restauration dans une SQLite temporaire chiffrée sur
+Android, comparaison de toutes les valeurs/relations, écriture du fichier puis
+relecture identique. backup_history reçoit verified uniquement après ces étapes.
+Restauration réelle : prévalidation temporaire puis remplacement transactionnel
+des seules données portables ; erreur/contrainte/interruption => rollback.
+Schéma/journal et configuration appareil conservés. Le service exige une route
+dédiée après flush/unmount des éditeurs ; entrée depuis Réglages implémentée.
+
+BackupScreen : génération/recopie du code, choix du dossier système, sélection du
+fichier, confirmation de remplacement, état vérifié et dernière sauvegarde.
+Départ/Retour Android bloqués pendant l'opération ; pas d'export en clair sur disque.
+Limites explicites : 8 Mio de copie logique, fichier 24 Mio, format 1/schema exact.
+Une future version devra ajouter les migrations de format ; pas de saut silencieux.
+
+54 tests Node réussis et TypeScript valide. Quatre nouveaux tests sur AES-GCM réel
+Node/SQLite : aller-retour Unicode/null/zéro/horaires partiels, nouveau fichier et
+réouverture, exclusion des secrets, mauvaise clé, altération IV/tag/chiffrement,
+interruption SQL après suppression avec rollback, relations/colonnes/réglages
+invalides et succès jamais annoncé après annulation/échec de fichier/test restore.
+L'adaptateur Expo AES, le sélecteur système et SQLCipher temporaire ne sont PAS
+encore exécutés sur Android. Aucune nouvelle dépendance, compilation ou données
+réelles. Prochain travail : relier l'assistant et la protection locale, puis tester
+le parcours natif et préparer le build autonome. Voir docs/10_sauvegarde_locale_v2.md.
 
 ### Bilans hebdomadaires multirubriques — lot repris après interruption
 

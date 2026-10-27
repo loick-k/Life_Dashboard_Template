@@ -26,7 +26,7 @@ compléter pendant chaque portage. « À porter » ne signifie jamais implément
 | Todo / todoist_view | Interface/accès Todoist, projets et statistiques disponibles ; intégration facultative | À porter |
 | Réglages / app_config | Seuils, objectifs, horaires standards, jours de travail, date arrêt tabac | 13 préférences persistantes, validation/CAS, écran d'essai autosauvegardé ; standards et libellé consommés ; bilans, assistant et validation Android à faire |
 | Performance / app | Adapter suivi du coût API et diagnostic à l'usage mobile, sans données sensibles | À porter |
-| Données / app | Consultation entrées et journaux ; export sécurisé remplace téléchargement non chiffré | À porter |
+| Données / app | Consultation entrées et journaux ; export sécurisé remplace téléchargement non chiffré | Historique quotidien et sauvegarde/restauration chiffrée connectés en développement ; validation Android à faire |
 
 ## Exigences propres à Android
 
@@ -37,7 +37,7 @@ compléter pendant chaque portage. « À porter » ne signifie jamais implément
 | Autosauvegarde | Saisie, retour, concurrence, arrêt forcé et redémarrage | Repository quotidien CAS et tests fichier SQLite ; UI et arrêt Android à faire |
 | Assistant initial | Hors ligne, interruption/reprise, ne réapparaît pas après fin | Repository de progression testé sur SQLite (3 tests) ; écrans et opérations métier à faire |
 | Protection locale | Verrouillage, biométrie, reprise sûre et récupération | À faire |
-| Sauvegarde chiffrée | Nouveau téléphone, mauvais mot de passe, altération, interruption | À faire |
+| Sauvegarde chiffrée | Nouveau téléphone, mauvais mot de passe, altération, interruption | Service AES-GCM/code de récupération, restauration contrôlée et UI Réglages écrits ; 4 tests Node/SQLite réussis ; validation Expo/Android à faire |
 | Import V1 | Fixtures synthétiques, relations, collisions et rejeu | À faire |
 | APK autonome signé | Installation et mise à jour sans Metro/Expo Go ni perte | À faire |
 
