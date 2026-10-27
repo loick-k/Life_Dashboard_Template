@@ -1,8 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { Alert, BackHandler, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import * as Crypto from 'expo-crypto';
 import type { SQLiteDatabase } from 'expo-sqlite';
-import { DailyEntries, dailyRules, validateDate, type DailyField } from '../storage/dailyEntries';
+import { DailyEntries, dailyRules, validateDate, type DailyField, type DailyEntry } from '../storage/dailyEntries';
 import { DailyDraft } from '../storage/dailyDraft';
 import { parisDate, shiftDate } from '../domain/dates';
 import { parseInput } from '../domain/input';
@@ -20,9 +20,12 @@ import { inspectWorkSchedule, type WorkTimes } from '../domain/work';
 import { sleepDurationHours, sleepDisagrees } from '../domain/sleep';
 import { EnergyCard } from './EnergyCard';
 import { formatMinutes } from '../domain/workReport';
+import type { EditorHandle } from './editorHandle';
+import { resolveDailyDraft } from '../storage/dailyRecovery';
+import { settleWrites } from '../storage/settleWrites';
 
 /** Vertical development slice, not the final daily journey. Synthetic data only. */
-export function DailyForm({ database, initialDate, onSettings, onBilan }: { database: SQLiteDatabase; initialDate?: string; onSettings?(date: string): void; onBilan?(date: string): void }) {
+export const DailyForm = forwardRef<EditorHandle, { database: SQLiteDatabase; initialDate?: string; active?: boolean; onDate?(date: string): void; onSettings?(date: string): void; onBilan?(date: string): void }>(function DailyForm({ database, initialDate, active = true, onDate, onSettings, onBilan }, ref) {
   const [date, setDate] = useState(() => initialDate ?? parisDate());
   const [closeLabel, setCloseLabel] = useState('Écoute de mes proches');
   const [step, setStep] = useState(0);
@@ -32,6 +35,11 @@ export function DailyForm({ database, initialDate, onSettings, onBilan }: { data
   const [raw, setRaw] = useState<Record<string, string>>({});
   const [invalid, setInvalid] = useState<Set<string>>(new Set());
   const [error, setError] = useState('');
+  const [loadAttempt, setLoadAttempt] = useState(0);
+  const [review, setReview] = useState<{ latest: DailyEntry; pending: DailyPatch; choices: Record<string, 'draft' | 'database'> }>();
+  const loading = useRef<Promise<void>>(Promise.resolve());
+  const history = useRef<number[]>([]);
+  const scroll = useRef<ScrollView>(null);
   const position = useRef<CheckinPosition | null>(null);
   const navigating = useRef(false);
   const [busy, setBusy] = useState(false);
@@ -41,17 +49,45 @@ export function DailyForm({ database, initialDate, onSettings, onBilan }: { data
   const refresh = () => repaint(value => value + 1);
   useEffect(() => {
     let active = true;
-    setDraft(undefined); setRaw({}); setInvalid(new Set()); setError(''); setHome(true); position.current = null;
+    setDraft(undefined); setRaw({}); setInvalid(new Set()); setError(''); setHome(true); setReview(undefined); position.current = null; history.current = [];
     const repo = new DailyEntries(database, Crypto.randomUUID);
-    Promise.all([repo.getOrCreate(date), new CheckinPositions(database).read(date), new Preferences(database).read('close_relations_label').catch(() => null)]).then(([row, cursor, label]) => {
+    loading.current = (async () => {
+      const results = await Promise.allSettled([repo.getOrCreate(date), new CheckinPositions(database).read(date), new Preferences(database).read('close_relations_label').catch(() => null)] as const);
+      if (results[0].status !== 'fulfilled' || results[1].status !== 'fulfilled' || results[2].status !== 'fulfilled') {
+        if (active) setError('Impossible de charger cette journée.');
+        return;
+      }
+      const row = results[0].value, cursor = results[1].value, label = results[2].value;
       if (active) {
         setCloseLabel(label ? String(label.value) : 'Écoute des proches · libellé indisponible');
         if (!label) setError('Le libellé personnalisé est illisible. Les mesures restent accessibles ; vérifie les Réglages.');
         position.current = cursor; setStep(sections.findIndex(item => item.id === cursor.step)); setDraft(new DailyDraft(repo, row));
       }
-    }, () => { if (active) setError('Impossible de charger cette journée.'); });
+    })();
     return () => { active = false; };
-  }, [database, date]);
+  }, [database, date, loadAttempt]);
+  useEffect(() => { onDate?.(date); }, [date, onDate]);
+  const reviewing = !!review;
+  useEffect(() => { scroll.current?.scrollTo({ y: 0, animated: false }); }, [date, step, home, reviewing]);
+  useEffect(() => {
+    if (!active) return;
+    let current = true;
+    void new Preferences(database).read('close_relations_label').then(label => { if (current) setCloseLabel(String(label.value)); }, () => {});
+    return () => { current = false; };
+  }, [database, active]);
+  const settle = async () => {
+    if (navigating.current) throw new Error('Navigation en cours');
+    await settleWrites([loading.current, draft?.flush() ?? Promise.resolve(), sports.current?.settle() ?? Promise.resolve(), catalog.current?.settle() ?? Promise.resolve()]);
+  };
+  useImperativeHandle(ref, () => ({
+    settle,
+    hasUnconfirmed: () => invalid.size > 0 || !!review || (!!draft && draft.status !== 'saved') || !!sports.current?.hasUnconfirmed() || !!catalog.current?.hasUnconfirmed(),
+    beforeReplace: async () => {
+      await settle();
+      if (invalid.size || review) throw new Error('Brouillon quotidien à terminer');
+      await sports.current?.flush(); await catalog.current?.flush();
+    },
+  }));
   const navigate = async (action: () => void | Promise<void>) => {
     if (!draft || navigating.current) return;
     if (invalid.size) { setError('Termine la valeur en cours ou utilise Effacer pour une suppression volontaire.'); return; }
@@ -59,11 +95,16 @@ export function DailyForm({ database, initialDate, onSettings, onBilan }: { data
     try { await draft.flush(); if (sports.current) await sports.current.flush(); if (catalog.current) await catalog.current.flush(); setError(''); await action(); } catch { setError('Saisie invalide, ajout non terminé ou sauvegarde non confirmée. Termine la saisie avant de continuer.'); }
     finally { navigating.current = false; setBusy(false); refresh(); }
   };
-  const moveStep = async (target: number) => {
+  const moveStep = async (target: number, remember = true) => {
     if (!position.current || !sections[target]) throw new Error('Position indisponible');
     position.current = await new CheckinPositions(database).move(date, position.current.revision, sections[target]!.id);
+    if (remember) { if (home) history.current = []; else if (target !== step) history.current.push(step); }
     setStep(target);
     setHome(false);
+  };
+  const back = async () => {
+    if (history.current.length) { await moveStep(history.current.at(-1)!, false); history.current.pop(); }
+    else setHome(true);
   };
   const changeDate = (target: string) => {
     validateDate(target);
@@ -77,10 +118,11 @@ export function DailyForm({ database, initialDate, onSettings, onBilan }: { data
     await moveStep(step + 1);
   };
   useEffect(() => {
+    if (!active) return;
     const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (!draft) return false; // A failed load must not trap the Android Back button.
       void navigate(async () => {
-        if (!home && step > 0) await moveStep(step - 1);
-        else if (!home) setHome(true);
+        if (!home) await back();
         else Alert.alert('Quitter', 'Les écritures sont confirmées.', [{ text: 'Rester' }, { text: 'Quitter', onPress: () => BackHandler.exitApp() }]);
       });
       return true;
@@ -88,12 +130,13 @@ export function DailyForm({ database, initialDate, onSettings, onBilan }: { data
     return () => subscription.remove();
   });
   const save = (key: DailyField, value: string | number | null) => {
-    if (!draft || navigating.current) return;
-    draft.edit({ [key]: value }); refresh();
+    if (!draft || navigating.current || !active) return;
+    try { draft.edit({ [key]: value }); } catch { setError('Saisie invalide : les données enregistrées sont conservées.'); return; }
+    refresh();
     void draft.flush().then(refresh, () => { setError('Échec de sauvegarde. Le brouillon reste en mémoire sur cette page.'); refresh(); });
   };
   const edit = (item: Field, value: string) => {
-    if (navigating.current) return;
+    if (navigating.current || !active) return;
     setRaw(previous => ({ ...previous, [item.key]: value }));
     const parsed = parseInput(value, item.kind);
     const valid = parsed !== undefined && dailyRules[item.key](parsed);
@@ -126,7 +169,31 @@ export function DailyForm({ database, initialDate, onSettings, onBilan }: { data
   const snapshot = draft?.snapshot;
   let progress: ReturnType<typeof readProgress> | undefined;
   try { if (snapshot) progress = readProgress(snapshot); } catch { /* Preserve data; offer no progress mutations below. */ }
-  return <ScrollView contentContainerStyle={styles.page} keyboardShouldPersistTaps="handled">
+  const openReview = async () => {
+    if (!draft || navigating.current) return;
+    setBusy(true);
+    try {
+      const latest = await new DailyEntries(database, Crypto.randomUUID).read(draft.snapshot.entry_id);
+      const pending = draft.pendingPatch;
+      setReview({ latest, pending, choices: Object.fromEntries(Object.keys(pending).filter(key => pending[key as DailyField] === latest[key]).map(key => [key, 'database'])) });
+      setError('');
+    } catch { setError('Relecture impossible. Ton brouillon reste conservé.'); }
+    finally { setBusy(false); }
+  };
+  const applyReview = async () => {
+    if (!draft || !review || busy || Object.keys(review.pending).some(key => !review.choices[key])) return;
+    setBusy(true);
+    try {
+      const resolved = await resolveDailyDraft(new DailyEntries(database, Crypto.randomUUID), review.latest, review.pending, Object.keys(review.choices).filter(key => review.choices[key] === 'draft'));
+      setDraft(resolved);
+      const replaced = Object.keys(review.choices).filter(key => review.choices[key] === 'database');
+      setRaw(previous => { const next = { ...previous }; for (const key of replaced) delete next[key]; return next; });
+      setInvalid(previous => { const next = new Set(previous); replaced.forEach(key => next.delete(key)); return next; });
+      setReview(undefined); setError('Choix enregistrés. Les autres champs sont conservés.');
+    } catch { setError('La journée a encore changé ou l’écriture a échoué. Le brouillon initial reste conservé ; recharge la comparaison.'); }
+    finally { setBusy(false); }
+  };
+  return <ScrollView ref={scroll} contentContainerStyle={styles.page} keyboardShouldPersistTaps="handled">
     <Text style={styles.notice}>Essai technique · données fictives uniquement</Text>
     <View style={styles.row}>{[['Aujourd’hui', parisDate()], ['Hier', shiftDate(parisDate(), -1)]].map(([label, target]) => <Pressable accessibilityRole="button" disabled={busy || !draft} key={label} style={styles.secondary} onPress={() => void navigate(() => { if (target !== date) { setDraft(undefined); setDate(target!); } })}><Text>{label}</Text></Pressable>)}</View>
     <Text>{date}</Text><Text style={styles.title}>Mon point quotidien</Text>
@@ -149,8 +216,24 @@ export function DailyForm({ database, initialDate, onSettings, onBilan }: { data
     <Text style={styles.heading}>{home ? 'Ta saisie du jour' : section.title}</Text>
     {progress && <Text>Progression · {progress.count}/13 indicateurs traités</Text>}
     {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
-    {draft?.status === 'failed' && <Pressable style={styles.secondary} onPress={() => { void draft.retry().then(() => { setError(''); refresh(); }, refresh); }}><Text>Réessayer la sauvegarde</Text></Pressable>}
-    {!draft ? <Text>Chargement local…</Text> : !progress ? <Text style={styles.error}>Progression incompatible. Les données sont conservées.</Text> : home ? <View pointerEvents={busy ? 'none' : 'auto'}>
+    {!draft && error && <Pressable accessibilityRole="button" style={styles.secondary} onPress={() => setLoadAttempt(value => value + 1)}><Text>Réessayer le chargement de la journée</Text></Pressable>}
+    {draft?.status === 'failed' && <>
+      <Pressable accessibilityRole="button" style={styles.secondary} onPress={() => { void draft.retry().then(() => { setError(''); refresh(); }, refresh); }}><Text>Réessayer la sauvegarde</Text></Pressable>
+      <Pressable accessibilityRole="button" disabled={busy} style={styles.secondary} onPress={() => void openReview()}><Text>Comparer le brouillon aux valeurs enregistrées</Text></Pressable>
+    </>}
+    {review && <View style={styles.field}>
+      <Text style={styles.heading}>Résoudre sans écrasement automatique</Text>
+      <Text>Choisis pour chaque champ. Les saisies incomplètes restent en mémoire tant que tu ne choisis pas de les remplacer.</Text>
+      {Object.entries(review.pending).map(([key, value]) => <View key={key} style={styles.field}>
+        <Text style={styles.label}>{sections.flatMap(section => section.fields).find(item => item.key === key)?.label ?? key}</Text>
+        <Text>Enregistré : {String(review.latest[key] ?? 'Non renseigné')} · Brouillon : {String(value ?? 'Effacement explicite')}</Text>
+        <View style={styles.row}>{(['draft', 'database'] as const).map(choice => <Pressable key={choice} disabled={busy} accessibilityRole="button" accessibilityState={{ selected: review.choices[key] === choice, disabled: busy }} style={[styles.secondary, review.choices[key] === choice && styles.selected]} onPress={() => setReview(current => current && ({ ...current, choices: { ...current.choices, [key]: choice } }))}><Text>{choice === 'draft' ? 'Garder mon brouillon' : 'Garder la valeur enregistrée'}</Text></Pressable>)}</View>
+      </View>)}
+      <Pressable accessibilityRole="button" disabled={busy || Object.keys(review.pending).some(key => !review.choices[key])} style={styles.primary} onPress={() => void applyReview()}><Text style={styles.white}>Appliquer mes choix</Text></Pressable>
+      <Pressable accessibilityRole="button" style={styles.secondary} disabled={busy} onPress={() => void openReview()}><Text>Recharger la comparaison</Text></Pressable>
+      <Pressable accessibilityRole="button" style={styles.secondary} disabled={busy} onPress={() => setReview(undefined)}><Text>Fermer sans abandonner le brouillon</Text></Pressable>
+    </View>}
+    {!draft ? <Text>{error ? 'Journée non chargée. Bilan et Réglages restent accessibles dans le menu principal.' : 'Chargement local…'}</Text> : !progress ? <Text style={styles.error}>Progression incompatible. Les données sont conservées.</Text> : home ? <View pointerEvents={busy ? 'none' : 'auto'}>
       <Pressable style={styles.primary} onPress={() => void navigate(() => moveStep(progress.finished ? sections.length - 1 : step))}><Text style={styles.white}>{progress.finished ? 'Voir le récapitulatif' : progress.count ? 'Reprendre mon point quotidien' : 'Commencer mon point quotidien'}</Text></Pressable>
       <Text style={styles.heading}>Accès direct</Text>
       <View style={styles.row}>{sections.filter(item => item.id !== 'summary').map(item => <Pressable key={item.id} style={styles.secondary} onPress={() => void navigate(() => moveStep(sections.indexOf(item)))}><Text>{item.title}{progress.completed.includes(item.id) ? ' ✓' : progress.skipped.includes(item.id) ? ' · passé' : ''}</Text></Pressable>)}</View>
@@ -195,7 +278,7 @@ export function DailyForm({ database, initialDate, onSettings, onBilan }: { data
       {section.id === 'summary' && <RelatedSummary database={database} entryId={draft.snapshot.entry_id} onModify={id => void navigate(() => moveStep(sections.findIndex(item => item.id === id)))} />}
       {draft.status === 'saving' && <Text accessibilityLiveRegion="polite">Enregistrement en cours…</Text>}
       <View style={styles.row}>
-        <Pressable disabled={step === 0 || busy} style={styles.secondary} onPress={() => void navigate(() => moveStep(step - 1))}><Text>← Retour</Text></Pressable>
+        <Pressable disabled={busy} style={styles.secondary} onPress={() => void navigate(back)}><Text>← Retour</Text></Pressable>
         {section.id !== 'summary' ? <>
           <Pressable disabled={busy} style={styles.secondary} onPress={() => void navigate(() => advance('skipped'))}><Text>Passer</Text></Pressable>
           <Pressable disabled={busy} style={styles.primary} onPress={() => void navigate(() => advance('completed'))}><Text style={styles.white}>Continuer →</Text></Pressable>
@@ -206,7 +289,7 @@ export function DailyForm({ database, initialDate, onSettings, onBilan }: { data
       </View>
     </View>}
   </ScrollView>;
-}
+});
 
 const styles = StyleSheet.create({
   page: { padding: 20, paddingTop: 56, paddingBottom: 48, backgroundColor: '#fff', flexGrow: 1 },

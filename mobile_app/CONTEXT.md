@@ -11,6 +11,30 @@ remplacement forcé de la V1 et aucune synchronisation automatique des deux base
 
 ## État vérifié dans le dépôt
 
+### Corrections audit — navigation et interactions — 27/10/2026
+
+Menu Saisie/Bilan/Todo/Réglages indépendant du chargement quotidien ; éditeurs
+maintenus montés et inaccessibles lorsqu'ils sont masqués, pour conserver les
+brouillons incomplets et les erreurs. Bilan reprend la date de la saisie sans
+modifier la date d'un brouillon masqué et relit compteur/séries à chaque retour.
+Retour quotidien suit les écrans réellement visités (accès direct => accueil).
+Chargements jour/sport/réglages réessayables. Conflit quotidien : relecture et
+choix explicites champ par champ, deuxième conflit refusé sans écrasement forcé.
+Barrières attendent toutes les opérations, même en cas d'échec d'une d'entre elles,
+y compris l'initialisation des trois séances ; restauration/import refusés si un
+brouillon reste incomplet/non confirmé. Écrans remontés après remplacement réussi.
+Libellé d'écoute relu au retour des réglages sans réinitialiser les mesures.
+
+93 tests Node et TypeScript réussis, dont neuf nouveaux tests navigation/React,
+composants réels et SQLite synthétique ; seuls les ports natifs sont simulés.
+react-test-renderer 19.2.3 ajouté en développement, version alignée sur React ;
+outil déprécié mais borné aux interactions, pas une preuve de rendu Android.
+Installation précédente : enveloppe locale de 20 Mo dépassée (~21,9 Mo ajoutés,
+cache npm inclus), arrêt du garde-fou après installation ; budget global intact.
+Aucune nouvelle installation ni build dans ce lot de reprise. Validation Android
+reste ouverte, ainsi que parité, PDF, intégrations, ergonomie et audit social.
+
+
 ### Corrections audit — sommeil et fraîcheur — 27/10/2026
 
 Lot précédent commité fe6cf46. Migration additive 005_daily_derivations : mode de

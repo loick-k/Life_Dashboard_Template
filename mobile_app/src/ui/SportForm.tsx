@@ -5,8 +5,9 @@ import type { SQLiteDatabase } from 'expo-sqlite';
 import { SPORT_TYPES, SportDraft, SportSessions, type SportPatch } from '../storage/sportSessions';
 import { parseInput } from '../domain/input';
 import { parseSportDuration } from '../domain/sportInput';
+import { settleWrites } from '../storage/settleWrites';
 
-export type SportFormHandle = { flush(): Promise<void> };
+export type SportFormHandle = { flush(): Promise<void>; settle(): Promise<void>; hasUnconfirmed(): boolean };
 export const SportForm = forwardRef<SportFormHandle, { database: SQLiteDatabase; entryId: string }>(function SportForm({ database, entryId }, ref) {
   const [drafts, setDrafts] = useState<SportDraft[]>([]);
   const [raw, setRaw] = useState<Record<string, string>>({});
@@ -14,6 +15,10 @@ export const SportForm = forwardRef<SportFormHandle, { database: SQLiteDatabase;
   const [expanded, setExpanded] = useState<number[]>([1]);
   const invalid = useRef(new Set<string>());
   const [error, setError] = useState('');
+  const [loadAttempt, setLoadAttempt] = useState(0);
+  const loading = useRef<Promise<void>>(Promise.resolve());
+  const rows = useRef<SportDraft[]>([]);
+  const loadingFailed = useRef(false);
   const [, repaint] = useState(0);
   const refresh = () => repaint(value => value + 1);
   const setBuffers = (update: (previous: Record<string, string>) => Record<string, string>) => {
@@ -22,17 +27,35 @@ export const SportForm = forwardRef<SportFormHandle, { database: SQLiteDatabase;
   useEffect(() => {
     let active = true;
     const repo = new SportSessions(database, Crypto.randomUUID);
-    Promise.all([1, 2, 3].map(async position => new SportDraft(repo, await repo.getOrCreate(entryId, position))))
-      .then(rows => { if (active) setDrafts(rows); }, () => { if (active) setError('Chargement des séances impossible.'); });
+    loadingFailed.current = false;
+    loading.current = (async () => {
+      const results = await Promise.allSettled([1, 2, 3].map(async position => new SportDraft(repo, await repo.getOrCreate(entryId, position))));
+      if (results.some(result => result.status === 'rejected')) {
+        loadingFailed.current = true;
+        if (active) setError('Chargement des séances impossible. Les valeurs enregistrées sont conservées.');
+        return;
+      }
+      rows.current = results.map(result => (result as PromiseFulfilledResult<SportDraft>).value);
+      if (active) { setDrafts(rows.current); setError(''); }
+    })();
     return () => { active = false; };
-  }, [database, entryId]);
-  useImperativeHandle(ref, () => ({ flush: async () => {
+  }, [database, entryId, loadAttempt]);
+  const settle = async () => {
+    await loading.current;
+    await settleWrites(rows.current.map(draft => draft.flush()));
+    if (loadingFailed.current) throw new Error('Chargement sportif non confirmé');
+  };
+  useImperativeHandle(ref, () => ({
+    settle,
+    hasUnconfirmed: () => loadingFailed.current || rows.current.length !== 3 || invalid.current.size > 0 || rows.current.some(draft => draft.status !== 'saved'),
+    flush: async () => {
+    await settle();
     if (invalid.current.size) {
       setExpanded(current => [...new Set([...current, ...drafts.filter(draft => [...invalid.current].some(key => key.startsWith(`${draft.snapshot.session_id}:`))).map(draft => draft.snapshot.position)])]);
       setError('Corrige les durées ou distances signalées, ou supprime explicitement la valeur.');
     }
     if (drafts.length !== 3 || invalid.current.size) throw new Error('Saisie sportive incomplète ou invalide');
-    await Promise.all(drafts.map(draft => draft.flush()));
+    await settleWrites(rows.current.map(draft => draft.flush()));
   } }));
   const save = (draft: SportDraft, patch: SportPatch) => {
     try { draft.edit(patch); refresh(); void draft.flush().then(refresh, () => { setError('Sauvegarde sportive non confirmée. Réessaie avant de quitter.'); refresh(); }); }
@@ -73,6 +96,7 @@ export const SportForm = forwardRef<SportFormHandle, { database: SQLiteDatabase;
   };
   return <View>
     {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
+    {loadingFailed.current && <Pressable accessibilityRole="button" style={styles.choice} onPress={() => setLoadAttempt(value => value + 1)}><Text>Réessayer le chargement des séances</Text></Pressable>}
     {!drafts.length && <Text>Chargement des séances…</Text>}
     {drafts.map(draft => {
       const row = draft.snapshot;

@@ -5,7 +5,7 @@ import { readWeeklyMetrics } from '../storage/weeklyMetrics';
 import { formatMetric, weeklyMetrics, type MetricSeries } from '../domain/weeklyMetrics';
 import { MetricChart } from './MetricChart';
 
-export function WeeklyIndicators({ database, date }: { database: QueryConnection; date: string }) {
+export function WeeklyIndicators({ database, date, refreshToken = 0 }: { database: QueryConnection; date: string; refreshToken?: number }) {
   const [loaded, setLoaded] = useState<{ date: string; series: MetricSeries[] }>();
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
@@ -15,7 +15,7 @@ export function WeeklyIndicators({ database, date }: { database: QueryConnection
     setFailed(false); setLoaded(undefined);
     readWeeklyMetrics(database, date).then(series => { if (active) setLoaded({ date, series }); }, () => { if (active) setFailed(true); });
     return () => { active = false; };
-  }, [database, date, attempt]);
+  }, [database, date, attempt, refreshToken]);
   if (failed) return <View><Text accessibilityRole="alert">Lecture du bilan impossible. Les données sont conservées.</Text><Pressable style={styles.button} onPress={() => setAttempt(n => n + 1)}><Text>Réessayer</Text></Pressable></View>;
   if (!loaded || loaded.date !== date) return <Text>Chargement des indicateurs…</Text>;
   return <View style={{ marginVertical: 16 }}>

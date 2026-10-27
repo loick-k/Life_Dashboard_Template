@@ -73,6 +73,12 @@ export class DailyEntries {
     return row;
   }
 
+  async read(id: string): Promise<DailyEntry> {
+    const row = await this.database.getFirstAsync<DailyEntry>('SELECT * FROM daily_entries WHERE entry_id = ?', id);
+    if (!row) throw new Error('Journée absente. Aucun brouillon remplacé.');
+    return row;
+  }
+
   async patch(id: string, expectedRevision: number, patch: DailyPatch): Promise<DailyEntry> {
     if (!Number.isSafeInteger(expectedRevision) || expectedRevision < 1) throw new Error('Révision invalide');
     const fields = validatePatch(patch);

@@ -1,12 +1,14 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { Alert, BackHandler, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { parsePreference, preferenceDefinitions, validatePreference, type PreferenceKey, type PreferenceValue } from '../domain/preferences';
 import { Preferences, type PreferenceState } from '../storage/preferences';
 import { WriteQueue } from '../storage/writeQueue';
 import type { SqlConnection } from '../storage/migrations';
+import type { EditorHandle } from './editorHandle';
+import { settleWrites } from '../storage/settleWrites';
 
 type Draft = WriteQueue<PreferenceState, { value: PreferenceValue }>;
-export function PreferencesForm({ database, onDone, onBackup, onImport, onProtection, onBack, doneLabel = 'Retour' }: { database: SqlConnection; onDone(): void | Promise<void>; onBackup?(): void | Promise<void>; onImport?(): void | Promise<void>; onProtection?(): void | Promise<void>; onBack?(): void | Promise<void>; doneLabel?: string }) {
+export const PreferencesForm = forwardRef<EditorHandle, { database: SqlConnection; active?: boolean; preserveOnNavigate?: boolean; onDone(): void | Promise<void>; onBackup?(): void | Promise<void>; onImport?(): void | Promise<void>; onProtection?(): void | Promise<void>; onBack?(): void | Promise<void>; doneLabel?: string }>(function PreferencesForm({ database, active = true, preserveOnNavigate = false, onDone, onBackup, onImport, onProtection, onBack, doneLabel = 'Retour' }, ref) {
   const repository = useMemo(() => new Preferences(database), [database]);
   const drafts = useRef<Partial<Record<PreferenceKey, Draft>>>({});
   const invalid = useRef(new Set<PreferenceKey>());
@@ -15,9 +17,11 @@ export function PreferencesForm({ database, onDone, onBackup, onImport, onProtec
   const [raw, setRaw] = useState<Partial<Record<PreferenceKey, string>>>({});
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const [, refresh] = useState(0);
   useEffect(() => {
     let active = true;
+    setError('');
     repository.readAll().then(values => {
       if (!active) return;
       for (const { key } of preferenceDefinitions) drafts.current[key] = new WriteQueue(values[key],
@@ -26,26 +30,36 @@ export function PreferencesForm({ database, onDone, onBackup, onImport, onProtec
       setReady(true);
     }, () => { if (active) setError('Lecture des réglages impossible. Aucun réglage remplacé.'); });
     return () => { active = false; };
-  }, [repository]);
+  }, [repository, loadAttempt]);
+  const settle = async () => { await settleWrites(Object.values(drafts.current).map(draft => draft.flush())); };
+  useImperativeHandle(ref, () => ({
+    settle,
+    hasUnconfirmed: () => invalid.current.size > 0 || Object.values(drafts.current).some(draft => draft.status !== 'saved'),
+    beforeReplace: async () => {
+      if (leaving.current || invalid.current.size) throw new Error('Réglages à terminer');
+      await settle();
+    },
+  }));
 
   async function done(action = onDone) {
     if (leaving.current) return;
-    if (invalid.current.size) { setError('Complétez les champs signalés, ou rétablissez leur valeur enregistrée.'); return; }
+    if (!preserveOnNavigate && invalid.current.size) { setError('Complétez les champs signalés, ou rétablissez leur valeur enregistrée.'); return; }
     leaving.current = true; setBusy(true);
     try {
-      await Promise.all(Object.values(drafts.current).map(draft => draft.flush()));
+      try { await settle(); } catch (error) { if (!preserveOnNavigate) throw error; }
       await action();
     } catch { setError('Sauvegarde non confirmée. Vos saisies restent affichées ; réessayez avant de quitter.'); }
     finally { leaving.current = false; setBusy(false); }
   }
   useEffect(() => {
+    if (!active) return;
     const listener = BackHandler.addEventListener('hardwareBackPress', () => { void done(onBack ?? onDone); return true; });
     return () => listener.remove();
   });
 
   function save(key: PreferenceKey, value: PreferenceValue) {
     const draft = drafts.current[key];
-    if (!draft || leaving.current) return;
+    if (!draft || leaving.current || !active) return;
     invalid.current.delete(key); setError('');
     draft.edit({ value }); refresh(n => n + 1);
     void draft.flush().catch(() => setError('Sauvegarde non confirmée. Aucun écrasement forcé.')).finally(() => refresh(n => n + 1));
@@ -91,6 +105,7 @@ export function PreferencesForm({ database, onDone, onBackup, onImport, onProtec
     {onImport && <Pressable accessibilityRole="button" disabled={busy || !ready} style={styles.secondary} onPress={() => void done(onImport)}><Text>Importer un export V1</Text></Pressable>}
     {onProtection && <Pressable accessibilityRole="button" disabled={busy || !ready} style={styles.secondary} onPress={() => void done(onProtection)}><Text>Protection biométrique</Text></Pressable>}
     {!!error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
+    {!ready && !!error && <Pressable accessibilityRole="button" style={styles.secondary} onPress={() => setLoadAttempt(value => value + 1)}><Text>Réessayer le chargement des réglages</Text></Pressable>}
     {!ready && !error && <Text>Chargement…</Text>}
     {ready && preferenceDefinitions.map(definition => {
       const { key, label, kind } = definition;
@@ -116,7 +131,7 @@ export function PreferencesForm({ database, onDone, onBackup, onImport, onProtec
     {onBack && <Pressable accessibilityRole="button" disabled={busy || !ready} style={styles.secondary} onPress={() => void done(onBack)}><Text>← Retour</Text></Pressable>}
     <Pressable accessibilityRole="button" disabled={busy || (!!onBack && !ready)} style={styles.button} onPress={() => void done()}><Text style={styles.buttonText}>{doneLabel}</Text></Pressable>
   </ScrollView>;
-}
+});
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: '#fff' }, content: { padding: 20, paddingTop: 48, paddingBottom: 40, gap: 16 },
   title: { fontSize: 28, fontWeight: '700', color: '#31333f' }, help: { color: '#626570', lineHeight: 22 },

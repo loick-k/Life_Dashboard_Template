@@ -7,7 +7,7 @@ import { createBackup, restoreBackup } from '../storage/backupService';
 import { recoveryKey } from '../storage/backupFormat';
 import migrations from '../storage/generated/migrations.json';
 
-export function BackupScreen({ database, onDone, restoreOnly = false, onRestored }: { database: QueryConnection; onDone(): void; restoreOnly?: boolean; onRestored?(): Promise<void> }) {
+export function BackupScreen({ database, onDone, restoreOnly = false, onRestored, beforeRestore }: { database: QueryConnection; onDone(): void; restoreOnly?: boolean; onRestored?(): Promise<void>; beforeRestore?(): Promise<void> }) {
   const [key, setKey] = useState('');
   const [confirmation, setConfirmation] = useState('');
   const [showKey, setShowKey] = useState(false);
@@ -53,6 +53,10 @@ export function BackupScreen({ database, onDone, restoreOnly = false, onRestored
       'Les journées, séances, relations, objectifs et préférences seront remplacés par ceux de ce fichier. Pense à sauvegarder les données actuelles avant de continuer.',
       [{ text: 'Annuler', style: 'cancel', onPress: () => resolve(false) }, { text: 'Restaurer', style: 'destructive', onPress: () => resolve(true) }], { cancelable: false }));
     if (!confirmed) { setMessage('Restauration annulée.'); return; }
+    if (beforeRestore) {
+      try { await beforeRestore(); }
+      catch { setError('Restauration bloquée : un brouillon quotidien ou un réglage n’est pas confirmé. Reviens à la saisie pour le terminer ou résoudre le conflit. Aucun fichier ni brouillon effacé.'); return; }
+    }
     const result = await restoreBackup(database, migrations, encrypted, key, nativeBackupEnvironment);
     setMessage(`Restauration vérifiée : ${result.rows} lignes. Les écrans reliront les données restaurées à leur ouverture.`);
     setKey(''); setConfirmation(''); setShowKey(false);

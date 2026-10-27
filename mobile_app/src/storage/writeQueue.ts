@@ -13,6 +13,8 @@ export class WriteQueue<Row extends object, Patch extends object> {
     this.current = { ...initial }; this.validate = validate; this.write = write;
   }
   get snapshot(): Row { return Object.assign({}, this.current, ...this.pending); }
+  get pendingPatch(): Patch { return Object.assign({}, ...this.pending); }
+  get failureCause(): unknown { return this.failure; }
   get status(): 'saved' | 'saving' | 'failed' {
     return this.failure ? 'failed' : this.running || this.pending.length ? 'saving' : 'saved';
   }

@@ -18,7 +18,7 @@ const warningLabels: Record<string, string> = {
   legacy_default_flags: 'État actif absent : valeur standard V1 utilisée, source archivée',
   earlier_source_rows_retained: 'Anciennes lignes absentes du nouvel export conservées depuis le précédent import',
 };
-export function V1ImportScreen({ database, onDone, onImported }: { database: QueryConnection; onDone(): void; onImported?(): Promise<void> }) {
+export function V1ImportScreen({ database, onDone, onImported, beforeImport }: { database: QueryConnection; onDone(): void; onImported?(): Promise<void>; beforeImport?(): Promise<void> }) {
   const raw = useRef('');
   const working = useRef(false);
   const [busy, setBusy] = useState(false);
@@ -38,6 +38,7 @@ export function V1ImportScreen({ database, onDone, onImported }: { database: Que
     finally { working.current = false; setBusy(false); }
   }
   const select = () => void run(async () => {
+    if (beforeImport) await beforeImport();
     setReport(undefined); raw.current = '';
     const picked = await File.pickFileAsync({ mimeTypes: ['application/json', '*/*'] });
     if (picked.canceled || !picked.result) return;
@@ -52,6 +53,7 @@ export function V1ImportScreen({ database, onDone, onImported }: { database: Que
       'Les nouvelles journées et leurs relations seront ajoutées. Les données déjà importées resteront inchangées. Les historiques signalés seront conservés dans une archive locale incluse dans les sauvegardes V2.',
       [{ text: 'Annuler', style: 'cancel', onPress: () => resolve(false) }, { text: 'Importer', onPress: () => resolve(true) }], { cancelable: false }));
     if (!confirmed) return;
+    if (beforeImport) await beforeImport();
     const result = await importV1(database, raw.current, nativeBackupCrypto, { dryRun: false, expectedFingerprint: report.fingerprint });
     setReport(result); raw.current = ''; setMessage('Import vérifié et enregistré. Crée maintenant une sauvegarde V2 chiffrée.');
     if (onImported) try { await onImported(); } catch { setError('Les données ont bien été importées. Recharge la configuration initiale pour continuer.'); }

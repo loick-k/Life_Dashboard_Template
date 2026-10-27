@@ -5,8 +5,8 @@ import { readWorkReport } from '../storage/workReport';
 import { formatMinutes, type WorkReport } from '../domain/workReport';
 import { WorkDurationChart } from './WorkDurationChart';
 
-export function WorkBalanceCard({ database, date, revision, saved = true, weekly = false }: {
-  database: QueryConnection; date: string; revision?: number; saved?: boolean; weekly?: boolean;
+export function WorkBalanceCard({ database, date, revision, saved = true, weekly = false, refreshToken = 0 }: {
+  database: QueryConnection; date: string; revision?: number; saved?: boolean; weekly?: boolean; refreshToken?: number;
 }) {
   const [result, setResult] = useState<{ date: string; revision?: number; report: WorkReport }>();
   const [failed, setFailed] = useState(false);
@@ -14,10 +14,13 @@ export function WorkBalanceCard({ database, date, revision, saved = true, weekly
   useEffect(() => {
     let active = true;
     setFailed(false);
-    if (saved) void readWorkReport(database, date).then(report => { if (active) setResult({ date, revision, report }); },
-      () => { if (active) setFailed(true); });
+    if (saved) {
+      setResult(undefined);
+      void readWorkReport(database, date).then(report => { if (active) setResult({ date, revision, report }); },
+        () => { if (active) setFailed(true); });
+    }
     return () => { active = false; };
-  }, [database, date, revision, saved, attempt]);
+  }, [database, date, revision, saved, attempt, refreshToken]);
   if (failed) return <View><Text accessibilityRole="alert">Compteur indisponible. Aucune donnée modifiée.</Text><Pressable accessibilityRole="button" style={styles.button} onPress={() => setAttempt(n => n + 1)}><Text>Réessayer</Text></Pressable></View>;
   if (!result || result.date !== date) return <Text>Chargement du compteur…</Text>;
   const pending = !saved || result.revision !== revision;

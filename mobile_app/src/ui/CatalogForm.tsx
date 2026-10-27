@@ -4,7 +4,7 @@ import * as Crypto from 'expo-crypto';
 import type { SQLiteDatabase } from 'expo-sqlite';
 import { Catalogs, FRIEND_CATEGORIES, type CatalogItem, type CatalogKind, type LogItem } from '../storage/catalogs';
 
-export type CatalogFormHandle = { flush(): Promise<void> };
+export type CatalogFormHandle = { flush(): Promise<void>; settle(): Promise<void>; hasUnconfirmed(): boolean };
 export const CatalogForm = forwardRef<CatalogFormHandle, { database: SQLiteDatabase; entryId: string; kind: CatalogKind }>(function CatalogForm({ database, entryId, kind }, ref) {
   const repo = useMemo(() => new Catalogs(database, Crypto.randomUUID, kind), [database, kind]);
   const [items, setItems] = useState<CatalogItem[]>([]);
@@ -30,7 +30,10 @@ export const CatalogForm = forwardRef<CatalogFormHandle, { database: SQLiteDatab
     }).finally(() => { pending.current = null; setBusy(false); });
   };
   useEffect(() => { run(async () => {}); }, [repo, entryId]);
-  useImperativeHandle(ref, () => ({ flush: async () => {
+  useImperativeHandle(ref, () => ({
+    settle: async () => { if (pending.current) await pending.current; if (failed.current) throw new Error('Journal non confirmé'); },
+    hasUnconfirmed: () => !!pending.current || failed.current || !!label.trim(),
+    flush: async () => {
     if (pending.current) await pending.current;
     if (!ready.current || failed.current || label.trim()) throw new Error('Catalogue non confirmé ou ajout non terminé');
   } }));

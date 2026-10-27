@@ -16,9 +16,12 @@ données synthétiques, pas de Neon/push, plafond cumulatif disque 5 Go inchang�
 | Travail : chevauchements | Exclusion des cumuls et avertissement ; anciennes valeurs sources non réécrites ; tests jour/semaine/nuit | Android |
 | Sommeil dérivé des horaires, sieste et cohérence | Calcul nuit/minuit, modes calculé/manuel/importé, avertissement de désaccord ; tests SQLite | Test d'écran et Android |
 | Estimation nutritionnelle obsolète après changement | Migration 005, fraîcheur/version propres, valeurs/provenance conservées, exclusion visible et carte unique | Test d'écran et Android, calcul en ligne encore à porter |
-| Chargement journalier récupérable | À corriger | Réessayer, navigation indépendante |
-| Conflit de révision récupérable sans perdre le brouillon | À corriger | Résolution explicite, tests |
-| Menu principal, date commune et retour Android | À corriger | Routes explicites, contexte, tests d'interaction |
+| Chargement journalier récupérable | Réessayer jour/sport/réglages ; menu indépendant ; tests React | Android |
+| Conflit de révision récupérable sans perdre le brouillon | Comparaison champ par champ et CAS ; deuxième conflit refusé ; tests React/SQLite | Android |
+| Menu principal, date commune et retour Android | Éditeurs conservés, date Bilan et historique réel de retour ; tests React avec Back simulé | Retour physique Android |
+| Bilan actualisé après saisie | Relecture compteur et séries au retour, même date ; test +1 h et poids modifié | Android |
+| Barrière sur chargement sportif lent/en échec | Attend les trois initialisations et toutes les files ; échec réessayable ; tests React | Android |
+| Notes/durées sociales après décochage/recochage | Perte reproduite dans l'audit approfondi : DELETE du journal | À corriger sans perte, migration/sauvegarde/import/tests |
 | Formats heures/minutes et calendrier français | À corriger | Contrôles tactiles et tests |
 | Sport moins encombrant | Cartes repliables, champs invalides révélés lors du flush | Vérification téléphone |
 | Enregistré distinct d'étape validée ; absence distincte de zéro | À corriger | Progression, temps pour moi, messages |
@@ -35,7 +38,7 @@ données synthétiques, pas de Neon/push, plafond cumulatif disque 5 Go inchang�
 | Todoist optionnel | À porter | Secrets appareil, interface et erreurs réseau |
 | Analyse nutritionnelle explicite optionnelle | À porter | Secrets, calcul asynchrone, résultat unique |
 | Clavier, encoches, retour en haut, grandes polices/accessibilité | À vérifier/corriger | Écrans et mesures téléphone |
-| Couverture d'interactions | À ajouter | Les tests Node actuels ne montent pas encore les écrans |
+| Couverture d'interactions | Neuf tests navigation/React ; composants et SQLite réels, ports natifs simulés | Étendre aux autres parcours et essais Android |
 
 ## Lot intégrité notes/sport/travail
 
@@ -66,3 +69,15 @@ nouvel import V1 finalise la fraîcheur uniquement des nouvelles journées, jama
 import déjà modifié en V2. Rollback migration/journal et injection de métadonnées
 futures refusée testés. 84 tests Node, TypeScript et 10 tests Python locaux réussis.
 Tests d'écran et validation Android encore ouverts. Pas de nouveau build/outillage.
+
+## Lot navigation et récupération
+
+93 tests Node et TypeScript réussis. Tests React réels (ports Android simulés) :
+sport invalide corrigé puis suppression confirmée d'un seul créneau, chargement
+lent avec une écriture en échec, retour direct vers l'accueil, chargement quotidien
+réessayé, comparaison/résolution de révision, réglages illisibles réessayés,
+menu utilisable malgré erreur, conservation d'horaires complets/incomplets entre
+écrans, restauration bloquée par ce brouillon. Compteur et poids du Bilan sont
+relus au retour. Les sauvegardes n'annoncent pas inclure des brouillons non confirmés.
+Pas de preuve native : biométrie, rendu/clavier/insets et arrêt forcé restent ouverts.
+La matrice de parité et tous les lots non réalisés ci-dessus restent requis.
