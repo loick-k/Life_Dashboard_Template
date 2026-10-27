@@ -11,6 +11,22 @@ remplacement forcé de la V1 et aucune synchronisation automatique des deux base
 
 ## État vérifié dans le dépôt
 
+### Reprise audit — durée de travail importée — 27/10/2026
+
+Le nouvel audit a reproduit une perte : changer seulement work_mode recalculait
+la durée depuis des horaires absents/partiels et remplaçait une durée V1 valide
+par null. DailyEntries recalcule maintenant uniquement après changement réel d'un
+des six horaires. Un patch d'horaires identiques ne détruit pas la durée historique.
+Valeurs zéro et durées importées conservées ; une suppression volontaire d'un
+horaire réellement présent rend toujours le calcul incomplet, sans effacer le reste.
+
+Trois tests supplémentaires SQLite/React : modes successifs, durées 462/447/0,
+horaires partiels, patch inchangé, changement/effacement réel et Continuer/Retour.
+133 tests Node dans l'arbre courant et TypeScript réussis (dont les huit tests PDF
+du lot encore non commité). Ce lot ne stage que sa correction/tests/documentation.
+PDF préexistant conservé. Aucun build, téléchargement, donnée réelle ou changement V1.
+Day off sans horaires, récupérations de conflit, parité et preuve Android restent ouverts.
+
 ### Corrections audit — périodes et historique complet — 27/10/2026
 
 Évaluation précédente commitée 7a4b93c. Bilan : périodes V1 7 jours, 1 mois

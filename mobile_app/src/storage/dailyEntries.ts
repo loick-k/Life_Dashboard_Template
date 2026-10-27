@@ -93,7 +93,10 @@ export class DailyEntries {
     const changed = Object.fromEntries(fields);
     const merged = { ...current, ...changed };
     const put = (name: string, value: BindValue) => { const existing = updates.findIndex(([key]) => key === name); if (existing >= 0) updates[existing] = [name, value]; else updates.push([name, value]); };
-    if (fields.some(([field]) => field.startsWith('work_'))) {
+    // A change of day type is not a request to replace a historical duration.
+    // In particular, V1 imports can have a valid stored duration and partial/no clocks.
+    const workClocks = ['work_start_time', 'work_morning_end_time', 'work_afternoon_start_time', 'work_end_time', 'work_third_start_time', 'work_third_end_time'];
+    if (fields.some(([field, value]) => workClocks.includes(field) && value !== current[field])) {
       updates.push(['work_duration_minutes', workDuration(merged as WorkTimes)]);
     }
     if (fields.some(([field]) => ['sleep_bedtime', 'sleep_wake_time', 'sleep_hours', 'sleep_duration_mode'].includes(field))) {

@@ -14,6 +14,7 @@ données synthétiques, pas de Neon/push, plafond cumulatif disque 5 Go inchang�
 | Retrait complet d'une séance | Action explicite confirmée, patch atomique des 3 champs à null ; autre séance/poids/bilan préservés | Test d'écran et Android |
 | Travail : journée continue + créneau 3 | Calcul 08–16 + 18–19 = 540 min ; incomplet reste null | Android |
 | Travail : chevauchements | Exclusion des cumuls et avertissement ; anciennes valeurs sources non réécrites ; tests jour/semaine/nuit | Android |
+| Travail : durée historique après changement de mode | Recalcul seulement si un des six horaires change réellement ; durées V1 sans/avec horaires partiels et zéro conservés, tests SQLite/React | Android ; Day off sans horaires à expliciter |
 | Sommeil dérivé des horaires, sieste et cohérence | Calcul nuit/minuit, modes calculé/manuel/importé, avertissement de désaccord ; tests SQLite | Test d'écran et Android |
 | Estimation nutritionnelle obsolète après changement | Migration 005, fraîcheur/version propres, valeurs/provenance conservées, exclusion visible et carte unique | Test d'écran et Android, calcul en ligne encore à porter |
 | Chargement journalier récupérable | Réessayer jour/sport/réglages ; menu indépendant ; tests React | Android |
@@ -137,3 +138,13 @@ non renseignées ne deviennent pas artificiellement zéro à l'ouverture d'une j
 Fenêtres et agrégats mensuels vérifiés avec Python et la fonction V1 réelle isolée.
 Semaines explicitement lundi–dimanche plutôt que la fréquence V1 finissant lundi.
 Rendu, mémoire et fluidité restent à mesurer sur téléphone, pas seulement sur PC.
+
+## Reprise audit — conservation du travail
+
+133 tests Node dans l'arbre courant (huit PDF encore non commités), TypeScript valide.
+Trois tests nouveaux couvrent la perte reproduite de 7h42 après changement de mode,
+une durée historique de 7h27 avec début isolé, zéro, patch inchangé et tous les modes.
+Modifier réellement un horaire conserve le recalcul atomique et les autres indicateurs.
+Test du formulaire réel avec Continuer/Retour et relecture du compteur partagé.
+Pas de modification de schéma ni migration corrective des données historiques : une
+durée déjà perdue ne peut pas être reconstruite sans source/sauvegarde antérieure.
