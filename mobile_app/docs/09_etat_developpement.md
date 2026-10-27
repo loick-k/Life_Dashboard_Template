@@ -39,7 +39,7 @@ contrôle de disponibilité de son déploiement distant n'a été effectué dans
 
 ## Vérifié à cette clôture
 
-- 193 tests Node réussis, dont SQLite réel sur données synthétiques et réouverture,
+- 198 tests Node réussis, dont SQLite réel sur données synthétiques et réouverture,
   AES-GCM réel via Node, fichier altéré/mauvaise clé et restauration interrompue.
 - TypeScript sans erreur ; `git diff --check` sans anomalie.
 - 16 tests Python locaux réussis : migrations/schéma et parité travail, scores,
@@ -69,8 +69,8 @@ contrôle de disponibilité de son déploiement distant n'a été effectué dans
    des services externes et finitions tactiles. Sommeil, mesures précédentes,
    périodes, scores/évaluation, récurrences, journaux et rapport PDF sont désormais
    connectés et testés localement (docs/06 et 14), mais pas validés sur Android.
-   Journal durable des champs quotidiens simples connecté ; étendre aux sports,
-   journaux, ajouts de répertoire et réglages avant de promettre tout brouillon
+   Journal durable des champs quotidiens, sports et journaux connecté ; étendre
+   aux ajouts de répertoire et réglages avant de promettre tout brouillon
    retrouvé après arrêt forcé. Les trois défauts audit (comparaison, sortie en
    erreur, date Paris) ont des corrections/tests dédiés, preuve native restant due.
 6. Intégrations facultatives Todoist et analyse nutritionnelle, saisie/protection/

@@ -199,7 +199,7 @@ export const SportForm = forwardRef<SportFormHandle, { database: SQLiteDatabase;
         ])}><Text>Supprimer cette séance</Text></Pressable>
         </>}
         {journal?.restored && <Text accessibilityRole="alert">Brouillon sportif retrouvé sur cet appareil. Les valeurs incomplètes restent à terminer ; une intention non confirmée doit être comparée. Aucun rejeu automatique.</Text>}
-        {journal?.storageFailed() && <Pressable accessibilityRole="button" disabled={recovering || !!review} style={styles.choice} onPress={() => { if (!recovery.current && !currentReview.current) void journal.retry(); }}><Text>Réessayer la conservation de la séance {row.position}</Text></Pressable>}
+        {journal?.storageFailed() && <Pressable accessibilityRole="button" disabled={recovering || !!review} style={styles.choice} onPress={() => { if (!recovery.current && !currentReview.current) void journal.retry().then(() => { if (!journal.storageFailed() && draft.status === 'saved') setError(''); refresh(); }); }}><Text>Réessayer la conservation de la séance {row.position}</Text></Pressable>}
         {(draft.status === 'saving' || journal?.isWorking()) && <Text accessibilityLiveRegion="polite">Enregistrement en cours…</Text>}
         {!!journal?.invalid.size && <Text accessibilityRole="alert" style={styles.error}>Brouillon incomplet : termine les valeurs signalées ou efface-les explicitement.</Text>}
         {draft.status === 'failed' && <>

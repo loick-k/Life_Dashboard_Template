@@ -11,6 +11,29 @@ remplacement forcé de la V1 et aucune synchronisation automatique des deux base
 
 ## État vérifié dans le dépôt
 
+### Audit approfondi — notes et durées de journaux durables — 27/10/2026
+
+Sport commité c4df30a. Le même socle journalise les notes sociales/objectifs, le
+contexte et la durée sociale AVANT SQL. Buffers incomplets retrouvés à l'identique
+et détails dépliés ; valeur valide non confirmée => comparaison explicite, pas de
+rejeu ni d'interaction/contribution ajoutée. Cases included/worked, UUID, dates et
+autres journaux inchangés. Conflit supplémentaire refusé, choix par champ conservés.
+
+Barrières de sélection/désélection, archive, navigation et restauration attendent
+journalisation, écriture et nettoyage. Relire après un changement de case ne jette
+pas le brouillon. Statuts distinguent brouillon retrouvé/incomplet, conservation
+non confirmée et SQL enregistré. Réessai du nettoyage ne rejoue pas SQL et retire
+son ancien message d'erreur, également corrigé pour le sport.
+
+198 tests Node, TypeScript et 16 tests Python réussis. Cinq nouveaux tests React/
+SQLite : contexte vide/durée incomplète après remontage, Unicode, note d'objectif
+non travaillé interrompue puis second conflit, panne après SQL et réessai local,
+restauration excluant/préservant les buffers privés, barrière pendant lecture lente.
+Les brouillons restent hors sauvegarde portable (valeurs confirmées uniquement).
+Preuve d'arrêt forcé Android toujours requise. Restent ajouts de répertoire et
+réglages à rendre durables, intégrations/ergonomie/parité et validation Android.
+V1 et fichiers Todoist préexistants inchangés ; aucun téléchargement/build/push.
+
 ### Audit approfondi — brouillons sportifs durables — 27/10/2026
 
 Champs quotidiens commités bed157e. Trois séances : durée/distance incomplètes,
