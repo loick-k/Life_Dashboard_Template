@@ -1,4 +1,4 @@
-import { DAILY_WORK_TARGET_MINUTES, workBalance, inspectWorkSchedule, type WorkTimes } from './work.ts';
+import { DAILY_WORK_TARGET_MINUTES, workBalance, inspectWorkSchedule, effectiveWorkMinutes, hasWorkClocks, type WorkTimes } from './work.ts';
 import { shiftDate } from './dates.ts';
 import { validateDate } from '../storage/dailyEntries.ts';
 
@@ -42,10 +42,9 @@ export function buildWorkReport(records: readonly WorkRecord[], date: string, we
     seen.add(row.entry_date);
     const overlapping = inspectWorkSchedule(row).issue === 'overlap';
     if (overlapping) report.invalidSchedules.push(row.entry_date);
-    const minutes = overlapping ? null : row.work_duration_minutes;
-    if (minutes !== null && (!Number.isSafeInteger(minutes) || minutes < 0)) throw new Error('Durée enregistrée invalide.');
+    const minutes = effectiveWorkMinutes(row);
     const balance = workBalance(minutes, row.work_mode === 'Day off', DAILY_WORK_TARGET_MINUTES);
-    const hasClocks = [row.work_start_time, row.work_morning_end_time, row.work_afternoon_start_time, row.work_end_time, row.work_third_start_time, row.work_third_end_time].some(Boolean);
+    const hasClocks = hasWorkClocks(row);
     if (row.work_mode || minutes !== null || hasClocks) {
       const mode = row.work_mode || 'Non renseigné';
       report.typeCounts[mode] = (report.typeCounts[mode] ?? 0) + 1;

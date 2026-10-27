@@ -1,7 +1,7 @@
 import { shiftDate } from './dates.ts';
 import { validateDate } from '../storage/dailyEntries.ts';
 import { estimateFields, hasEstimate } from './nutrition.ts';
-import { inspectWorkSchedule, workBalance, type WorkTimes } from './work.ts';
+import { effectiveWorkMinutes, workBalance, type WorkState } from './work.ts';
 
 type Aggregation = 'sum' | 'mean' | 'latest';
 const metric = (key: string, label: string, group: string, unit: string, aggregate: Aggregation = 'sum') => ({ key, label, group, unit, aggregate });
@@ -55,8 +55,7 @@ export function prepareMetricRow(row: MetricRow): MetricRow {
   const usable = row.nutrition_estimate_stale !== 1;
   const kcal = usable ? numeric(row.kcal) : null, sportKcal = usable ? numeric(row.sport_kcal_burned) : null;
   const me = ['writing', 'meditation', 'relaxation', 'outings'].map(name => numeric(row[`me_time_${name}_minutes`])).filter(value => value !== null);
-  const work = inspectWorkSchedule(row as WorkTimes).issue === 'overlap' ? null : numeric(row.work_duration_minutes);
-  if (work !== null && (!Number.isSafeInteger(work) || work < 0)) throw new Error('Durée de travail invalide');
+  const work = effectiveWorkMinutes(row as WorkState);
   const observed: Record<string, number | null> = {};
   // SQL COUNT returns zero for untouched categories too. Only explicit daily tracking
   // or a retained journal makes that zero an observation; opening a day is not one.

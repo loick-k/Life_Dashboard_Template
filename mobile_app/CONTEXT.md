@@ -11,6 +11,23 @@ remplacement forcé de la V1 et aucune synchronisation automatique des deux base
 
 ## État vérifié dans le dépôt
 
+### Reprise audit — Day off explicite et calcul partagé — 27/10/2026
+
+PDF commité cc44e76. effectiveWorkMinutes centralise la lecture du travail pour
+formulaire, compteur/PDF, séries et évaluation. Day off sans horaires ni durée
+connue signifie zéro travaillé ; un horaire partiel reste incomplet, une durée
+importée (zéro compris) reste prioritaire, les chevauchements restent exclus.
+Ce zéro de repos n'est pas écrit en SQLite : revenir sur Bureau ne crée donc pas
+une journée faussement travaillée à zéro avec un débit de 7h42. Aucun changement
+du calcul workBalance(null), des sources historiques ou de la pondération V1.
+
+141 tests Node et TypeScript réussis ; trois nouveaux tests domaines/SQLite/React
+couvrent tous les consommateurs, le caractère lecture seule, Continuer/Retour et
+le changement de mode. Trois PDF fictifs existants toujours vérifiés. Un attendu
+de test du score travail a été aligné sur la vraie formule V1 (zéro heure ne signifie
+pas automatiquement zéro point), sans modifier cette formule. Pas de nouveau
+build, téléchargement, donnée réelle, modification V1 ou push. Preuve Android ouverte.
+
 ### Parité — rapport PDF local du travail — 27/10/2026
 
 Récupérations commitée 0d15c03. Lot PDF précédemment en cours maintenant vérifié :

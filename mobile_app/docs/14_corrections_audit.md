@@ -14,7 +14,8 @@ données synthétiques, pas de Neon/push, plafond cumulatif disque 5 Go inchang�
 | Retrait complet d'une séance | Action explicite confirmée, patch atomique des 3 champs à null ; autre séance/poids/bilan préservés | Test d'écran et Android |
 | Travail : journée continue + créneau 3 | Calcul 08–16 + 18–19 = 540 min ; incomplet reste null | Android |
 | Travail : chevauchements | Exclusion des cumuls et avertissement ; anciennes valeurs sources non réécrites ; tests jour/semaine/nuit | Android |
-| Travail : durée historique après changement de mode | Recalcul seulement si un des six horaires change réellement ; durées V1 sans/avec horaires partiels et zéro conservés, tests SQLite/React | Android ; Day off sans horaires à expliciter |
+| Travail : durée historique après changement de mode | Recalcul seulement si un des six horaires change réellement ; durées V1 sans/avec horaires partiels et zéro conservés, tests SQLite/React | Android |
+| Travail : Day off sans horaires | Zéro explicite à la lecture seulement, partagé par formulaire/compteur/PDF/séries/évaluation ; retour Bureau sans faux débit ; tests SQLite/React | Android |
 | Sommeil dérivé des horaires, sieste et cohérence | Calcul nuit/minuit, modes calculé/manuel/importé, avertissement de désaccord ; tests SQLite | Test d'écran et Android |
 | Estimation nutritionnelle obsolète après changement | Migration 005, fraîcheur/version propres, valeurs/provenance conservées, exclusion visible et carte unique | Test d'écran et Android, calcul en ligne encore à porter |
 | Chargement journalier récupérable | Réessayer jour/sport/réglages ; menu indépendant ; tests React | Android |

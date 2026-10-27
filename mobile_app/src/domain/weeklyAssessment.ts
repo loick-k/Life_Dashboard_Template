@@ -1,5 +1,5 @@
 import { validateDate } from '../storage/dailyEntries.ts';
-import { inspectWorkSchedule, type WorkTimes } from './work.ts';
+import { inspectWorkSchedule, effectiveWorkMinutes, type WorkState } from './work.ts';
 import { shiftDate } from './dates.ts';
 import { preferenceDefinitions, validatePreference, type PreferenceKey, type PreferenceValue } from './preferences.ts';
 import type { MetricRow } from './weeklyMetrics.ts';
@@ -37,7 +37,8 @@ export function buildWeeklyAssessment(source: readonly MetricRow[], date: string
     if (row.entry_date < monday || row.entry_date > date) continue;
     if (seen.has(row.entry_date)) throw new Error('Journée dupliquée'); seen.add(row.entry_date);
     const next = { ...row };
-    if (inspectWorkSchedule(row as WorkTimes).issue === 'overlap') { next.work_duration_minutes = null; excludedWorkDates.push(row.entry_date); }
+    next.work_duration_minutes = effectiveWorkMinutes(row as WorkState);
+    if (inspectWorkSchedule(row as WorkState).issue === 'overlap') excludedWorkDates.push(row.entry_date);
     if (row.nutrition_estimate_stale === 1) {
       if (row.has_nutrition_estimate === 1 || ['kcal', 'sport_kcal_burned', 'proteins_g', 'carbs_g', 'fats_g'].some(key => row[key] !== null && row[key] !== undefined)) staleEstimates++;
       for (const key of ['kcal', 'sport_kcal_burned', 'proteins_g', 'carbs_g', 'fats_g']) next[key] = null;

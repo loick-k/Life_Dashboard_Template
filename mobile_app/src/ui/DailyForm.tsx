@@ -16,7 +16,7 @@ import { Preferences } from '../storage/preferences';
 import { standardWorkPatch, previousWorkPatch } from '../storage/workShortcuts';
 import type { DailyPatch } from '../storage/dailyEntries';
 import { WorkBalanceCard } from './WorkBalanceCard';
-import { inspectWorkSchedule, type WorkTimes } from '../domain/work';
+import { inspectWorkSchedule, effectiveWorkMinutes, type WorkState, type WorkTimes } from '../domain/work';
 import { sleepDurationHours, sleepDisagrees } from '../domain/sleep';
 import { EnergyCard } from './EnergyCard';
 import { formatMinutes } from '../domain/workReport';
@@ -319,7 +319,7 @@ export const DailyForm = forwardRef<EditorHandle, { database: SQLiteDatabase; in
           setRaw(previous => { const next = { ...previous, [item.key]: '' }; delete next[`${item.key}.hours`]; delete next[`${item.key}.minutes`]; return next; }); setInvalid(previous => { const next = new Set(previous); next.delete(item.key); return next; }); save(item.key, null);
         } }])}><Text style={styles.clear}>Effacer</Text></Pressable>}
       </View>)}
-      {section.id === 'work' && <Text style={styles.total}>Temps travaillé : {inspectWorkSchedule(snapshot as WorkTimes).issue === 'overlap' ? 'n.c.' : snapshot?.work_duration_minutes ?? 'n.c.'} min</Text>}
+      {section.id === 'work' && <Text style={styles.total}>Temps travaillé : {formatMinutes(effectiveWorkMinutes(snapshot as WorkState))}</Text>}
       {section.id === 'work' && inspectWorkSchedule(snapshot as WorkTimes).issue === 'overlap' && <Text accessibilityRole="alert" style={styles.error}>Des créneaux se chevauchent. Les horaires sont enregistrés, mais la journée est exclue du compteur jusqu’à correction.</Text>}
       {section.id === 'me-time' && <Text style={styles.total}>Temps pour moi total : {formatMinutes(sumKnownMinutes(section.fields.map(item => snapshot?.[item.key])))}</Text>}
       {['nutrition', 'summary'].includes(section.id) && <EnergyCard database={database} entryId={draft.snapshot.entry_id} revision={draft.snapshot.revision} saved={draft.status === 'saved'} />}
