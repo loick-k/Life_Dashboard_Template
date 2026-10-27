@@ -4,6 +4,15 @@ Chaque lot se termine par un commit indépendant et des tests. Continuer les lot
 locaux autorisés sans confirmation de routine. Import réel, push et services
 externes nécessitent une autorisation explicite.
 
+## Décision produit V2 — 27/10/2026
+
+La V2 sera une application Android autonome sans portail de connexion ni compte
+utilisateur distant. Les données seront locales et les fonctions principales
+devront marcher hors ligne. La V1 Streamlit/Neon reste inchangée. Import V1/V2
+explicite, sans synchronisation automatique. Voir
+[`15_decision_v2_locale_sans_compte.md`](15_decision_v2_locale_sans_compte.md)
+pour la justification, les intégrations et les choix de sécurité encore ouverts.
+
 ## Étape 0 - Référence et sauvegarde
 
 - [x] Capturer le commit et les résultats des tests.
@@ -47,14 +56,14 @@ repositories SQL testés sur SQLite, analyse nutritionnelle explicite et fronti�
 
 - [x] Définir SQLite comme stockage principal mono-utilisateur de la V2.
 - [x] Définir un schéma local à UUID, révisions, contraintes et index.
-- [x] Définir la frontière de chiffrement Android Keystore.
-- [x] Définir le format et la vérification des sauvegardes chiffrées.
+- [ ] Décider et valider les protections locales (chiffrement/biométrie) sur Android.
+- [ ] Décider et valider la stratégie de sauvegarde et de restauration.
 - [x] Tester les migrations locales et leur idempotence.
 - [x] Conserver Streamlit/Neon comme V1 fonctionnelle sans les modifier.
 
 Condition de sortie : le schéma local peut être créé et vérifié sans Neon. Condition
-remplie le 15/09/2026 ; l'implémentation Android du chiffrement reste un critère bloquant
-du socle mobile, car elle dépendra de la bibliothèque retenue.
+remplie le 15/09/2026. Les prototypes ultérieurs de chiffrement, biométrie et sauvegarde
+ne ferment pas les décisions de sécurité, qui restent à étudier avant usage réel.
 
 ## Étape 3B - Import contrôlé depuis Neon
 
@@ -112,12 +121,12 @@ reprise, absence d'effacement et comparaison fonctionnelle/visuelle avec la V1.
 
 ## Lot sauvegarde et restauration
 
-- Export chiffré/authentifié et code de récupération implémentés, écran branché
-  aux Réglages ; vérification réelle sur Android encore requise.
+- Prototype d'export chiffré/code de récupération et écran Réglages présents ;
+  stratégie à décider avant de retenir ou de valider ce mécanisme.
 - Restauration dans une base vierge et comparaison des valeurs/relations testées
   sur SQLite Node ; adaptateur temporaire SQLCipher écrit, exécution native à faire.
 - Tests de code incorrect, fichier altéré et interruption SQL avec rollback réussis.
-- Ajouter une destination automatique facultative après validation de l'export.
+- Évaluer les destinations après décision sur la stratégie de sauvegarde.
 
 ## Étape 7 - Bilan et intégrations
 

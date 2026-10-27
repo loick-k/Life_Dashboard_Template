@@ -1,5 +1,14 @@
 # État du développement V2 — actualisé le 27/10/2026
 
+## Décision produit — 27/10/2026
+
+La V2 sera une application Android autonome sans portail de connexion ni compte
+utilisateur distant. Ses données seront stockées localement et ses fonctions
+principales fonctionneront hors ligne. La V1 Streamlit/Neon reste inchangée.
+Voir [`15_decision_v2_locale_sans_compte.md`](15_decision_v2_locale_sans_compte.md).
+Biométrie, chiffrement et sauvegarde/restauration restent à étudier ; le code
+présent sur ces sujets est un prototype et non une politique adoptée.
+
 ## Conclusion
 
 La V2 possède un socle local et plusieurs parcours métier connectés, mais n'est
@@ -14,8 +23,8 @@ commit local uniquement, pas de lot suivant ni de push sans nouvelle demande.
 ## Implémenté dans le code
 
 - Expo/React Native/TypeScript, schéma local et migrations atomiques avec checksums.
-- Ouverture SQLCipher obligatoire et clé dans SecureStore, sans repli en clair.
-  Coordination testée ; preuve native de chiffrement/récupération encore nécessaire.
+- Prototype d'ouverture SQLCipher et de gestion de clé SecureStore ; technologie,
+  politique et garanties natives à décider et vérifier avant usage réel.
 - Écritures ciblées, révisions, files de sauvegarde, erreurs explicites.
 - Parcours quotidien 13 catégories + résumé, progression, reprise et historique.
 - Horaires partiels/3 créneaux, sport incomplet, minutes/distances, corps,
@@ -27,17 +36,14 @@ commit local uniquement, pas de lot suivant ni de push sans nouvelle demande.
 - Compteur travail commun formulaire/Bilan, référence 7 h 42, suivi hebdomadaire.
 - 27 autres séries hebdomadaires, courbes/barres natives, données absentes distinctes
   des zéros, statistiques sans multiplication des relations.
-- Assistant initial en mode d'essai : progression persistante, 7 écrans, préférences,
-  conservation des données présentes et sauvegarde/restauration V2 reliées.
-  Import V1 et protection biométrique supplémentaire connectés, validation native à faire.
-- Sauvegarde locale AES-GCM et code de récupération, restauration transactionnelle,
-  contrôle dans une base temporaire et écran accessible depuis Réglages.
-  APIs Expo/SQLCipher/choix de dossier restant à valider sur Android.
+- Assistant initial en mode d'essai : progression persistante, 7 écrans et réglages.
+  Import V1 connecté ; biométrie et sauvegarde expérimentales, à arbitrer et valider.
+- Prototype d'export AES-GCM/code de récupération et de restauration transactionnelle.
+  Choix de stratégie, destination et comportement Android encore ouverts.
 - Convertisseur V1 avec simulation, reçus/archives, collisions refusées et rejeu
   préservant les modifications V2. Outil de préparation d'instantané et route d'import.
-- Protection de la clé SQLCipher par biométrie forte, activation/désactivation
-  authentifiées, politique reprenable, absence de fallback et couverture des éditeurs
-  au retour d'arrière-plan. FLAG_SECURE généré avant le rendu React.
+- Prototype de biométrie pour la clé SQLCipher et FLAG_SECURE ; aucune décision de
+  politique n'est adoptée avant étude et validation sur appareil.
 - Signature stable privée hors Git, plugin Expo/Gradle reproductible sans clé debug
   en release, contrôle du certificat attendu et scripts avec garde-fous disque.
 
@@ -57,15 +63,15 @@ commit local uniquement, pas de lot suivant ni de push sans nouvelle demande.
 
 ## Reste à réaliser avant livraison
 
-1. Valider sur Android SQLCipher/Keystore, saisie, retour, arrêt forcé, redémarrage
-   et mise à jour. Mesurer ergonomie/performance ; ne pas installer un émulateur
-   volumineux sans vérifier le budget disque.
+1. Valider sur Android le stockage local, la saisie, le retour, l'arrêt forcé,
+   le redémarrage et la mise à jour. Mesurer ergonomie/performance ; ne pas installer
+   un émulateur volumineux sans vérifier le budget disque. Tester le chiffrement
+   seulement après décision.
 2. Finaliser et valider la navigation de production et la première utilisation :
-   le parcours d'essai, l'import et la protection biométrique sont branchés ;
-   intégrations à réaliser, puis les gates Android à lever.
-3. Valider sur Android la sauvegarde chiffrée et la récupération indépendante du
-   téléphone : création/lecture de fichier, base temporaire chiffrée, arrêt forcé
-   et restauration entre deux installations. Le code et les tests locaux existent.
+   le parcours d'essai et l'import sont branchés. Réviser les étapes qui exposent
+   les prototypes de protection/sauvegarde après les décisions.
+3. Décider la stratégie de sauvegarde/restauration puis la valider sur Android :
+   création/lecture, récupération, arrêt forcé et restauration entre installations.
 4. Valider l'import V1 sur Android puis préparer avec l'utilisateur l'import réel.
    Conversion unités/relations, conflits, idempotence, rapport et archives testés
    localement sur sources synthétiques. Import personnel après accord explicite.
@@ -77,8 +83,8 @@ commit local uniquement, pas de lot suivant ni de push sans nouvelle demande.
    ces parcours sur appareil avant de promettre tout brouillon
    retrouvé après arrêt forcé. Les trois défauts audit (comparaison, sortie en
    erreur, date Paris) ont des corrections/tests dédiés, preuve native restant due.
-6. Intégrations facultatives Todoist et analyse nutritionnelle, saisie/protection/
-   suppression des secrets et erreurs réseau non bloquantes.
+6. Intégrations facultatives Todoist et analyse nutritionnelle, secrets et erreurs
+   réseau non bloquantes ; aucun service distant ne doit être requis par le cœur local.
 7. Établir le pic disque puis compiler l'APK release autonome avec la signature
    préparée hors Git, vérifier installation/mise à jour et fournir son SHA-256.
    Validation réelle et période d'observation de 14 jours.

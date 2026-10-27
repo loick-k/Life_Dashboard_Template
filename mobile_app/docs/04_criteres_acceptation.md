@@ -19,9 +19,15 @@
 ## Sécurité
 
 - Aucun identifiant Neon ou OpenAI n'est présent dans l'APK.
-- Les éventuelles intégrations en ligne sont authentifiées sans secret embarqué.
+- Le parcours principal ne comporte ni portail de connexion ni compte utilisateur
+  distant ; saisie, consultation et bilans principaux fonctionnent hors ligne.
+- Les éventuelles intégrations en ligne ont leur authentification propre, demeurent
+  facultatives et ne bloquent pas les fonctions locales.
 - Les journaux ne contiennent ni repas, ni mesures, ni relations, ni jetons.
-- Les données locales sensibles sont protégées selon les capacités Android.
+- Les choix de biométrie, de chiffrement et de sauvegarde/restauration sont arrêtés
+  après évaluation distincte, puis validés sur Android avant usage réel.
+- La première utilisation ne présente pas ces mécanismes comme requis ou déjà
+  adoptés tant que les choix sont ouverts.
 - Les secrets et sauvegardes sont exclus de Git.
 
 ## Performance

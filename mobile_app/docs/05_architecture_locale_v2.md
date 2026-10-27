@@ -2,37 +2,42 @@
 
 ## Décision
 
-La V2 mobile est une application locale d'abord, mono-utilisateur et sans dépendance
-à Neon. SQLite devient sa base principale. Streamlit et Neon restent la V1 fonctionnelle
-pendant l'import initial et la période de comparaison ; cette étape 3A ne modifie pas Neon.
+La V2 est une application Android autonome, mono-utilisateur, sans portail de
+connexion ni compte Life Dashboard distant. SQLite locale est sa source de vérité.
+La saisie, l'historique et les bilans principaux doivent fonctionner hors ligne.
+Streamlit et Neon restent le fonctionnement de la V1 et ne sont pas modifiés par
+cette décision. Aucun remplacement ni synchronisation automatique n'est prévu ;
+l'import entre versions reste explicite. Voir la décision produit détaillée dans
+[`15_decision_v2_locale_sans_compte.md`](15_decision_v2_locale_sans_compte.md).
 
 ## Frontières
 
 - L'APK ne contient aucun secret Neon, OpenAI ou Todoist.
 - Le domaine partagé valide les valeurs avant leur écriture.
 - Le repository mobile sera la seule couche autorisée à ouvrir SQLite.
-- Les analyses externes restent optionnelles et ne bloquent jamais la sauvegarde locale.
+- Les intégrations externes nécessitant compte ou réseau (Todoist, analyses distantes)
+  sont séparées de l'accès à l'application et doivent rester facultatives.
 - Les dates métier utilisent `Europe/Paris`; les horodatages techniques sont en UTC ISO 8601.
 
-## Stockage et confidentialité
+## Stockage et confidentialité — à décider
 
-Le fichier SQLite doit être créé dans l'espace privé de l'application Android. En
-production, son chiffrement au repos est obligatoire. La clé sera créée aléatoirement et
-protégée par Android Keystore ; elle ne sera jamais stockée dans SQLite, les préférences
-ou Git. La bibliothèque Android/Expo sera validée avant le socle mobile.
+La base doit rester locale à l'application sur le téléphone. Le mécanisme de
+protection au repos, la gestion des clés et le rôle éventuel de la biométrie ne
+sont pas encore des choix produit arrêtés. SQLCipher, Keystore/SecureStore et la
+biométrie présents dans le prototype doivent être évalués et vérifiés sur Android
+avant décision. Aucune authentification distante n'est requise pour le profil local.
 
 Les journaux ne doivent jamais afficher les repas, mesures corporelles, horaires,
 relations, objectifs, jetons ou contenu des sauvegardes.
 
-## Sauvegarde locale
+## Sauvegarde et restauration — stratégie à décider
 
-Une sauvegarde est un conteneur chiffré comprenant une copie SQLite cohérente, un
-manifeste sans donnée personnelle et une authentification cryptographique. Le manifeste
-contient seulement la version du format et du schéma, la date UTC, le nombre de tables et
-les sommes de contrôle. Une sauvegarde n'est valide qu'après restauration et vérification
-dans une base temporaire. Sa clé de récupération n'est jamais enregistrée avec elle.
-
-La destination pourra être un fichier choisi par l'utilisateur ou Google Drive.
+Une implémentation de sauvegarde chiffrée et par code de récupération existe dans
+le prototype V2 ; elle ne représente pas la stratégie validée. Il faut encore choisir
+les supports, la récupération, la protection des clés, les conséquences d'une perte
+de code ou d'appareil, et vérifier création/restauration sur Android. Google Drive
+nécessiterait un compte tiers et le réseau : aucune destination distante n'est
+retenue par cette décision. L'import V1 explicite reste distinct d'une sauvegarde V2.
 
 ## Identifiants et écritures
 

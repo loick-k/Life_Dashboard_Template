@@ -11,8 +11,9 @@ de la V2. L'import sera une copie explicite, sans synchronisation automatique.
 ## État actuel
 
 État détaillé et limites : [CONTEXT.md](CONTEXT.md). Consignes de développement :
-[AGENTS.md](AGENTS.md). Le schéma local 3A existe ; le projet Android, le chiffrement
-et les sauvegardes V2 restent à implémenter. Les chiffres ci-dessous concernent
+[AGENTS.md](AGENTS.md). Le schéma local 3A et le prototype Android existent. Les
+implémentations de chiffrement, biométrie et sauvegarde ne constituent pas des
+choix de sécurité validés ; les chiffres ci-dessous concernent
 la référence initiale de l'étape 0.
 
 - Étape 0 : terminée et validée le 15/09/2026.
@@ -20,7 +21,8 @@ la référence initiale de l'étape 0.
 - Tests source : 46 tests réussis.
 - Aucune modification de schéma Neon réalisée.
 - Aucune donnée personnelle enregistrée dans ce dossier.
-- Sauvegarde réelle validée : 12 tables et 348 lignes.
+- Sauvegarde réelle Neon V1 validée : 12 tables et 348 lignes ; ce contrôle historique
+  n'établit pas la stratégie de sauvegarde de la V2.
 - Restauration testée dans un schéma Neon temporaire, ensuite supprimé.
 
 ## Documents

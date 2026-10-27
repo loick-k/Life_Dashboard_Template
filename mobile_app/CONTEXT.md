@@ -2,12 +2,31 @@
 
 Mis à jour le 27/10/2026. Lire les AGENTS.md avant de travailler.
 
+## Décision produit acceptée — V2 autonome et sans compte distant
+
+Décision du 27/10/2026 : Life Dashboard V2 sera une application Android autonome,
+sans portail de connexion ni compte utilisateur distant. Ses données résideront
+localement sur le téléphone et ses fonctions principales (saisie, historique,
+bilans) devront fonctionner hors ligne. La V1 Streamlit/Neon conserve son
+fonctionnement actuel. Les deux versions restent indépendantes ; tout import est
+explicite et aucune synchronisation automatique n'est prévue.
+
+L'accès aux fonctions locales ne dépend pas des intégrations externes éventuelles.
+Todoist et les analyses nutritionnelles distantes nécessitent leurs propres services,
+comptes ou réseau et restent facultatifs. Google Drive, mentionné comme possibilité
+dans l'ancien document d'architecture, n'est pas une destination de sauvegarde
+retenue. La biométrie, le chiffrement et la stratégie de sauvegarde/restauration
+restent à étudier. Les prototypes techniques présents dans le code ne valent pas
+validation d'une politique finale. Détail :
+[`docs/15_decision_v2_locale_sans_compte.md`](docs/15_decision_v2_locale_sans_compte.md).
+
 ## Objectif accepté
 
 Développer une application Android autonome à stockage local, fidèle aux fonctions
-et à l'interface Streamlit V1. Les deux versions doivent rester utilisables
-indépendamment. La V1 conserve Neon ; la V2 conserve sa propre SQLite. Aucun
-remplacement forcé de la V1 et aucune synchronisation automatique des deux bases.
+et à l'interface Streamlit V1, selon la décision sans compte distant ci-dessus.
+Les deux versions doivent rester utilisables indépendamment. La V1 conserve Neon ;
+la V2 conserve sa propre SQLite. Aucun remplacement forcé de la V1 et aucune
+synchronisation automatique des deux bases.
 
 ## État vérifié dans le dépôt
 

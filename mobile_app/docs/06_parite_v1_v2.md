@@ -7,6 +7,7 @@ compléter pendant chaque portage. « À porter » ne signifie jamais implément
 
 | Rubrique V1 / source | Contrat V2 à vérifier | État Android |
 |---|---|---|
+| Accès à l'application | Application locale sans compte distant ; V1 conservée telle quelle | Décision produit du 27/10/2026 ; aucun portail de connexion V2 prévu |
 | Navigation principale / app | Aujourd'hui, Todo, Bilan, Réglages ; date du jour Paris | Menu principal connecté, éditeurs conservés, date et retours testés avec React ; Todoist et preuve Android à faire |
 | Parcours / app_config, checkin | 13 étapes + récapitulatif, reprise, passer, retour, accès direct | Accueil, accès directs, curseur par date, progression, fin, retour/Modifier, résumé sport/relations/objectifs et ouverture historique connectés ; UI Android non validée |
 | Sommeil | Durée, horaires, sieste ; valeurs partielles préservées | Horaires calculés, mode manuel/importé explicite, sieste h/min et désaccord signalé ; tests locaux ; validation native à faire |
@@ -26,18 +27,18 @@ compléter pendant chaque portage. « À porter » ne signifie jamais implément
 | Todo / todoist_view | Interface/accès Todoist, projets et statistiques disponibles ; intégration facultative | À porter |
 | Réglages / app_config | Seuils, objectifs, horaires standards, jours de travail, date arrêt tabac | 13 préférences persistantes/CAS, autosauvegarde, assistant et consommateurs des scores/bilans connectés ; Android à faire |
 | Performance / app | Adapter suivi du coût API et diagnostic à l'usage mobile, sans données sensibles | À porter |
-| Données / app | Consultation entrées et journaux ; export sécurisé remplace téléchargement non chiffré | Historique quotidien et sauvegarde/restauration chiffrée connectés en développement ; validation Android à faire |
+| Données / app | Consultation entrées et journaux ; stratégie d'export à décider | Historique local connecté ; prototype sauvegarde/restauration, stratégie et validation Android encore ouverts |
 
 ## Exigences propres à Android
 
 | Fonction | Preuve de sortie attendue | État |
 |---|---|---|
 | Migrations atomiques | Interruption et reprise dans le runtime réel | Python : 9 tests ; TypeScript/SQLite : 4 tests ; Android à faire |
-| SQLCipher + Keystore | Fichier illisible sans clé, réouverture et mauvaise clé refusée | Adaptateur natif écrit ; 5 tests de coordination, validation Android à faire |
+| Chiffrement local | Protection des mesures, horaires et autres données personnelles | Implémentation SQLCipher/Keystore présente dans le prototype ; choix produit et validation Android ouverts |
 | Autosauvegarde | Saisie, retour, concurrence, arrêt forcé et redémarrage | CAS et journal durable quotidien, sport, journaux, réglages et ajouts de répertoire ; UUID stable sans doublon, reprise explicite/React/SQLite fichier ; arrêt forcé Android à valider |
-| Assistant initial | Hors ligne, interruption/reprise, ne réapparaît pas après fin | Progression testée (4 tests), écrans reliés aussi en production, préférences/import V1/sauvegarde/restauration/biométrie connectés ; validation Android à faire |
-| Protection locale | Verrouillage, biométrie, reprise sûre et récupération | Clé authentifiée Keystore et écran connecté, politique reprenable, couverture conservant les brouillons, FLAG_SECURE généré ; 8 tests de coordination ; validation matérielle Android à faire |
-| Sauvegarde chiffrée | Nouveau téléphone, mauvais mot de passe, altération, interruption | Service AES-GCM/code de récupération, restauration contrôlée et UI Réglages écrits ; 4 tests Node/SQLite réussis ; validation Expo/Android à faire |
+| Assistant initial | Hors ligne, interruption/reprise, ne réapparaît pas après fin | Progression et préférences locales connectées ; étapes prototype protection/sauvegarde à réviser après arbitrage ; validation Android à faire |
+| Protection locale | Verrouillage, biométrie, reprise sûre et récupération | Prototype biométrique et tests de coordination présents ; nécessité, comportement et validation matérielle à décider |
+| Sauvegarde/restauration | Transfert d'appareil, récupération et intégrité | Prototype AES-GCM/code de récupération présent ; stratégie, récupération, destination et validation Android ouvertes |
 | Import V1 | Fixtures synthétiques, relations, collisions et rejeu | Convertisseur, CLI, simulation transactionnelle et écran d'import connectés ; 5 tests d'import SQLite réussis ; Android et données réelles à faire |
 | APK autonome signé | Installation et mise à jour sans Metro/Expo Go ni perte | Signature stable hors Git et plugins prêts, graphe Gradle release hors ligne et bundle Hermes vérifiés ; pic disque du build à établir, compilation release et validation téléphone à faire |
 
@@ -55,6 +56,9 @@ compléter pendant chaque portage. « À porter » ne signifie jamais implément
   normalisés en HH:MM. Dernières mesures corporelles datées réutilisées seulement
   sur confirmation, pas de report automatique d'un jour à l'autre.
 - Pas de connexion Google obligatoire pour les données locales.
+- Pas de portail de connexion ni de compte Life Dashboard distant pour la V2.
+- Todoist et toute analyse nutritionnelle distante restent des intégrations distinctes,
+  facultatives, et ne conditionnent pas l'utilisation hors ligne du cœur de l'app.
 - Pas de Neon ni de serveur Python ; pas de synchronisation implicite V1/V2.
 - Secrets facultatifs saisis sur appareil, jamais distribués avec l'APK.
 - Aucune copie de données personnelles dans les fixtures ou captures comparatives.

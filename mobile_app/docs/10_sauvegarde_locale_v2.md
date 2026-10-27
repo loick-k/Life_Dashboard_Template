@@ -1,6 +1,12 @@
-# Sauvegarde locale V2 — format 1
+# Prototype de sauvegarde locale V2 — format 1
 
-## Usage
+> Statut : ce mécanisme est présent dans le prototype, mais la stratégie de
+> sauvegarde/restauration n'est pas encore une décision produit validée. Voir
+> [`15_decision_v2_locale_sans_compte.md`](15_decision_v2_locale_sans_compte.md).
+> Les instructions ci-dessous décrivent le prototype technique, pas une politique
+> de sauvegarde recommandée ou garantie pour les données personnelles réelles.
+
+## Parcours du prototype — non validé pour les données réelles
 
 Depuis Réglages, ouvrir Sauvegarde et récupération. Générer un code aléatoire,
 le conserver dans un gestionnaire de mots de passe séparément du fichier, puis le

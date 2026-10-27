@@ -1,6 +1,14 @@
-# Protection biométrique locale
+# Prototype de protection biométrique locale
 
-Implémentée le 27/10/2026, validation sur téléphone encore requise.
+Un prototype de protection biométrique est présent dans le code. La décision de
+produit reste ouverte : biométrie, chiffrement et politique de récupération doivent
+être évalués ensemble avant de retenir un comportement pour les utilisateurs. Ce
+document décrit l'implémentation actuelle à auditer ; il n'engage pas la politique
+finale. Voir [`15_decision_v2_locale_sans_compte.md`](15_decision_v2_locale_sans_compte.md).
+
+Les points ci-dessous consignent le comportement du prototype et ses hypothèses,
+pas une consigne de sécurité adoptée. Ne pas présenter cette option comme requise
+ou validée avant la revue de sécurité et les essais Android.
 
 - Activation facultative depuis l'assistant ou Réglages > Protection biométrique.
 - Utilise expo-secure-store déjà installé, sans nouvelle dépendance. La biométrie
