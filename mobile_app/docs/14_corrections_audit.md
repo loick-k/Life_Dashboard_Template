@@ -19,6 +19,8 @@ données synthétiques, pas de Neon/push, plafond cumulatif disque 5 Go inchang�
 | Estimation nutritionnelle obsolète après changement | Migration 005, fraîcheur/version propres, valeurs/provenance conservées, exclusion visible et carte unique | Test d'écran et Android, calcul en ligne encore à porter |
 | Chargement journalier récupérable | Réessayer jour/sport/réglages ; menu indépendant ; tests React | Android |
 | Conflit de révision récupérable sans perdre le brouillon | Comparaison champ par champ et CAS ; deuxième conflit refusé ; tests React/SQLite | Android |
+| Conflit sportif récupérable | Comparaison par séance/champ, choix explicites, second conflit refusé, buffers et autres séances conservés ; tests React/SQLite | Android |
+| Conflit de position de navigation | Relecture du seul curseur, sans changer écran/mesures/buffers/progression ; test React | Android |
 | Menu principal, date commune et retour Android | Éditeurs conservés, date Bilan et historique réel de retour ; tests React avec Back simulé | Retour physique Android |
 | Bilan actualisé après saisie | Relecture compteur et séries au retour, même date ; test +1 h et poids modifié | Android |
 | Barrière sur chargement sportif lent/en échec | Attend les trois initialisations et toutes les files ; échec réessayable ; tests React | Android |
@@ -148,3 +150,13 @@ Modifier réellement un horaire conserve le recalcul atomique et les autres indi
 Test du formulaire réel avec Continuer/Retour et relecture du compteur partagé.
 Pas de modification de schéma ni migration corrective des données historiques : une
 durée déjà perdue ne peut pas être reconstruite sans source/sauvegarde antérieure.
+
+## Reprise audit — récupération des conflits
+
+138 tests Node dans l'arbre courant et TypeScript valides. Réessayer une séance ne
+résout plus seul un conflit : comparaison explicite proposée, valeurs courantes
+relues, seul le patch choisi appliqué sous CAS. Un deuxième conflit conserve le
+brouillon et impose une nouvelle relecture. Les buffers invalides non remplacés
+restent présents et empêchent toujours une fausse validation de l'étape. Relecture
+de position indépendante des mesures et des saisies incomplètes ; pas de reset du
+formulaire. Les contrôles d'interaction ne remplacent pas le retour physique Android.

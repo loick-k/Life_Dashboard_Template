@@ -11,6 +11,27 @@ remplacement forcé de la V1 et aucune synchronisation automatique des deux base
 
 ## État vérifié dans le dépôt
 
+### Reprise audit — conflits sportifs et position de navigation — 27/10/2026
+
+Correction du travail commitée 17b09d6. Sport : comparaison champ par champ des
+valeurs enregistrées et du patch en échec, choix explicites, CAS au moment de
+l'application, second conflit refusé. Saisies incomplètes et autres séances
+conservées ; choisir la valeur enregistrée ne retire que les buffers de ce champ.
+Barrières attendent la résolution, éditions de la séance comparée verrouillées,
+comparaison relisible et refermable sans abandon du brouillon. Les résolutions
+quotidiennes vérifient aussi la révision si tous les choix gardent la base.
+
+Position quotidienne : erreur de conflit dédiée et action Relire la position
+sans perdre mes saisies. Ne recharge ni la ligne quotidienne ni les buffers,
+ne déplace pas l'écran automatiquement et conserve la progression déjà confirmée.
+Un curseur corrompu n'est jamais remis à zéro silencieusement.
+
+138 tests Node dans l'arbre courant et TypeScript réussis (huit tests PDF encore
+non commités). Cinq tests nouveaux de résolution/domaines/React réels, dont un
+second conflit et un brouillon horaire incomplet pendant la relecture de position.
+Aucune installation, compilation, donnée personnelle, intervention V1 ou push.
+Parité, Day off explicite et validation sur Android restent ouverts.
+
 ### Reprise audit — durée de travail importée — 27/10/2026
 
 Le nouvel audit a reproduit une perte : changer seulement work_mode recalculait

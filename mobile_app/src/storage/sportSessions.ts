@@ -29,6 +29,12 @@ export class SportSessions {
   private uuid: () => string;
   constructor(db: SqlConnection, uuid: () => string) { this.db = db; this.uuid = uuid; }
 
+  async read(id: string): Promise<SportSession> {
+    const row = await this.db.getFirstAsync<SportSession>('SELECT * FROM sport_sessions WHERE session_id = ?', id);
+    if (!row) throw new Error('Séance absente. Le brouillon reste conservé.');
+    return row;
+  }
+
   async getOrCreate(entryId: string, position: number): Promise<SportSession> {
     if (!Number.isInteger(position) || position < 1 || position > 3) throw new Error('Position invalide');
     const now = new Date().toISOString();

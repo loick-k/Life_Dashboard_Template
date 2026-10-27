@@ -9,7 +9,7 @@ import { parseInput } from '../domain/input';
 import { SportForm, type SportFormHandle } from './SportForm';
 import { CHECKIN_SECTIONS as sections, type CheckinField as Field } from '../domain/checkinConfig';
 import { CatalogForm, type CatalogFormHandle } from './CatalogForm';
-import { CheckinPositions, type CheckinPosition } from '../storage/checkinPosition';
+import { CheckinPositions, CheckinPositionConflict, type CheckinPosition } from '../storage/checkinPosition';
 import { readProgress, setCheckinProgress } from '../storage/checkinProgress';
 import { RelatedSummary } from './RelatedSummary';
 import { Preferences } from '../storage/preferences';
@@ -48,6 +48,7 @@ export const DailyForm = forwardRef<EditorHandle, { database: SQLiteDatabase; in
   const history = useRef<number[]>([]);
   const scroll = useRef<ScrollView>(null);
   const position = useRef<CheckinPosition | null>(null);
+  const [positionIssue, setPositionIssue] = useState(false);
   const navigating = useRef(false);
   const [busy, setBusy] = useState(false);
   const sports = useRef<SportFormHandle>(null);
@@ -59,6 +60,7 @@ export const DailyForm = forwardRef<EditorHandle, { database: SQLiteDatabase; in
     setDraft(undefined); setRaw({}); setInvalid(new Set()); setError(''); setHome(true); setReview(undefined); position.current = null; history.current = [];
     durationBuffers.current = {};
     setChosenDate(''); setShowCalendar(false);
+    setPositionIssue(false);
     const repo = new DailyEntries(database, Crypto.randomUUID);
     loading.current = (async () => {
       const results = await Promise.allSettled([repo.getOrCreate(date), new CheckinPositions(database).read(date), new Preferences(database).read('close_relations_label').catch(() => null)] as const);
@@ -101,15 +103,25 @@ export const DailyForm = forwardRef<EditorHandle, { database: SQLiteDatabase; in
     if (!draft || navigating.current) return;
     if (invalid.size) { setError('Termine la valeur en cours ou utilise Effacer pour une suppression volontaire.'); return; }
     navigating.current = true; setBusy(true);
-    try { await draft.flush(); if (sports.current) await sports.current.flush(); if (catalog.current) await catalog.current.flush(); setError(''); await action(); } catch { setError('Saisie invalide, ajout non terminé ou sauvegarde non confirmée. Termine la saisie avant de continuer.'); }
+    try { await draft.flush(); if (sports.current) await sports.current.flush(); if (catalog.current) await catalog.current.flush(); setError(''); await action(); } catch (issue) { setError(issue instanceof CheckinPositionConflict ? issue.message : 'Saisie invalide, ajout non terminé ou sauvegarde non confirmée. Termine la saisie avant de continuer.'); }
     finally { navigating.current = false; setBusy(false); refresh(); }
   };
   const moveStep = async (target: number, remember = true) => {
     if (!position.current || !sections[target]) throw new Error('Position indisponible');
-    position.current = await new CheckinPositions(database).move(date, position.current.revision, sections[target]!.id);
+    try { position.current = await new CheckinPositions(database).move(date, position.current.revision, sections[target]!.id); }
+    catch (issue) { setPositionIssue(true); throw issue; }
     if (remember) { if (home) history.current = []; else if (target !== step) history.current.push(step); }
     setStep(target);
     setHome(false);
+  };
+  const reloadPosition = async () => {
+    if (navigating.current) return;
+    navigating.current = true; setBusy(true);
+    try {
+      position.current = await new CheckinPositions(database).read(date);
+      setPositionIssue(false); setError('Position relue. Tes valeurs et brouillons sont conservés ; réessaie la navigation souhaitée.');
+    } catch { setError('Position toujours illisible. Aucune saisie ni progression réinitialisée. Réessaie ou utilise la récupération dans Réglages.'); }
+    finally { navigating.current = false; setBusy(false); }
   };
   const back = async () => {
     if (history.current.length) { await moveStep(history.current.at(-1)!, false); history.current.pop(); }
@@ -247,6 +259,7 @@ export const DailyForm = forwardRef<EditorHandle, { database: SQLiteDatabase; in
     <Text style={styles.heading}>{home ? 'Ta saisie du jour' : section.title}</Text>
     {progress && <Text>Progression · {progress.count}/13 indicateurs traités</Text>}
     {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
+    {positionIssue && <Pressable accessibilityRole="button" disabled={busy} style={styles.secondary} onPress={() => void reloadPosition()}><Text>Relire la position sans perdre mes saisies</Text></Pressable>}
     {!draft && error && <Pressable accessibilityRole="button" style={styles.secondary} onPress={() => setLoadAttempt(value => value + 1)}><Text>Réessayer le chargement de la journée</Text></Pressable>}
     {draft?.status === 'failed' && <>
       <Pressable accessibilityRole="button" style={styles.secondary} onPress={() => { void draft.retry().then(() => { setError(''); refresh(); }, refresh); }}><Text>Réessayer la sauvegarde</Text></Pressable>
