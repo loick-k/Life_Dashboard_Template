@@ -18,7 +18,7 @@ const criteriaHelp: Partial<Record<PreferenceKey, string>> = {
   work_days_per_week: 'Référence du nombre de jours renseignés dans Travail · suivi. Sans effet sur le compteur cumulé de 7 h 42 par journée travaillée.',
   tobacco_stop_date: 'Date de départ du suivi sans tabac. Une date future ne produit pas encore de score.',
 };
-export const PreferencesForm = forwardRef<EditorHandle, { database: SqlConnection; active?: boolean; preserveOnNavigate?: boolean; onDone(): void | Promise<void>; onBackup?(): void | Promise<void>; onImport?(): void | Promise<void>; onProtection?(): void | Promise<void>; onBack?(): void | Promise<void>; doneLabel?: string }>(function PreferencesForm({ database, active = true, preserveOnNavigate = false, onDone, onBackup, onImport, onProtection, onBack, doneLabel = 'Retour' }, ref) {
+export const PreferencesForm = forwardRef<EditorHandle, { database: SqlConnection; active?: boolean; preserveOnNavigate?: boolean; onDone(): void | Promise<void>; onBackup?(): void | Promise<void>; onImport?(): void | Promise<void>; onProtection?(): void | Promise<void>; onFriends?(): void | Promise<void>; onGoals?(): void | Promise<void>; onBack?(): void | Promise<void>; doneLabel?: string }>(function PreferencesForm({ database, active = true, preserveOnNavigate = false, onDone, onBackup, onImport, onProtection, onFriends, onGoals, onBack, doneLabel = 'Retour' }, ref) {
   const repository = useMemo(() => new Preferences(database), [database]);
   const drafts = useRef<Partial<Record<PreferenceKey, Draft>>>({});
   const invalid = useRef(new Set<PreferenceKey>());
@@ -111,6 +111,8 @@ export const PreferencesForm = forwardRef<EditorHandle, { database: SqlConnectio
   return <ScrollView style={styles.page} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
     <Text accessibilityRole="header" style={styles.title}>Réglages</Text>
     <Text style={styles.help}>Enregistrement local automatique. Unités : kg, cm, km et heures. Les secrets des intégrations ne sont pas stockés ici.</Text>
+    {onFriends && <Pressable accessibilityRole="button" disabled={busy} style={styles.secondary} onPress={() => void done(onFriends)}><Text>Gérer les personnes suivies</Text></Pressable>}
+    {onGoals && <Pressable accessibilityRole="button" disabled={busy} style={styles.secondary} onPress={() => void done(onGoals)}><Text>Gérer mes objectifs</Text></Pressable>}
     {onBackup && <Pressable accessibilityRole="button" disabled={busy || (!ready && !preserveOnNavigate)} style={styles.secondary} onPress={() => void done(onBackup)}><Text>Sauvegarde et récupération</Text></Pressable>}
     {onImport && <Pressable accessibilityRole="button" disabled={busy || !ready} style={styles.secondary} onPress={() => void done(onImport)}><Text>Importer un export V1</Text></Pressable>}
     {onProtection && <Pressable accessibilityRole="button" disabled={busy || !ready} style={styles.secondary} onPress={() => void done(onProtection)}><Text>Protection biométrique</Text></Pressable>}

@@ -11,6 +11,24 @@ remplacement forcé de la V1 et aucune synchronisation automatique des deux base
 
 ## État vérifié dans le dépôt
 
+### Parité — catalogues indépendants des journées — 27/10/2026
+
+Day off commité c847b11. Écrans Personnes suivies/Mes objectifs accessibles depuis
+Réglages et depuis les étapes correspondantes. Même gestion d'archives et de fin
+d'objectif, sans UUID de journée requis et sans créer de journal quotidien.
+Ajouter depuis une étape ne sélectionne plus implicitement l'élément : il faut
+cocher séparément une interaction/contribution réelle. Message explicite et
+annulation confirmée d'un ajout inachevé ; Back attend les écritures et ne jette
+pas un nom/titre non enregistré. Répertoire relu au retour d'un écran de gestion,
+sans réinitialiser la date historique ni les autres brouillons.
+
+146 tests Node et TypeScript réussis. Cinq tests React/SQLite nouveaux : ajout
+hors journée sans daily_entries/logs, sélection séparée, échec/reprise, annulation,
+route depuis une date historique et réglages avec horaire quotidien incomplet.
+Aucun changement de schéma, accès réel, installation, build ou push. Notes/durée/
+contexte sociaux et historiques détaillés restent à porter, ainsi que les services
+facultatifs et la validation Android. L'objectif global reste actif.
+
 ### Reprise audit — Day off explicite et calcul partagé — 27/10/2026
 
 PDF commité cc44e76. effectiveWorkMinutes centralise la lecture du travail pour

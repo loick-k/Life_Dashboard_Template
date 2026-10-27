@@ -5,19 +5,20 @@ import type { SQLiteDatabase } from 'expo-sqlite';
 import { Catalogs, FRIEND_CATEGORIES, type CatalogItem, type CatalogKind, type LogItem } from '../storage/catalogs';
 
 export type CatalogFormHandle = { flush(): Promise<void>; settle(): Promise<void>; hasUnconfirmed(): boolean };
-export const CatalogForm = forwardRef<CatalogFormHandle, { database: SQLiteDatabase; entryId: string; kind: CatalogKind }>(function CatalogForm({ database, entryId, kind }, ref) {
+export const CatalogForm = forwardRef<CatalogFormHandle, { database: SQLiteDatabase; entryId?: string; kind: CatalogKind; active?: boolean }>(function CatalogForm({ database, entryId, kind, active = true }, ref) {
   const repo = useMemo(() => new Catalogs(database, Crypto.randomUUID, kind), [database, kind]);
   const [items, setItems] = useState<CatalogItem[]>([]);
   const [logs, setLogs] = useState<LogItem[]>([]);
   const [label, setLabel] = useState('');
   const [category, setCategory] = useState('Ami');
   const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
   const ready = useRef(false), failed = useRef(false);
   const pending = useRef<Promise<void> | null>(null);
   const reload = async () => {
-    const [nextItems, nextLogs] = await Promise.all([repo.list(false), repo.logs(entryId)]);
+    const [nextItems, nextLogs] = await Promise.all([repo.list(false), entryId ? repo.logs(entryId) : Promise.resolve([])]);
     setItems(nextItems); setLogs(nextLogs); ready.current = true;
   };
   const run = (action: () => Promise<void>) => {
@@ -29,7 +30,7 @@ export const CatalogForm = forwardRef<CatalogFormHandle, { database: SQLiteDatab
       failed.current = true; setError('Opération non confirmée. Recharge les valeurs avant de réessayer.');
     }).finally(() => { pending.current = null; setBusy(false); });
   };
-  useEffect(() => { run(async () => {}); }, [repo, entryId]);
+  useEffect(() => { if (active) run(async () => {}); }, [repo, entryId, active]);
   useImperativeHandle(ref, () => ({
     settle: async () => { if (pending.current) await pending.current; if (failed.current) throw new Error('Journal non confirmé'); },
     hasUnconfirmed: () => !!pending.current || failed.current || !!label.trim(),
@@ -38,20 +39,22 @@ export const CatalogForm = forwardRef<CatalogFormHandle, { database: SQLiteDatab
     if (!ready.current || failed.current || label.trim()) throw new Error('Catalogue non confirmé ou ajout non terminé');
   } }));
   const toggle = (item: CatalogItem) => {
+    if (!entryId) return;
     const log = logs.find(value => value.subject_id === item.id && (kind === 'friends' || value.worked === 1));
     run(async () => { if (log) await repo.deselect(log); else await repo.select(entryId, item.id); });
   };
   return <View>
-    <Text>{kind === 'friends' ? 'Qui as-tu vu aujourd’hui ?' : 'As-tu contribué à tes objectifs ?'}</Text>
+    <Text>{entryId ? kind === 'friends' ? 'Qui as-tu vu pour cette journée ?' : 'As-tu contribué à tes objectifs pour cette journée ?' : 'Ce répertoire est indépendant des journées. Ajouter ou archiver un élément ne crée aucune interaction ni contribution.'}</Text>
+    {!!message && <Text accessibilityLiveRegion="polite" style={styles.hint}>{message}</Text>}
     {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
     {error ? <Pressable style={styles.button} disabled={busy} onPress={() => run(async () => {})}><Text>Recharger les valeurs</Text></Pressable> : null}
     {!items.length && !busy && <Text style={styles.hint}>Aucun élément enregistré. Ajoute le premier ci-dessous.</Text>}
     {items.filter(item => showArchived || item.active).map(item => {
       const selected = logs.some(log => log.subject_id === item.id && (kind === 'friends' || log.worked === 1));
       return <View key={item.id} style={styles.card}>
-        <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: selected, disabled: busy }} disabled={busy} style={styles.button} onPress={() => toggle(item)}>
+        {entryId ? <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: selected, disabled: busy }} disabled={busy} style={styles.button} onPress={() => toggle(item)}>
           <Text>{selected ? '☑' : '☐'} {item.label}{item.completed_at ? ' · terminé' : item.active ? '' : ' · archivé'}</Text>
-        </Pressable>
+        </Pressable> : <Text style={styles.heading}>{item.label}{item.completed_at ? ' · terminé' : item.active ? '' : ' · archivé'}</Text>}
         {item.category && <Text style={styles.hint}>{item.category}</Text>}
         {!item.completed_at && <Pressable disabled={busy} style={styles.button} onPress={() => Alert.alert(item.active ? 'Archiver cet élément ?' : 'Réactiver cet élément ?', 'Le journal historique et les dates de réalisation seront conservés.', [{ text: 'Annuler' }, { text: 'Confirmer', onPress: () => run(() => repo.setActive(item, !item.active)) }])}><Text>{item.active ? 'Archiver' : 'Réactiver'}</Text></Pressable>}
         {kind === 'goals' && <Pressable accessibilityRole="button" disabled={busy} style={styles.button} onPress={() => Alert.alert(item.completed_at ? 'Rouvrir cet objectif ?' : 'Terminer cet objectif ?', item.completed_at ? 'La date de réalisation sera retirée et cet objectif redeviendra actif. Son journal reste conservé.' : 'Cet objectif sera marqué comme terminé, avec sa date de réalisation. Il ne comptera plus parmi les trois objectifs actifs.', [{ text: 'Annuler', style: 'cancel' }, { text: 'Confirmer', onPress: () => run(() => repo.setCompleted(item, !item.completed_at)) }])}><Text>{item.completed_at ? 'Rouvrir cet objectif' : 'Marquer comme terminé'}</Text></Pressable>}
@@ -60,10 +63,12 @@ export const CatalogForm = forwardRef<CatalogFormHandle, { database: SQLiteDatab
     <Pressable style={styles.button} onPress={() => setShowArchived(value => !value)}><Text>{showArchived ? 'Masquer les archives' : 'Afficher les archives'}</Text></Pressable>
     <Text style={styles.heading}>{kind === 'friends' ? 'Ajouter une personne' : 'Ajouter un objectif'}</Text>
     <TextInput accessibilityLabel={kind === 'friends' ? 'Nom de la personne' : 'Titre de l’objectif'} style={styles.input} value={label} onChangeText={setLabel} placeholder={kind === 'friends' ? 'Nom' : 'Titre'} maxLength={200} editable={!busy} />
-    {kind === 'friends' && <View style={styles.row}>{FRIEND_CATEGORIES.map(value => <Pressable key={value} style={[styles.button, category === value && styles.selected]} onPress={() => setCategory(value)}><Text>{value}</Text></Pressable>)}</View>}
-    <Pressable style={[styles.button, styles.selected]} disabled={busy || !label.trim()} onPress={() => run(async () => {
-      const id = await repo.create(label, category); setLabel(''); await repo.select(entryId, id);
-    })}><Text>Ajouter et sélectionner</Text></Pressable>
+    {kind === 'friends' && <View style={styles.row}>{FRIEND_CATEGORIES.map(value => <Pressable accessibilityRole="button" accessibilityState={{ selected: category === value, disabled: busy }} disabled={busy} key={value} style={[styles.button, category === value && styles.selected]} onPress={() => setCategory(value)}><Text>{value}</Text></Pressable>)}</View>}
+    <Pressable accessibilityRole="button" style={[styles.button, styles.selected]} disabled={busy || !label.trim()} onPress={() => run(async () => {
+      await repo.create(label, category); setLabel('');
+      setMessage(entryId ? 'Élément ajouté au répertoire. Coche-le séparément si une interaction ou une contribution a eu lieu pour cette journée.' : 'Élément ajouté au répertoire, sans modifier les journées.');
+    })}><Text>{kind === 'friends' ? 'Ajouter la personne' : 'Ajouter l’objectif'}</Text></Pressable>
+    {!!label.trim() && <Pressable accessibilityRole="button" disabled={busy} style={styles.button} onPress={() => Alert.alert('Annuler cet ajout ?', 'Le texte non enregistré de cet ajout sera abandonné. Le répertoire et les journaux existants sont conservés.', [{ text: 'Garder', style: 'cancel' }, { text: 'Abandonner cet ajout', style: 'destructive', onPress: () => { if (!pending.current) setLabel(''); } }])}><Text>Annuler cet ajout</Text></Pressable>}
     {kind === 'goals' && <Text style={styles.hint}>Jusqu’à trois objectifs actifs.</Text>}
     {busy && <Text accessibilityLiveRegion="polite">Enregistrement en cours…</Text>}
   </View>;

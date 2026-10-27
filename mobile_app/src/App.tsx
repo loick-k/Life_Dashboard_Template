@@ -11,6 +11,7 @@ import { OnboardingProgress } from './storage/onboarding';
 import { V1ImportScreen } from './ui/V1ImportScreen';
 import { ProtectionScreen } from './ui/ProtectionScreen';
 import { SessionGuard } from './ui/SessionGuard';
+import { CatalogScreen } from './ui/CatalogScreen';
 import type { EditorHandle } from './ui/editorHandle';
 import { parisDate } from './domain/dates';
 import { initialNavigation, mainDestinations, navigateMain, type MainDestination, type OverlayDestination } from './domain/navigation';
@@ -82,18 +83,19 @@ function Dashboard() {
     {!!notice && <Text accessibilityLiveRegion="polite" style={styles.notice}>{notice}</Text>}
     <View style={styles.root}>
       <View style={panel('daily')} importantForAccessibility={active('daily') ? 'auto' : 'no-hide-descendants'} accessibilityElementsHidden={!active('daily')}>
-        <DailyForm key={'daily:' + epoch} ref={daily} database={database} active={active('daily')} initialDate={navigation.dailyDate} onDate={rememberDaily} onBilan={date => void go('bilan', date)} onSettings={() => void go('settings')} />
+        <DailyForm key={'daily:' + epoch} ref={daily} database={database} active={active('daily')} initialDate={navigation.dailyDate} onDate={rememberDaily} onBilan={date => void go('bilan', date)} onSettings={() => void go('settings')} onManageCatalog={kind => openOverlay(kind)} />
       </View>
       {navigation.visited.includes('bilan') && <View style={panel('bilan')} importantForAccessibility={active('bilan') ? 'auto' : 'no-hide-descendants'} accessibilityElementsHidden={!active('bilan')}>
         <WorkBilan key={'bilan:' + epoch} database={database} active={active('bilan')} initialDate={navigation.bilanDate} onDate={rememberBilan} onBusy={operationState} onDone={() => void go('daily')} />
       </View>}
       {navigation.visited.includes('settings') && <View style={panel('settings')} importantForAccessibility={active('settings') ? 'auto' : 'no-hide-descendants'} accessibilityElementsHidden={!active('settings')}>
-        <PreferencesForm key={'settings:' + epoch} ref={settings} database={database} preserveOnNavigate active={active('settings')} onBackup={() => openOverlay('backup')} onImport={() => openOverlay('import')} onProtection={() => openOverlay('protection')} onDone={() => go('daily')} />
+        <PreferencesForm key={'settings:' + epoch} ref={settings} database={database} preserveOnNavigate active={active('settings')} onBackup={() => openOverlay('backup')} onImport={() => openOverlay('import')} onProtection={() => openOverlay('protection')} onFriends={() => openOverlay('friends')} onGoals={() => openOverlay('goals')} onDone={() => go('daily')} />
       </View>}
       {navigation.main === 'todo' && !navigation.overlay && <View style={styles.page}><Text accessibilityRole="header" style={styles.title}>Todo</Text><Text>L’intégration Todoist sera reliée dans le lot de parité. Les autres fonctions restent disponibles hors ligne.</Text></View>}
       {navigation.overlay === 'backup' && <BackupScreen database={database} beforeRestore={beforeReplace} onRestored={refreshed} onDone={closeOverlay} />}
       {navigation.overlay === 'import' && <V1ImportScreen database={database} beforeImport={beforeReplace} onImported={refreshed} onDone={closeOverlay} />}
       {navigation.overlay === 'protection' && <ProtectionScreen onDone={closeOverlay} />}
+      {(navigation.overlay === 'friends' || navigation.overlay === 'goals') && <CatalogScreen database={database} kind={navigation.overlay} onDone={closeOverlay} />}
     </View>
     {!navigation.overlay && <View accessibilityRole="tablist" style={styles.menu}>{mainDestinations.map(destination => <Pressable key={destination} accessibilityRole="tab" accessibilityState={{ selected: navigation.main === destination, disabled: busy || operationBusy }} disabled={busy || operationBusy} style={[styles.tab, navigation.main === destination && styles.selected]} onPress={() => void go(destination)}>
       <Text style={styles.tabText}>{{ daily: 'Saisie', bilan: 'Bilan', todo: 'Todo', settings: 'Réglages' }[destination]}</Text>

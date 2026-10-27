@@ -28,9 +28,10 @@ import type { BodyMeasure, PreviousMeasure } from '../storage/previousMeasures';
 import { PreviousMeasureCard } from './PreviousMeasureCard';
 import { FrenchCalendar } from './FrenchCalendar';
 import { palette } from './palette';
+import type { CatalogKind } from '../storage/catalogs';
 
 /** Vertical development slice, not the final daily journey. Synthetic data only. */
-export const DailyForm = forwardRef<EditorHandle, { database: SQLiteDatabase; initialDate?: string; active?: boolean; onDate?(date: string): void; onSettings?(date: string): void; onBilan?(date: string): void }>(function DailyForm({ database, initialDate, active = true, onDate, onSettings, onBilan }, ref) {
+export const DailyForm = forwardRef<EditorHandle, { database: SQLiteDatabase; initialDate?: string; active?: boolean; onDate?(date: string): void; onSettings?(date: string): void; onBilan?(date: string): void; onManageCatalog?(kind: CatalogKind): void }>(function DailyForm({ database, initialDate, active = true, onDate, onSettings, onBilan, onManageCatalog }, ref) {
   const [date, setDate] = useState(() => initialDate ?? parisDate());
   const [closeLabel, setCloseLabel] = useState('Écoute de mes proches');
   const [step, setStep] = useState(0);
@@ -286,7 +287,10 @@ export const DailyForm = forwardRef<EditorHandle, { database: SQLiteDatabase; in
       {section.id === 'work' && <WorkBalanceCard database={database} date={date} revision={draft.snapshot.revision} saved={draft.status === 'saved'} />}
       {['weight', 'fat', 'belly'].includes(section.id) && <PreviousMeasureCard database={database} field={section.fields[0]!.key as BodyMeasure} date={date} disabled={busy} onReuse={measure => reuseBodyMeasure(section.fields[0]!.key as BodyMeasure, measure)} />}
       {section.id === 'sport' && <SportForm key={draft.snapshot.entry_id} ref={sports} database={database} entryId={draft.snapshot.entry_id} />}
-      {['social', 'goals'].includes(section.id) && <CatalogForm key={`${draft.snapshot.entry_id}:${section.id}`} ref={catalog} database={database} entryId={draft.snapshot.entry_id} kind={section.id === 'social' ? 'friends' : 'goals'} />}
+      {['social', 'goals'].includes(section.id) && <>
+        {onManageCatalog && <Pressable accessibilityRole="button" disabled={busy} style={styles.secondary} onPress={() => void navigate(() => onManageCatalog(section.id === 'social' ? 'friends' : 'goals'))}><Text>{section.id === 'social' ? 'Gérer les personnes suivies' : 'Gérer mes objectifs'}</Text></Pressable>}
+        <CatalogForm key={`${draft.snapshot.entry_id}:${section.id}`} ref={catalog} database={database} entryId={draft.snapshot.entry_id} active={active} kind={section.id === 'social' ? 'friends' : 'goals'} />
+      </>}
       {section.id === 'work' && <View style={styles.row}>{['Télétravail', 'Day off', 'Bureau', 'Déplacement'].map(mode => <Pressable accessibilityRole="button" accessibilityState={{ selected: snapshot?.work_mode === mode }} key={mode} style={[styles.secondary, snapshot?.work_mode === mode && styles.selected]} onPress={() => save('work_mode', mode)}><Text>{mode}</Text></Pressable>)}</View>}
       {section.id === 'work' && <View style={styles.row}>
         <Pressable accessibilityRole="button" disabled={busy} style={styles.secondary} onPress={() => applyShortcut('previous')}><Text>Horaires d’hier</Text></Pressable>

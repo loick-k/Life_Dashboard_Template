@@ -1,7 +1,7 @@
 import { validateDate } from '../storage/dailyEntries.ts';
 export const mainDestinations = ['daily', 'bilan', 'todo', 'settings'] as const;
 export type MainDestination = typeof mainDestinations[number];
-export type OverlayDestination = 'backup' | 'import' | 'protection';
+export type OverlayDestination = 'backup' | 'import' | 'protection' | 'friends' | 'goals';
 export interface AppNavigation {
   main: MainDestination; overlay: OverlayDestination | null;
   dailyDate: string; bilanDate: string; visited: MainDestination[];
