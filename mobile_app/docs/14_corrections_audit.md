@@ -26,6 +26,7 @@ données synthétiques, pas de Neon/push, plafond cumulatif disque 5 Go inchang�
 | Bilan actualisé après saisie | Relecture compteur et séries au retour, même date ; test +1 h et poids modifié | Android |
 | Barrière sur chargement sportif lent/en échec | Attend les trois initialisations et toutes les files ; échec réessayable ; tests React | Android |
 | Notes/durées sociales après décochage/recochage | Migration 006, included au lieu de DELETE ; UUID/détails conservés, compteurs filtrés, backup/import/rejeu/React testés | Android ; anciennes pertes nécessitent sauvegarde antérieure |
+| Détails sociaux et notes d'objectifs modifiables | Éditeur repliable, notes/contexte/durée h/min, autosauvegarde CAS, comparaison après conflit, barrières et backup/restore ; huit tests React/SQLite | Android ; historique/récurrence séparés à compléter |
 | Formats heures/minutes et calendrier français | Portable/sieste/activités h/min, horaires normalisés, calendrier français repliable ; tests React | Validation tactile Android, grandes polices |
 | Sport moins encombrant | Cartes repliables, champs invalides révélés lors du flush | Vérification téléphone |
 | Enregistré distinct d'étape validée ; absence distincte de zéro | Message explicite, total n.c. si absent, zéro saisi distinct ; tests | Android |

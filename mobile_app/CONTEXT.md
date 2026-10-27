@@ -11,6 +11,31 @@ remplacement forcé de la V1 et aucune synchronisation automatique des deux base
 
 ## État vérifié dans le dépôt
 
+### Parité — détails des journaux sociaux et objectifs — 27/10/2026
+
+Répertoires précédents commités 90cdbbe. Éditeur repliable par journal existant :
+note sociale/objectif, contexte libre social, durée sociale h/min précise.
+Autosauvegarde ciblée FIFO/CAS, jamais écriture des liens, de la sélection ou du
+statut travaillé. Effacement volontaire de durée confirmé, zéro/absence distincts.
+Comparer/résoudre champ par champ après conflit, second conflit refusé, erreurs
+de lecture réessayables sans valeur par défaut écrasante. Le contexte V1 reste
+Vu en personne par défaut ; les valeurs importées ne sont pas remplacées.
+
+Décocher conserve les détails visibles et leur identité ; édition encore possible
+sans recomptage implicite. Archive/retour/navigation attendent tous les journaux,
+même si un échoue ; saisie invalide révélée et conservée. Un journal sous archive
+masquée reste monté pour ne pas perdre son brouillon. Révision de journal relue
+après changement explicite de sélection ; pas de conflit artificiel à la frappe
+suivante. Aucun changement de schéma ni du format des sauvegardes.
+
+154 tests Node et TypeScript réussis. Huit tests nouveaux SQLite/React couvrent
+backup/restore exact, Unicode, validation/CAS, note d'objectif, décocher/recocher,
+durée invalide empêchant archive/désélection, attente d'une autre écriture lente,
+lecture échouée puis reprise et date historique avec brouillon après changement
+de menu. Skill Streamlit : environnement non découvrable, référence V1 lue depuis
+ses sources sans installation. Aucun build/téléchargement/accès réel/push.
+Historique/récurrence détaillés et interfaces Android restent à vérifier/compléter.
+
 ### Parité — catalogues indépendants des journées — 27/10/2026
 
 Day off commité c847b11. Écrans Personnes suivies/Mes objectifs accessibles depuis

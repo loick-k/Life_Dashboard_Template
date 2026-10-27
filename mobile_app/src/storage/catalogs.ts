@@ -56,9 +56,9 @@ export class Catalogs {
     const result = await this.db.runAsync(`UPDATE goals SET active = ?, completed_at = ?, updated_at = ?, revision = revision + 1 WHERE goal_id = ? AND revision = ?${capacity}`, ...values);
     if (result.changes !== 1) throw new RevisionConflict();
   }
-  async logs(entryId: string): Promise<LogItem[]> {
+  async logs(entryId: string, includeDeselected = false): Promise<LogItem[]> {
     const def = definitions[this.kind];
-    return this.db.getAllAsync(`SELECT ${def.logId} AS id, entry_id, ${def.id} AS subject_id, revision${this.kind === 'goals' ? ', worked' : ', included'} FROM ${def.logs} WHERE entry_id = ?${this.kind === 'friends' ? ' AND included = 1' : ''}`, entryId);
+    return this.db.getAllAsync(`SELECT ${def.logId} AS id, entry_id, ${def.id} AS subject_id, revision${this.kind === 'goals' ? ', worked' : ', included'} FROM ${def.logs} WHERE entry_id = ?${this.kind === 'friends' && !includeDeselected ? ' AND included = 1' : ''}`, entryId);
   }
   async select(entryId: string, subjectId: string): Promise<LogItem> {
     const def = definitions[this.kind], now = new Date().toISOString();
