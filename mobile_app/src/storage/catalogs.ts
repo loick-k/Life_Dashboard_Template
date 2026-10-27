@@ -66,7 +66,10 @@ export class Catalogs {
   }
   async deselect(log: LogItem): Promise<void> {
     const def = definitions[this.kind];
-    const result = await this.db.runAsync(`DELETE FROM ${def.logs} WHERE ${def.logId} = ? AND revision = ?`, log.id, log.revision);
+    // Unchecking means "not worked", not "destroy this journal and its imported note".
+    const result = this.kind === 'goals'
+      ? await this.db.runAsync('UPDATE goal_logs SET worked = 0, revision = revision + 1, updated_at = ? WHERE goal_log_id = ? AND revision = ?', new Date().toISOString(), log.id, log.revision)
+      : await this.db.runAsync(`DELETE FROM ${def.logs} WHERE ${def.logId} = ? AND revision = ?`, log.id, log.revision);
     if (result.changes !== 1) throw new RevisionConflict();
   }
 }

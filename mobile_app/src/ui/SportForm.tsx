@@ -4,15 +4,21 @@ import * as Crypto from 'expo-crypto';
 import type { SQLiteDatabase } from 'expo-sqlite';
 import { SPORT_TYPES, SportDraft, SportSessions, type SportPatch } from '../storage/sportSessions';
 import { parseInput } from '../domain/input';
+import { parseSportDuration } from '../domain/sportInput';
 
 export type SportFormHandle = { flush(): Promise<void> };
 export const SportForm = forwardRef<SportFormHandle, { database: SQLiteDatabase; entryId: string }>(function SportForm({ database, entryId }, ref) {
   const [drafts, setDrafts] = useState<SportDraft[]>([]);
   const [raw, setRaw] = useState<Record<string, string>>({});
+  const rawRef = useRef<Record<string, string>>({});
+  const [expanded, setExpanded] = useState<number[]>([1]);
   const invalid = useRef(new Set<string>());
   const [error, setError] = useState('');
   const [, repaint] = useState(0);
   const refresh = () => repaint(value => value + 1);
+  const setBuffers = (update: (previous: Record<string, string>) => Record<string, string>) => {
+    rawRef.current = update(rawRef.current); setRaw(rawRef.current);
+  };
   useEffect(() => {
     let active = true;
     const repo = new SportSessions(database, Crypto.randomUUID);
@@ -21,6 +27,10 @@ export const SportForm = forwardRef<SportFormHandle, { database: SQLiteDatabase;
     return () => { active = false; };
   }, [database, entryId]);
   useImperativeHandle(ref, () => ({ flush: async () => {
+    if (invalid.current.size) {
+      setExpanded(current => [...new Set([...current, ...drafts.filter(draft => [...invalid.current].some(key => key.startsWith(`${draft.snapshot.session_id}:`))).map(draft => draft.snapshot.position)])]);
+      setError('Corrige les durées ou distances signalées, ou supprime explicitement la valeur.');
+    }
     if (drafts.length !== 3 || invalid.current.size) throw new Error('Saisie sportive incomplète ou invalide');
     await Promise.all(drafts.map(draft => draft.flush()));
   } }));
@@ -33,14 +43,14 @@ export const SportForm = forwardRef<SportFormHandle, { database: SQLiteDatabase;
       const id = draft.snapshot.session_id;
       const keys = kind === 'distance' ? [`${id}:distance`] : [`${id}:hours`, `${id}:minutes`];
       keys.forEach(key => invalid.current.delete(key));
-      setRaw(previous => ({ ...previous, ...Object.fromEntries(keys.map(key => [key, ''])) }));
+      setBuffers(previous => ({ ...previous, ...Object.fromEntries(keys.map(key => [key, ''])) }));
       save(draft, kind === 'distance' ? { distance_km: null } : { duration_minutes: null });
     } },
   ]);
   const edit = (draft: SportDraft, part: 'distance' | 'hours' | 'minutes', text: string) => {
     const row = draft.snapshot;
     const key = `${row.session_id}:${part}`;
-    const nextRaw = { ...raw, [key]: text }; setRaw(nextRaw);
+    const nextRaw = { ...rawRef.current, [key]: text }; setBuffers(() => nextRaw);
     const value = parseInput(text, 'number');
     let valid = typeof value === 'number';
     if (part === 'distance') {
@@ -50,10 +60,13 @@ export const SportForm = forwardRef<SportFormHandle, { database: SQLiteDatabase;
       const base = row.duration_minutes;
       const h = nextRaw[`${row.session_id}:hours`] ?? (base === null ? '' : String(Math.floor(base / 60)));
       const m = nextRaw[`${row.session_id}:minutes`] ?? (base === null ? '' : String(base % 60));
-      const hours = h === '' ? 0 : parseInput(h, 'number');
-      const minutes = m === '' ? 0 : parseInput(m, 'number');
-      valid = valid && typeof hours === 'number' && typeof minutes === 'number' && Number.isInteger(hours) && Number.isInteger(minutes) && minutes < 60 && hours * 60 + minutes <= 600;
-      if (valid) save(draft, { duration_minutes: Number(hours) * 60 + Number(minutes) });
+      const duration = parseSportDuration(h, m);
+      valid = duration.valid;
+      for (const field of ['hours', 'minutes']) {
+        const partKey = `${row.session_id}:${field}`;
+        if (valid) invalid.current.delete(partKey); else invalid.current.add(partKey);
+      }
+      if (valid) save(draft, { duration_minutes: duration.minutes });
     }
     if (valid) invalid.current.delete(key); else invalid.current.add(key);
     refresh();
@@ -64,7 +77,10 @@ export const SportForm = forwardRef<SportFormHandle, { database: SQLiteDatabase;
     {drafts.map(draft => {
       const row = draft.snapshot;
       return <View key={row.session_id} style={styles.card}>
-        <Text style={styles.title}>Séance {row.position}</Text>
+        <Pressable accessibilityRole="button" accessibilityState={{ expanded: expanded.includes(row.position) }} style={styles.choice} onPress={() => setExpanded(current => current.includes(row.position) ? current.filter(value => value !== row.position) : [...current, row.position])}>
+          <Text style={styles.title}>Séance {row.position} · {row.sport_type ?? 'À renseigner'} {expanded.includes(row.position) ? '−' : '+'}</Text>
+        </Pressable>
+        {expanded.includes(row.position) && <>
         <View style={styles.row}>{SPORT_TYPES.map(type => <Pressable accessibilityRole="button" accessibilityState={{ selected: row.sport_type === type }} key={type} style={[styles.choice, row.sport_type === type && styles.selected]} onPress={() => save(draft, { sport_type: type })}><Text>{type}</Text></Pressable>)}</View>
         {(['hours', 'minutes', 'distance'] as const).map(part => {
           const key = `${row.session_id}:${part}`;
@@ -73,6 +89,15 @@ export const SportForm = forwardRef<SportFormHandle, { database: SQLiteDatabase;
           return <View key={part}><Text>{label}</Text><TextInput accessibilityLabel={`Séance ${row.position} · ${label}`} keyboardType="decimal-pad" value={raw[key] ?? String(value ?? '')} placeholder="Non renseigné" onChangeText={text => edit(draft, part, text)} style={[styles.input, invalid.current.has(key) && styles.invalid]} /></View>;
         })}
         <View style={styles.row}><Pressable style={styles.choice} onPress={() => clear(draft, 'duration')}><Text>Effacer la durée</Text></Pressable><Pressable style={styles.choice} onPress={() => clear(draft, 'distance')}><Text>Effacer la distance</Text></Pressable></View>
+        <Pressable accessibilityRole="button" style={styles.choice} onPress={() => Alert.alert('Supprimer cette séance ?', 'Le type, la durée et la distance de cette seule séance seront effacés. Les autres séances sont conservées.', [
+          { text: 'Annuler', style: 'cancel' }, { text: 'Supprimer', style: 'destructive', onPress: () => {
+            const prefix = `${row.session_id}:`;
+            for (const part of ['hours', 'minutes', 'distance']) invalid.current.delete(prefix + part);
+            setBuffers(previous => Object.fromEntries(Object.entries(previous).filter(([key]) => !key.startsWith(prefix))));
+            save(draft, { sport_type: null, duration_minutes: null, distance_km: null });
+          } },
+        ])}><Text>Supprimer cette séance</Text></Pressable>
+        </>}
         {draft.status === 'saving' && <Text>Enregistrement en cours…</Text>}
         {draft.status === 'failed' && <Pressable style={styles.choice} onPress={() => { void draft.retry().then(() => { setError(''); refresh(); }, refresh); }}><Text>Réessayer</Text></Pressable>}
       </View>;

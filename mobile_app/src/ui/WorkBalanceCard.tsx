@@ -35,6 +35,7 @@ export function WorkBalanceCard({ database, date, revision, saved = true, weekly
     <Text style={styles.help}>Référence : 7 h 42 par jour travaillé. Les jours sans durée calculable sont exclus. Day off : cible de 0 h.</Text>
     <Text style={styles.help}>{report.countedDays} journée(s) comptée(s) jusqu’au {date.split('-').reverse().join('/')}.</Text>
     {report.incompleteDays > 0 && <Text style={styles.help}>{report.incompleteDays} journée(s) avec type de travail mais sans durée calculable, non comptée(s).</Text>}
+    {report.invalidSchedules.length > 0 && <Text accessibilityRole="alert">Créneaux chevauchants exclus du compteur : {report.invalidSchedules.map(value => value.split('-').reverse().join('/')).join(', ')}. Les horaires originaux sont conservés ; ouvre ces journées pour les corriger.</Text>}
     {weekly && <>
       <Text style={styles.label}>Semaine du {report.monday.split('-').reverse().join('/')} au {report.sunday.split('-').reverse().join('/')}</Text>
       <Text>Durée de travail : {formatMinutes(report.weekMinutes)}</Text>

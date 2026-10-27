@@ -11,6 +11,24 @@ remplacement forcé de la V1 et aucune synchronisation automatique des deux base
 
 ## État vérifié dans le dépôt
 
+### Corrections audit — lot notes/sport/travail — 27/10/2026
+
+Nouvel objectif actif : corriger tous les constats du dernier audit, navigation,
+ergonomie et parité V1 comprises. Suivi exhaustif dans docs/14_corrections_audit.md ;
+ne pas réduire la clôture à quelques tests de domaine.
+Décocher un objectif passe worked à 0 sans supprimer note/UUID/date de création.
+Sport : validation du couple heures/minutes (anciens drapeaux effacés ensemble),
+buffers synchrones, suppression complète confirmée en un patch, cartes repliables
+et réouverture des cartes invalides à la navigation.
+Travail : journée continue compatible créneau 3 ; détection de chevauchements,
+y compris après minuit. Horaires toujours sauvegardés ; durée incohérente non
+comptée. Les anciennes durées avec chevauchement ne sont pas écrasées en base :
+le rapport partagé les exclut et cite les dates à corriger.
+79 tests Node et TypeScript réussis. Aucune migration, donnée réelle, modification
+V1, installation ou compilation native. Tests d'écran/Android encore à faire.
+Prochain lot : sommeil cohérent et fraîcheur des estimations, avec sauvegardes
+compatibles, puis navigation indépendante/récupération des erreurs.
+
 ### Préparation autonome et signature — 27/10/2026
 
 Version source 0.2.0/code 2, parcours d'essai accessible aussi en production.

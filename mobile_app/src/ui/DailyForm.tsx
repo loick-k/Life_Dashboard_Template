@@ -16,6 +16,7 @@ import { Preferences } from '../storage/preferences';
 import { standardWorkPatch, previousWorkPatch } from '../storage/workShortcuts';
 import type { DailyPatch } from '../storage/dailyEntries';
 import { WorkBalanceCard } from './WorkBalanceCard';
+import { inspectWorkSchedule, type WorkTimes } from '../domain/work';
 
 /** Vertical development slice, not the final daily journey. Synthetic data only. */
 export function DailyForm({ database, initialDate, onSettings, onBilan }: { database: SQLiteDatabase; initialDate?: string; onSettings?(date: string): void; onBilan?(date: string): void }) {
@@ -166,7 +167,8 @@ export function DailyForm({ database, initialDate, onSettings, onBilan }: { data
           setRaw(previous => ({ ...previous, [item.key]: '' })); setInvalid(previous => { const next = new Set(previous); next.delete(item.key); return next; }); save(item.key, null);
         } }])}><Text style={styles.clear}>Effacer</Text></Pressable>
       </View>)}
-      {section.id === 'work' && <Text style={styles.total}>Temps travaillé : {snapshot?.work_duration_minutes ?? 'n.c.'} min</Text>}
+      {section.id === 'work' && <Text style={styles.total}>Temps travaillé : {inspectWorkSchedule(snapshot as WorkTimes).issue === 'overlap' ? 'n.c.' : snapshot?.work_duration_minutes ?? 'n.c.'} min</Text>}
+      {section.id === 'work' && inspectWorkSchedule(snapshot as WorkTimes).issue === 'overlap' && <Text accessibilityRole="alert" style={styles.error}>Des créneaux se chevauchent. Les horaires sont enregistrés, mais la journée est exclue du compteur jusqu’à correction.</Text>}
       {section.id === 'me-time' && <Text style={styles.total}>Temps pour moi total : {section.fields.reduce((sum, item) => sum + Number(snapshot?.[item.key] ?? 0), 0)} min</Text>}
       {section.id === 'nutrition' && <Text style={styles.total}>Kcal : {snapshot?.kcal ?? 'n.c.'} · Sport : {snapshot?.sport_kcal_burned ?? 'n.c.'} · Net : {typeof snapshot?.kcal === 'number' && typeof snapshot?.sport_kcal_burned === 'number' ? snapshot.kcal - snapshot.sport_kcal_burned : 'n.c.'}\nAnalyse externe non encore disponible.</Text>}
       {section.id === 'summary' && sections.filter(item => item.fields.length).map(item => <View style={styles.field} key={item.id}>

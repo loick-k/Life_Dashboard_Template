@@ -1,13 +1,14 @@
-import { DAILY_WORK_TARGET_MINUTES, workBalance } from './work.ts';
+import { DAILY_WORK_TARGET_MINUTES, workBalance, inspectWorkSchedule, type WorkTimes } from './work.ts';
 import { shiftDate } from './dates.ts';
 import { validateDate } from '../storage/dailyEntries.ts';
 
-export interface WorkRecord { entry_date: string; work_mode: string | null; work_duration_minutes: number | null }
+export interface WorkRecord extends WorkTimes { entry_date: string; work_mode: string | null; work_duration_minutes: number | null }
 export interface WorkReport {
   date: string; monday: string; sunday: string;
   beforeMinutes: number; cumulativeMinutes: number; afterMinutes: number | null;
   dayMinutes: number | null; dayBalance: number | null;
   countedDays: number; incompleteDays: number;
+  invalidSchedules: string[];
   weekMinutes: number | null; weekTargetMinutes: number; weekDifference: number | null;
   rows: (WorkRecord & { balance: number | null; cumulative: number })[];
 }
@@ -27,7 +28,7 @@ export function buildWorkReport(records: readonly WorkRecord[], date: string, we
   const weekday = new Date(`${date}T12:00:00Z`).getUTCDay();
   const monday = shiftDate(date, -((weekday + 6) % 7));
   const report: WorkReport = { date, monday, sunday: shiftDate(monday, 6), beforeMinutes: 0, cumulativeMinutes: 0,
-    afterMinutes: null, dayMinutes: null, dayBalance: null, countedDays: 0, incompleteDays: 0,
+    afterMinutes: null, dayMinutes: null, dayBalance: null, countedDays: 0, incompleteDays: 0, invalidSchedules: [],
     weekMinutes: null, weekTargetMinutes: Math.round(weeklyTargetHours * 60), weekDifference: null, rows: [] };
   const seen = new Set<string>();
   for (const row of [...records].sort((a, b) => a.entry_date.localeCompare(b.entry_date))) {
@@ -35,7 +36,9 @@ export function buildWorkReport(records: readonly WorkRecord[], date: string, we
     if (row.entry_date > date) continue;
     if (seen.has(row.entry_date)) throw new Error('Journée dupliquée.');
     seen.add(row.entry_date);
-    const minutes = row.work_duration_minutes;
+    const overlapping = inspectWorkSchedule(row).issue === 'overlap';
+    if (overlapping) report.invalidSchedules.push(row.entry_date);
+    const minutes = overlapping ? null : row.work_duration_minutes;
     if (minutes !== null && (!Number.isSafeInteger(minutes) || minutes < 0)) throw new Error('Durée enregistrée invalide.');
     const balance = workBalance(minutes, row.work_mode === 'Day off', DAILY_WORK_TARGET_MINUTES);
     if (balance !== null) { report.cumulativeMinutes += balance; report.countedDays++; }
@@ -46,7 +49,7 @@ export function buildWorkReport(records: readonly WorkRecord[], date: string, we
       report.afterMinutes = balance === null ? null : report.cumulativeMinutes;
     }
     if (row.entry_date >= monday) {
-      report.rows.push({ ...row, balance, cumulative: report.cumulativeMinutes });
+      report.rows.push({ ...row, work_duration_minutes: minutes, balance, cumulative: report.cumulativeMinutes });
       if (minutes !== null) report.weekMinutes = (report.weekMinutes ?? 0) + minutes;
     }
   }
