@@ -6,9 +6,10 @@ import { historyPeriods, historyLabels, periodDays, type HistoryPeriod, type His
 import { formatMetric, weeklyMetrics } from '../domain/weeklyMetrics';
 import { parisDate, shiftDate } from '../domain/dates';
 import { MetricChart } from './MetricChart';
+import type { CatalogKind } from '../storage/catalogs';
 
 const chartWindow = 24;
-export function HistoryIndicators({ database, date, refreshToken = 0, onDate }: { database: QueryConnection; date: string; refreshToken?: number; onDate?(date: string): void }) {
+export function HistoryIndicators({ database, date, refreshToken = 0, onDate, onCatalogHistory, disabled = false }: { database: QueryConnection; date: string; refreshToken?: number; onDate?(date: string): void; onCatalogHistory?(kind: CatalogKind): void; disabled?: boolean }) {
   const [period, setPeriod] = useState<HistoryPeriod>('month'), [group, setGroup] = useState('Corps'), [page, setPage] = useState(0);
   const [report, setReport] = useState<HistoryReport>(), [failed, setFailed] = useState(false), [attempt, setAttempt] = useState(0);
   useEffect(() => {
@@ -29,6 +30,7 @@ export function HistoryIndicators({ database, date, refreshToken = 0, onDate }: 
       <Text>Du {report.start.split('-').reverse().join('/')} au {report.end.split('-').reverse().join('/')} · détail {report.grain === 'day' ? 'journalier' : report.grain === 'week' ? 'par semaine (lundi–dimanche)' : 'par mois'}.</Text>
       <Text style={styles.help}>1 mois = 30 jours, 1 an = 365 jours, comme en V1. Totaux et moyennes sur toute la période ; n.c. n’est pas zéro. Pour le corps, la carte montre la dernière mesure et la courbe la moyenne par période.</Text>
       <View style={styles.row}>{[...new Set(weeklyMetrics.map(item => item.group))].map(name => <Pressable key={name} accessibilityRole="button" accessibilityState={{ selected: name === group }} style={[styles.button, name === group && styles.selected]} onPress={() => setGroup(name)}><Text>{name}</Text></Pressable>)}</View>
+      {onCatalogHistory && ['Social', 'Objectifs'].includes(group) && <Pressable accessibilityRole="button" disabled={disabled} style={styles.button} onPress={() => onCatalogHistory(group === 'Social' ? 'friends' : 'goals')}><Text>{group === 'Social' ? 'Historique social détaillé' : 'Historique détaillé des objectifs'}</Text></Pressable>}
       {pages > 1 && <View><Text>Graphiques : points {first + 1}–{last} sur {points}. Les indicateurs chiffrés couvrent toujours la période complète.</Text><View style={styles.row}><Pressable accessibilityRole="button" disabled={page >= pages - 1} style={styles.button} onPress={() => setPage(value => value + 1)}><Text>← Points plus anciens</Text></Pressable><Pressable accessibilityRole="button" disabled={page === 0} style={styles.button} onPress={() => setPage(value => value - 1)}><Text>Points plus récents →</Text></Pressable></View></View>}
       {group === 'Travail' && report.excludedWorkDates.length > 0 && <Text accessibilityRole="alert">Journées aux horaires chevauchants exclues : {report.excludedWorkDates.map(value => value.split('-').reverse().join('/')).join(', ')}.</Text>}
       {report.series.filter(item => item.group === group).map(item => <View key={item.key} style={styles.card}>

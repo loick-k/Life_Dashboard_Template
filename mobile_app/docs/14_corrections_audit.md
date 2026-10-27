@@ -38,8 +38,8 @@ données synthétiques, pas de Neon/push, plafond cumulatif disque 5 Go inchang�
 | Scores et évaluation hebdomadaire V1 | 23 lignes, 22 pondérées ; semaine Paris actuelle ; fixtures V1 et UI réessayable connectées | Android ; différences V2 explicites ci-dessous |
 | Périodes mensuelles, annuelles et depuis le début | Quatre périodes V1, 29 séries, fenêtres graphiques complètes, agrégats sur jours observés, fixtures V1 et tests React | Rendu et performances Android |
 | Rapport PDF travail | Export local sous le graphe, modèle partagé, relecture identique, deux pages/3 créneaux ; tests et six pages fictives contrôlées | Sélecteur, écriture et lecture du PDF sur Android |
-| Social : récurrence et historique détaillé | À porter | Domaine, stockage, écran |
-| Personnes/objectifs gérés hors journal | Répertoires autonomes depuis Réglages/étapes ; ajout sans journal, sélection quotidienne séparée, retour/date/brouillons préservés ; cinq tests React/SQLite | Android ; édition détaillée et historiques encore nécessaires |
+| Social : récurrence et historique détaillé | Statistiques UUID, jours/intervalles V1, périodes semaine/mois, journaux paginés/filtrés et notes ; six tests React/SQLite et parité Python | Rendu et performances Android |
+| Personnes/objectifs gérés hors journal | Répertoires autonomes, ajout sans journal, notes modifiables et historiques, archives/terminés séparés ; retour/date/brouillons préservés | Android |
 | Objectif archivé distinct de terminé | Actions Archiver/Terminer/Rouvrir séparées ; dates préservées lors d'archive ; tests CAS/capacité/React | Android ; dates historiques ambiguës non réécrites |
 | Todoist optionnel | À porter | Secrets appareil, interface et erreurs réseau |
 | Analyse nutritionnelle explicite optionnelle | À porter | Secrets, calcul asynchrone, résultat unique |

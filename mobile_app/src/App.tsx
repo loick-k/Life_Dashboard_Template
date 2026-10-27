@@ -61,6 +61,7 @@ function Dashboard() {
   };
   const refreshed = async () => { setEpoch(value => value + 1); setNotice('Les écrans reliront les données confirmées à leur ouverture.'); };
   const openOverlay = (overlay: OverlayDestination) => {
+    if (operation.current || moving.current) return;
     Keyboard.dismiss();
     setNotice(daily.current?.hasUnconfirmed() || settings.current?.hasUnconfirmed() ? 'Un brouillon non confirmé reste conservé. La sauvegarde contient uniquement les valeurs enregistrées ; termine les brouillons avant une restauration.' : '');
     setNavigation(state => ({ ...state, overlay }));
@@ -79,6 +80,7 @@ function Dashboard() {
   if (onboarding) return <OnboardingScreen database={database} onDone={() => setOnboarding(false)} />;
   const active = (destination: MainDestination) => navigation.main === destination && navigation.overlay === null;
   const panel = (destination: MainDestination) => [styles.panel, !active(destination) && styles.hidden];
+  const catalogKind = navigation.overlay === 'friends' || navigation.overlay === 'social-history' ? 'friends' : navigation.overlay === 'goals' || navigation.overlay === 'goal-history' ? 'goals' : null;
   return <View style={styles.root}>
     {!!notice && <Text accessibilityLiveRegion="polite" style={styles.notice}>{notice}</Text>}
     <View style={styles.root}>
@@ -86,7 +88,7 @@ function Dashboard() {
         <DailyForm key={'daily:' + epoch} ref={daily} database={database} active={active('daily')} initialDate={navigation.dailyDate} onDate={rememberDaily} onBilan={date => void go('bilan', date)} onSettings={() => void go('settings')} onManageCatalog={kind => openOverlay(kind)} />
       </View>
       {navigation.visited.includes('bilan') && <View style={panel('bilan')} importantForAccessibility={active('bilan') ? 'auto' : 'no-hide-descendants'} accessibilityElementsHidden={!active('bilan')}>
-        <WorkBilan key={'bilan:' + epoch} database={database} active={active('bilan')} initialDate={navigation.bilanDate} onDate={rememberBilan} onBusy={operationState} onDone={() => void go('daily')} />
+        <WorkBilan key={'bilan:' + epoch} database={database} active={active('bilan')} initialDate={navigation.bilanDate} onDate={rememberBilan} onBusy={operationState} onCatalogHistory={kind => openOverlay(kind === 'friends' ? 'social-history' : 'goal-history')} onDone={() => void go('daily')} />
       </View>}
       {navigation.visited.includes('settings') && <View style={panel('settings')} importantForAccessibility={active('settings') ? 'auto' : 'no-hide-descendants'} accessibilityElementsHidden={!active('settings')}>
         <PreferencesForm key={'settings:' + epoch} ref={settings} database={database} preserveOnNavigate active={active('settings')} onBackup={() => openOverlay('backup')} onImport={() => openOverlay('import')} onProtection={() => openOverlay('protection')} onFriends={() => openOverlay('friends')} onGoals={() => openOverlay('goals')} onDone={() => go('daily')} />
@@ -95,7 +97,7 @@ function Dashboard() {
       {navigation.overlay === 'backup' && <BackupScreen database={database} beforeRestore={beforeReplace} onRestored={refreshed} onDone={closeOverlay} />}
       {navigation.overlay === 'import' && <V1ImportScreen database={database} beforeImport={beforeReplace} onImported={refreshed} onDone={closeOverlay} />}
       {navigation.overlay === 'protection' && <ProtectionScreen onDone={closeOverlay} />}
-      {(navigation.overlay === 'friends' || navigation.overlay === 'goals') && <CatalogScreen database={database} kind={navigation.overlay} onDone={closeOverlay} />}
+      {catalogKind && <CatalogScreen key={navigation.overlay} database={database} kind={catalogKind} date={navigation.main === 'bilan' ? navigation.bilanDate : navigation.dailyDate} initialView={navigation.overlay === 'social-history' || navigation.overlay === 'goal-history' ? 'history' : 'catalog'} onDone={closeOverlay} />}
     </View>
     {!navigation.overlay && <View accessibilityRole="tablist" style={styles.menu}>{mainDestinations.map(destination => <Pressable key={destination} accessibilityRole="tab" accessibilityState={{ selected: navigation.main === destination, disabled: busy || operationBusy }} disabled={busy || operationBusy} style={[styles.tab, navigation.main === destination && styles.selected]} onPress={() => void go(destination)}>
       <Text style={styles.tabText}>{{ daily: 'Saisie', bilan: 'Bilan', todo: 'Todo', settings: 'Réglages' }[destination]}</Text>

@@ -1,12 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { BackHandler, Pressable, ScrollView, Text } from 'react-native';
-import type { QueryConnection } from '../storage/catalogs';
+import type { CatalogKind, QueryConnection } from '../storage/catalogs';
 import { parisDate, shiftDate } from '../domain/dates';
 import { WorkBalanceCard } from './WorkBalanceCard';
 import { HistoryIndicators } from './HistoryIndicators';
 import { WeeklyAssessment } from './WeeklyAssessment';
 
-export function WorkBilan({ database, onDone, initialDate, onDate, active = true, onBusy }: { database: QueryConnection; onDone(): void; initialDate?: string; onDate?(date: string): void; active?: boolean; onBusy?(value: boolean): void }) {
+export function WorkBilan({ database, onDone, initialDate, onDate, active = true, onBusy, onCatalogHistory }: { database: QueryConnection; onDone(): void; initialDate?: string; onDate?(date: string): void; active?: boolean; onBusy?(value: boolean): void; onCatalogHistory?(kind: CatalogKind): void }) {
   const [date, setDate] = useState(() => initialDate ?? parisDate());
   const [refreshToken, setRefreshToken] = useState(0);
   const wasActive = useRef(active);
@@ -31,7 +31,7 @@ export function WorkBilan({ database, onDone, initialDate, onDate, active = true
     <Pressable accessibilityRole="button" disabled={exportBusy} style={{ padding: 16 }} onPress={() => chooseDate(shiftDate(date, -weekday - 1))}><Text>← Semaine précédente</Text></Pressable>
     <Pressable accessibilityRole="button" disabled={exportBusy || date >= parisDate()} style={{ padding: 16 }} onPress={() => chooseDate(nextSunday > parisDate() ? parisDate() : nextSunday)}><Text>Semaine suivante →</Text></Pressable>
     <Pressable accessibilityRole="button" disabled={exportBusy} style={{ padding: 16 }} onPress={() => chooseDate(parisDate())}><Text>Semaine en cours</Text></Pressable>
-    <HistoryIndicators database={database} date={date} refreshToken={refreshToken} onDate={chooseDate} />
+    <HistoryIndicators database={database} date={date} refreshToken={refreshToken} onDate={chooseDate} disabled={exportBusy} onCatalogHistory={kind => { if (!exporting.current) onCatalogHistory?.(kind); }} />
     <Pressable accessibilityRole="button" disabled={exportBusy} style={{ padding: 16 }} onPress={onDone}><Text>Retour</Text></Pressable>
   </ScrollView>;
 }

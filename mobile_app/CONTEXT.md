@@ -11,6 +11,32 @@ remplacement forcé de la V1 et aucune synchronisation automatique des deux base
 
 ## État vérifié dans le dépôt
 
+### Parité — récurrence et historiques détaillés — 27/10/2026
+
+Journaux commités dcba459. Depuis les répertoires et les catégories Social/Objectifs
+du Bilan : historique en lecture seule, périodes V1 7j/30j/365j/tout, statistiques
+par personne/objectif, première/dernière date, nombre de jours, jours depuis la
+date consultée, intervalle moyen. Archives/terminés inclus et statut actuel annoncé
+explicitement ; dates d'activités bornées à la date consultée, futurs exclus.
+Homonymes groupés par UUID (correction volontaire du groupement V1 par nom).
+
+Journal individuel filtrable ; entrées non comptées consultables explicitement,
+notes et contexte complets repliables, zéro/absence conservés. Statistiques et
+journaux paginés par 20, requêtes bornées à 21 lignes avec texte libre ; courbes
+de jours sociaux/personnes vues par semaine lundi–dimanche ou mois, fenêtres 24
+points accessibles vers tout l'historique. Périodes sans journal non inventées.
+Filtres conservés après erreur, réponses périmées ignorées, réessai et actualisation.
+Répertoire monté pendant consultation historique pour conserver un ajout inachevé ;
+retour Bilan conserve sa date/catégorie/période. Routes bloquées pendant export PDF.
+
+160 tests Node, TypeScript et 16 tests Python réussis. Six tests nouveaux de
+calcul/SQLite/React, plus deux tests Python qui exécutent la vraie fonction pure
+social_recurrence_table via AST, sans Streamlit/Plotly. Intervalles et arrondis
+Python flottants/ties-to-even conservés (dont 3.55 => 3.5), année bissextile et
+changement d'heure Paris testés. Aucune écriture pendant les lectures historiques.
+Pas d'installation, compilation, donnée réelle, modification V1 ou push. Rendu
+et performances Android restent à prouver ; intégrations et ergonomie native ouvertes.
+
 ### Parité — détails des journaux sociaux et objectifs — 27/10/2026
 
 Répertoires précédents commités 90cdbbe. Éditeur repliable par journal existant :

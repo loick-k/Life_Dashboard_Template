@@ -127,8 +127,9 @@ reprise, absence d'effacement et comparaison fonctionnelle/visuelle avec la V1.
   agrégats jour/semaine/mois et évaluation semaine en cours connectés, null distinct
   de zéro. Tests SQLite/React et fixtures métier communes V1/V2. PDF deux pages
   contrôlé sur six pages fictives ; consentement non chiffré et relecture du fichier.
-  Récurrence sociale, historique détaillé et validation native restent nécessaires,
-  y compris sélecteur Android et lecture du PDF sur téléphone.
+  Récurrence sociale et historiques détaillés personnes/objectifs maintenant connectés,
+  paginés et testés (parité avec la vraie fonction V1). Validation native toujours
+  nécessaire, y compris performances, sélecteur Android et lecture du PDF sur téléphone.
 - Todoist.
 - Analyse OpenAI asynchrone.
 - API éventuelle uniquement pour les intégrations nécessitant des secrets serveur.
