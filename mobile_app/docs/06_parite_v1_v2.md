@@ -21,7 +21,7 @@ compléter pendant chaque portage. « À porter » ne signifie jamais implément
 | Social | Personnes, catégories, récurrence, périodes, historique et journal quotidien | Ajout/catégories/sélection/archives connectés ; récurrence et historique détaillé à faire |
 | Objectifs | Ajout, actifs, complétés, critères, journal et historique | Ajout/journal/archives/réalisation/réouverture séparés, notes conservées, limite 3 actifs ; critères et historique détaillé à faire |
 | Bilan / dashboard_metrics | Courbes par catégorie, vue hebdomadaire, objectifs, évaluation semaine courante | Travail et 27 séries hebdomadaires (corps, sommeil, sport, alimentation, temps, écoute, social, objectifs) connectés ; scores, autres granularités et validation native à faire |
-| Scores / dashboard_metrics | Sommeil, alcool, tabac, sport, portable, nutrition, corps, social, objectifs, travail, temps positif, écoute | À porter |
+| Scores / dashboard_metrics | Sommeil, alcool, tabac, sport, portable, nutrition, corps, social, objectifs, travail, temps positif, écoute | Évaluation semaine courante, 22 dimensions pondérées et couverture travail ; 69 seuils + global vérifiés avec V1 ; différences correctives documentées dans docs/14 ; Android à faire |
 | Travail PDF / work_report | Tableau hebdomadaire, types, durée et compteur cumulé, graphique | À porter |
 | Todo / todoist_view | Interface/accès Todoist, projets et statistiques disponibles ; intégration facultative | À porter |
 | Réglages / app_config | Seuils, objectifs, horaires standards, jours de travail, date arrêt tabac | 13 préférences persistantes, validation/CAS, écran d'essai autosauvegardé ; standards et libellé consommés ; bilans, assistant et validation Android à faire |

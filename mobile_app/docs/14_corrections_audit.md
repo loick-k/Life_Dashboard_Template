@@ -29,8 +29,8 @@ données synthétiques, pas de Neon/push, plafond cumulatif disque 5 Go inchang�
 | Sauvegarde accessible avant biométrie | Route directe depuis protection, retour à la même étape ; test React | Sauvegarde/biométrie sur Android |
 | Dernières mesures corporelles datées / réutilisation volontaire | Lecture strictement avant date, chaque mesure indépendante ; confirmation et patch ciblé ; tests React/SQLite | Android |
 | Contraste des actions principales | Palette #c83232, contraste blanc >=4,5:1 testé ; accent V1 maintenu | Vérification visuelle sur téléphone |
-| Objectifs/réglages influencent les indicateurs | À porter | Sept réglages encore sans effet métier |
-| Scores et évaluation hebdomadaire V1 | À porter | Calculs/fixtures communes, UI |
+| Objectifs/réglages influencent les indicateurs | Les sept réglages sont consommés ; zéros explicités, couverture travail indépendante du compteur fixe ; tests | Android |
+| Scores et évaluation hebdomadaire V1 | 23 lignes, 22 pondérées ; semaine Paris actuelle ; fixtures V1 et UI réessayable connectées | Android ; différences V2 explicites ci-dessous |
 | Périodes mensuelles, annuelles et depuis le début | À porter | Agrégation et navigation |
 | Rapport PDF travail | À porter | Génération locale, contenu et rendu vérifiés |
 | Social : récurrence et historique détaillé | À porter | Domaine, stockage, écran |
@@ -105,3 +105,20 @@ carte énergétique unique ; sauvegarde avant activation accessible dans l'assis
 Récupération ouvrable malgré réglage corrompu, sans écraser ce réglage. Palette
 rouge adaptée au petit texte blanc. Aucun test ne prétend valider le rendu natif :
 clavier, insets, grandes polices, biométrie et arrêt forcé restent à réaliser.
+
+## Lot évaluation de la semaine en cours
+
+115 tests Node, TypeScript et 12 tests Python réussis. 69 cas de seuils plus une
+observation globale vérifiés contre les fonctions réelles V1 et le port TypeScript.
+Semaine Paris en cours indépendante des courbes historiques ; n.c. exclu du global,
+couverture visible, scores détaillés repliables, lecture réessayable et rafraîchissement
+après modification d'un réglage. Aucun des sept réglages signalés ne reste sans effet.
+Jours de référence agit sur Travail · suivi (hors pondération), pas sur le cumul 7h42.
+
+Corrections délibérées par rapport à V1, testées séparément : absence sociale ne vaut
+pas zéro, objectif nul pas remplacé silencieusement par défaut, maximum portable nul
+strict, sommeil minimum configurable, repas sans estimation comptés, estimations
+obsolètes et horaires chevauchants exclus. Date tabac future n.c. Limite 4h12 avec
+maximum portable de 3h évaluée correctement malgré les flottants binaires.
+Seuils alimentaires V1 2/4/6 jours et objectifs hebdomadaires non proratisés conservés.
+Il s'agit d'un outil personnel de suivi, pas d'un bilan médical.

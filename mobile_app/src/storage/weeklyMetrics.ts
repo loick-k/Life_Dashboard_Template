@@ -5,11 +5,15 @@ import { weeklySeries, type MetricRow } from '../domain/weeklyMetrics.ts';
 import { Preferences } from './preferences.ts';
 
 /** No cross-join of sport/social/goals: each one-to-many relation aggregates independently. */
-export async function readWeeklyMetrics(database: QueryConnection, date: string) {
-  validateDate(date);
-  const monday = shiftDate(date, -((new Date(`${date}T12:00:00Z`).getUTCDay() + 6) % 7));
+export async function readMetricRows(database: QueryConnection, start: string, end: string) {
+  validateDate(start); validateDate(end);
+  if (start > end) throw new Error('Période invalide');
   const rows = await database.getAllAsync<MetricRow>(`SELECT d.entry_date,
+    d.completed_steps, d.work_mode, d.work_duration_minutes,
+    d.work_start_time, d.work_morning_end_time, d.work_afternoon_start_time, d.work_end_time,
+    d.work_third_start_time, d.work_third_end_time,
     d.weight_kg, d.body_fat_pct, d.belly_cm, d.sleep_hours, d.nap_minutes, d.alcohol_glasses,
+    d.meal_breakfast, d.meal_lunch, d.meal_dinner, d.meal_other,
     d.phone_minutes, d.nutrition_estimate_stale,
     CASE WHEN d.kcal IS NOT NULL OR d.sport_kcal_burned IS NOT NULL OR d.proteins_g IS NOT NULL OR d.carbs_g IS NOT NULL OR d.fats_g IS NOT NULL THEN 1 ELSE 0 END AS has_nutrition_estimate,
     CASE WHEN d.nutrition_estimate_stale = 0 THEN d.kcal END AS kcal,
@@ -26,9 +30,18 @@ export async function readWeeklyMetrics(database: QueryConnection, date: string)
     (SELECT COUNT(*) FROM sport_sessions s WHERE s.entry_id = d.entry_id AND s.duration_minutes IS NULL AND
       (s.sport_type IS NOT NULL OR s.distance_km IS NOT NULL)) AS sport_partial_count,
     (SELECT COUNT(*) FROM social_logs l WHERE l.entry_id = d.entry_id AND l.included = 1) AS social_count,
+    (SELECT COUNT(*) FROM social_logs l WHERE l.entry_id = d.entry_id) AS social_log_count,
     (SELECT SUM(l.duration_minutes) FROM social_logs l WHERE l.entry_id = d.entry_id AND l.included = 1) AS social_minutes,
+    (SELECT COUNT(*) FROM goal_logs l WHERE l.entry_id = d.entry_id) AS goal_count,
     (SELECT COUNT(*) FROM goal_logs l WHERE l.entry_id = d.entry_id AND l.worked = 1) AS goals_worked
-    FROM daily_entries d WHERE d.entry_date >= ? AND d.entry_date <= ? ORDER BY d.entry_date`, monday, date);
+    FROM daily_entries d WHERE d.entry_date >= ? AND d.entry_date <= ? ORDER BY d.entry_date`, start, end);
+  return rows;
+}
+
+export async function readWeeklyMetrics(database: QueryConnection, date: string) {
+  validateDate(date);
+  const monday = shiftDate(date, -((new Date(`${date}T12:00:00Z`).getUTCDay() + 6) % 7));
+  const rows = await readMetricRows(database, monday, date);
   const series = weeklySeries(rows, date);
   const label = await new Preferences(database).read('close_relations_label');
   return series.map(item => item.key === 'close_relations_listening_score' ? { ...item, label: String(label.value) } : item);

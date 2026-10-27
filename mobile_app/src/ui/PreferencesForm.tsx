@@ -9,6 +9,15 @@ import { settleWrites } from '../storage/settleWrites';
 import { palette } from './palette';
 
 type Draft = WriteQueue<PreferenceState, { value: PreferenceValue }>;
+const criteriaHelp: Partial<Record<PreferenceKey, string>> = {
+  sleep_min_hours: 'Cible du score sommeil : minimum à minimum + 2 h. 0 désactive ce critère ; les mesures restent visibles.',
+  phone_max_hours: 'Maximum utilisé par le score portable. 0 signifie un maximum strict de zéro, pas une valeur par défaut.',
+  sport_weekly_goal_hours: 'Objectif utilisé par l’évaluation hebdomadaire. 0 désactive ce critère, pas le suivi des séances.',
+  social_weekly_goal_days: 'Nombre de jours distincts avec interaction dans l’évaluation. 0 désactive cet objectif.',
+  work_weekly_target_hours: 'Objectif hebdomadaire pour bilan et score ; 0 désactive le score travail. Le compteur journalier reste basé sur 7 h 42.',
+  work_days_per_week: 'Référence du nombre de jours renseignés dans Travail · suivi. Sans effet sur le compteur cumulé de 7 h 42 par journée travaillée.',
+  tobacco_stop_date: 'Date de départ du suivi sans tabac. Une date future ne produit pas encore de score.',
+};
 export const PreferencesForm = forwardRef<EditorHandle, { database: SqlConnection; active?: boolean; preserveOnNavigate?: boolean; onDone(): void | Promise<void>; onBackup?(): void | Promise<void>; onImport?(): void | Promise<void>; onProtection?(): void | Promise<void>; onBack?(): void | Promise<void>; doneLabel?: string }>(function PreferencesForm({ database, active = true, preserveOnNavigate = false, onDone, onBackup, onImport, onProtection, onBack, doneLabel = 'Retour' }, ref) {
   const repository = useMemo(() => new Preferences(database), [database]);
   const drafts = useRef<Partial<Record<PreferenceKey, Draft>>>({});
@@ -116,6 +125,7 @@ export const PreferencesForm = forwardRef<EditorHandle, { database: SqlConnectio
         <TextInput accessibilityLabel={label} style={styles.input} editable={!busy}
           keyboardType={kind === 'number' ? 'decimal-pad' : 'default'} autoCorrect={false}
           value={raw[key] ?? String(draft.snapshot.value ?? '')} onChangeText={text => edit(key, text)} />
+        {criteriaHelp[key] && <Text style={styles.help}>{criteriaHelp[key]}</Text>}
         {invalid.current.has(key) ? <>
           <Text style={styles.error}>Saisie incomplète ou hors limites — non enregistrée.</Text>
           <Pressable accessibilityRole="button" disabled={busy} style={styles.secondary} onPress={() => {

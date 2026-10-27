@@ -11,6 +11,36 @@ remplacement forcé de la V1 et aucune synchronisation automatique des deux base
 
 ## État vérifié dans le dépôt
 
+### Corrections audit — évaluation hebdomadaire — 27/10/2026
+
+Lot ergonomie précédent commité 08689ee. Évaluation de la semaine Paris en cours
+connectée au Bilan, indépendante de la période historique consultée. 23 lignes,
+dont 22 dimensions pondérées V1 et couverture Travail · suivi hors pondération.
+Score partiel avec nombre de dimensions observées, n.c. exclu (jamais zéro implicite),
+semaine lundi/date courante, détails repliables, erreurs réessayables et relecture
+au retour des réglages. Pas de double lecture au premier montage du Bilan.
+
+Les sept réglages auparavant sans effet sont consommés : minimum sommeil, objectif
+ventre, maximum portable, sport/social hebdomadaires, jours de référence travail,
+date arrêt tabac. Jours travail affecte la couverture, pas le compteur fixe 7h42.
+Objectifs sommeil/sport/social/travail à zéro désactivent leur score ; maximum
+portable à zéro reste strict, ventre à zéro conserve seulement la tendance.
+Seuils alimentaires V1 2/4/6 jours conservés et expliqués, sans proratisation.
+
+69 cas de seuils et une observation globale partagés Python/TypeScript, vérifiés
+contre les vraies fonctions dashboard_metrics.py (lecture seule, pandas existant,
+sans lancer Streamlit). Différences V2 explicites : semaine vide sans score social
+inventé, repas comptés sans analyse, calories/macros obsolètes exclues, chevauchements
+travail exclus, sommeil configurable, date tabac future non évaluée et limite
+portable 4h12/3h corrigée malgré l'arrondi binaire. Pondération V1 conservée.
+
+115 tests Node, TypeScript et 12 tests Python réussis. Test écran lecture échouée,
+réessai et mise à jour du score portable après réglage. Aucune migration, installation,
+compilation ou donnée réelle. Documentation Streamlit du skill non découvrable
+dans cet environnement ; comparaison fondée sur code métier Python exécuté directement.
+Périodes longues, PDF, catalogues/historiques, intégrations et essais Android restent ouverts.
+
+
 ### Corrections audit — ergonomie de saisie et première utilisation — 27/10/2026
 
 Conservation sociale précédente commitée 4ad6aeb. Calendrier français replié par
